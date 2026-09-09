@@ -1,4 +1,4 @@
-import type { Comment, Rating, Song } from "../types";
+import type { Comment, Rating, Song, SoundCloudAlbum } from "../types";
 
 const API_URL = import.meta.env.PUBLIC_API_URL ?? "http://localhost:8080";
 
@@ -43,6 +43,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+
+  getSoundCloudAlbums: () => request<SoundCloudAlbum[]>("/api/albums/soundcloud"),
 
   // --- Admin / cliente-admin ---
   uploadSong: (form: FormData, adminKey: string) =>

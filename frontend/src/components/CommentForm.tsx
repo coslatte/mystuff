@@ -15,7 +15,6 @@ export default function CommentForm({ songId, onCreated }: Props) {
     setLoading(true);
     try {
       await api.postComment(songId, { author, content });
-      setAuthor("");
       setContent("");
       onCreated?.();
     } finally {

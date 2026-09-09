@@ -24,3 +24,14 @@ export type Rating = {
   stars: number;
   createdAt: string;
 };
+
+export type SoundCloudAlbum = {
+  id: string;
+  title: string;
+  artworkUrl?: string;
+  trackCount?: number;
+  releaseDate?: string;
+  setType?: string;
+  url: string;
+  artist?: string;
+};
