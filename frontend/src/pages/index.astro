@@ -1,4 +1,6 @@
 ---
+export const prerender = false;
+
 import Layout from "../layouts/Layout.astro";
 import Hero from "../components/Hero.astro";
 import RepoRow from "../components/RepoRow.astro";
@@ -53,6 +55,11 @@ const repos = await Promise.all(
     imageSrc: source.githubUrl ? await fetchRepoMediaImage(source.githubUrl) : null,
     githubUrl: source.githubUrl || undefined,
   }))
+);
+
+Astro.response.headers.set(
+  "Cache-Control",
+  "public, s-maxage=600, stale-while-revalidate=3600"
 );
 ---
 

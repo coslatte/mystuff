@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 export interface PinnedRepo {
   id: string;
   name: string;
@@ -9,6 +12,34 @@ export interface PinnedRepo {
 }
 
 const GITHUB_GRAPHQL_ENDPOINT = "https://api.github.com/graphql";
+
+let cachedLocalToken: string | undefined | null = null;
+
+function readLocalEnvToken(): string | undefined {
+  if (cachedLocalToken !== null) return cachedLocalToken;
+
+  try {
+    const envPath = resolve(process.cwd(), ".env");
+    const content = readFileSync(envPath, "utf-8");
+    for (const line of content.split("\n")) {
+      const match = line.match(/^\s*GITHUB_TOKEN\s*=\s*(.+?)\s*$/);
+      if (match) {
+        cachedLocalToken = match[1].trim().replace(/^["']|["']$/g, "");
+        return cachedLocalToken;
+      }
+    }
+  } catch {
+    /* .env no disponible (p.ej. produccion): se ignora */
+  }
+
+  cachedLocalToken = undefined;
+  return undefined;
+}
+
+function getGithubToken(): string | undefined {
+  return process.env.GITHUB_TOKEN ?? readLocalEnvToken();
+}
+
 
 const PINNED_REPOS_QUERY = `
   query getPinnedRepos($username: String!) {
@@ -57,7 +88,7 @@ export async function fetchRepoMediaImage(githubUrl: string): Promise<string | n
   const repo = repoFromUrl(githubUrl);
   if (!repo) return null;
 
-  const token = (import.meta.env as unknown as Record<string, string | undefined>).GITHUB_TOKEN;
+  const token = getGithubToken();
   const headers: Record<string, string> = token ? { Authorization: `bearer ${token}` } : {};
 
   for (const folder of MEDIA_FOLDERS) {
@@ -81,10 +112,18 @@ export async function fetchRepoMediaImage(githubUrl: string): Promise<string | n
   return null;
 }
 
+const PINNED_CACHE_TTL_MS = 10 * 60 * 1000;
+
+let pinnedCache: { ts: number; data: PinnedRepo[] } | null = null;
+
 export async function fetchPinnedRepos(username: string = "coslatte"): Promise<PinnedRepo[]> {
-  const token = (import.meta.env as unknown as Record<string, string | undefined>).GITHUB_TOKEN;
+  const token = getGithubToken();
 
   if (!token) return [];
+
+  if (pinnedCache && Date.now() - pinnedCache.ts < PINNED_CACHE_TTL_MS) {
+    return pinnedCache.data;
+  }
 
   try {
     const response = await fetch(GITHUB_GRAPHQL_ENDPOINT, {
@@ -99,20 +138,23 @@ export async function fetchPinnedRepos(username: string = "coslatte"): Promise<P
       }),
     });
 
-    if (!response.ok) return [];
+    if (!response.ok) return pinnedCache?.data ?? [];
 
     const result = (await response.json()) as {
       data?: { user?: { pinnedItems: { nodes: PinnedRepo[] } } };
       errors?: unknown;
     };
 
-    if (result.errors || !result.data?.user) return [];
+    if (result.errors || !result.data?.user) return pinnedCache?.data ?? [];
 
     const EXCLUDED_REPOS = new Set(["cosmiclatteweb", "mystuff"]);
-    return result.data.user.pinnedItems.nodes.filter(
+    const data = result.data.user.pinnedItems.nodes.filter(
       (repo) => !EXCLUDED_REPOS.has(repo.name.toLowerCase())
     );
+
+    pinnedCache = { ts: Date.now(), data };
+    return data;
   } catch {
-    return [];
+    return pinnedCache?.data ?? [];
   }
 }

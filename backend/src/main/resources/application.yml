@@ -7,8 +7,10 @@ spring:
     name: cosmiclatteweb
   datasource:
     # DB_SSLMODE=disable (local Docker) | require (Supabase)
-    # Si necesitas pasar una URL completa (ej. pooler con ?sslmode=require&...), define JDBC_URL y tiene prioridad
-    url: ${JDBC_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:cosmiclatte}?sslmode=${DB_SSLMODE:disable}}
+    # IMPORTANTE: usamos las variables sueltas DB_* (no JDBC_URL). Meter el password
+    # inline en una URL con caracteres especiales (& # %) rompe la conexion, por eso
+    # el password va como propiedad separada DB_PASSWORD.
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:cosmiclatte}?sslmode=${DB_SSLMODE:disable}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
@@ -22,11 +24,14 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        # Fija el dialecto para no depender de la conexion y que un error de conexion
+        # salga claro (password/host) en vez del confuso "Unable to determine Dialect".
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   flyway:
     enabled: true
     locations: classpath:db/migration
     # usa las mismas vars que el datasource (necesario si Flyway corre con otro usuario)
-    url: ${JDBC_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:cosmiclatte}?sslmode=${DB_SSLMODE:disable}}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:cosmiclatte}?sslmode=${DB_SSLMODE:disable}
     user: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
   servlet:
