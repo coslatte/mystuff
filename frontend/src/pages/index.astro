@@ -1,15 +1,73 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import Hero from "../components/Hero.astro";
+import RepoRow from "../components/RepoRow.astro";
+import projects from "../data/projects";
+import { fetchPinnedRepos, fetchRepoMediaImage } from "../services/github";
+
+const remote = await fetchPinnedRepos("coslatte");
+
+type RepoSource = {
+  name: string;
+  category: string;
+  description: string;
+  tags: string[];
+  githubUrl: string;
+};
+
+const sources: RepoSource[] =
+  remote.length > 0
+    ? remote.map((repo) => ({
+        name: repo.name,
+        category: repo.primaryLanguage?.name?.toLowerCase() || "project",
+        description: repo.description?.toLowerCase() || "no description provided.",
+        tags: repo.repositoryTopics.nodes.map((node) => node.topic.name),
+        githubUrl: repo.url,
+      }))
+    : projects.map((project) => ({
+        name: project.title,
+        category: project.category,
+        description: project.description,
+        tags: project.tags,
+        githubUrl: project.githubUrl ?? "",
+      }));
+
+const repos = await Promise.all(
+  sources.map(async (source, index) => ({
+    index: String(index + 1).padStart(2, "0"),
+    title: source.name.toLowerCase(),
+    category: source.category,
+    description: source.description,
+    tags: source.tags,
+    imageSrc: source.githubUrl ? await fetchRepoMediaImage(source.githubUrl) : null,
+    githubUrl: source.githubUrl || undefined,
+  }))
+);
 ---
 
-<Layout title="CosmicLatte | Portfolio">
-  <section class="py-12">
-    <h1 class="text-4xl font-bold tracking-tight">Hola, soy CosmicLatte</h1>
-    <p class="mt-4 max-w-2xl text-zinc-400">
-      Portfolio personal. Descubre mi música, deja comentarios y califica las canciones.
-    </p>
-    <a href="/music" class="mt-6 inline-block rounded-lg bg-white px-5 py-2.5 text-sm font-medium text-zinc-900">
-      Explorar música
-    </a>
+<Layout title="repos | mystuff">
+  <Hero />
+
+  <section id="repos" class="border-t-2 border-black">
+    <div class="flex items-center justify-between border-b-2 border-black bg-black px-6 py-3 font-mono text-sm font-bold text-white">
+      <a
+        href="https://github.com/coslatte"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="group"
+      >
+        <span class="relative">
+          // pinned repositories
+          <span class="absolute -bottom-1 left-0 h-0.5 w-0 bg-brut-yellow transition-all duration-200 group-hover:w-full"></span>
+        </span>
+      </a>
+    </div>
+
+    {repos.map((repo) => <RepoRow {...repo} />)}
+
+    <div class="border-b-2 border-black bg-white p-8 text-center font-mono">
+      want to contact me?{" "}
+      <a href="mailto:hola@coslatte.dev" class="text-brut-red underline">send me an email</a>.
+    </div>
   </section>
 </Layout>

@@ -1,0 +1,80 @@
+---
+interface Props {
+  index: string;
+  title: string;
+  category: string;
+  description: string;
+  tags: string[];
+  imageSrc?: string | null;
+  demoUrl?: string;
+  githubUrl?: string;
+}
+
+const { index, title, category, description, tags, imageSrc, demoUrl, githubUrl } = Astro.props;
+---
+
+<div class="grid grid-cols-1 border-b-2 border-black bg-white hover:bg-neutral-50 md:grid-cols-12">
+  <div class="flex items-center justify-center border-b-2 border-black bg-neutral-100 p-4 md:col-span-2 md:border-b-0 md:border-r-2">
+    <span class="font-display text-6xl font-black tracking-tighter">{index}</span>
+  </div>
+
+  <div class="flex flex-col justify-between border-b-2 border-black p-4 md:col-span-6 md:border-b-0 md:border-r-2">
+    <div>
+      <span class="mb-2 inline-block bg-black px-2 py-0.5 font-mono text-xs font-bold text-white">
+        {category}
+      </span>
+      <h3 class="mb-2 font-display text-3xl font-bold">{title}</h3>
+      <p class="mb-3 font-mono text-sm text-gray-700">{description}</p>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      {tags.map((tag) => (
+        <span class="border border-black bg-neutral-100 px-2 py-0.5 font-mono text-xs">#{tag}</span>
+      ))}
+    </div>
+  </div>
+
+  <div class="flex flex-col justify-between bg-neutral-200 p-3 md:col-span-4">
+    <div class="relative mb-3 aspect-video overflow-hidden border-2 border-black bg-black">
+      {imageSrc ? (
+        <>
+          <img src={imageSrc} alt={title} class="h-full w-full object-cover contrast-90" />
+          <span class="absolute right-2 top-2 border border-white bg-black px-1.5 py-0.5 font-mono text-[10px] text-white">
+            preview
+          </span>
+        </>
+      ) : (
+        <div class="flex h-full w-full items-center justify-center bg-neutral-200">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 h-full w-full">
+            <line x1="0" y1="0" x2="100" y2="100" stroke="black" stroke-width="2" vector-effect="non-scaling-stroke" opacity="0.3" />
+          </svg>
+          <span class="relative flex items-center gap-1.5 font-mono text-sm font-bold">
+            no media
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3.5 w-3.5">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+          </span>
+        </div>
+      )}
+    </div>
+
+    <div class="grid grid-cols-1 gap-2">
+      {demoUrl && (
+        <a href={demoUrl} target="_blank" rel="noopener noreferrer" class="brut-btn text-center text-xs">
+          demo ↗
+        </a>
+      )}
+      {githubUrl && (
+        <a
+          href={githubUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="border-2 border-black bg-black py-2 text-center text-xs font-bold text-white transition-none hover:bg-brut-red"
+        >
+          code
+        </a>
+      )}
+    </div>
+  </div>
+</div>

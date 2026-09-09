@@ -2,9 +2,10 @@ export type Song = {
   id: number;
   title: string;
   artist: string;
+  duration?: string;
   audioUrl?: string;
   avgRating?: number;
-  createdAt: string;
+  totalVotes?: number;
 };
 
 export type Comment = {
@@ -13,6 +14,8 @@ export type Comment = {
   author: string;
   content: string;
   createdAt: string;
+  updatedAt?: string;
+  editToken?: string;
 };
 
 export type Rating = {

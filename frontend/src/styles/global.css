@@ -1,1 +1,35 @@
 @import "tailwindcss";
+
+@theme {
+  --color-brut-bg: #f2f2f2;
+  --color-brut-black: #000000;
+  --color-brut-yellow: #ffd600;
+  --color-brut-red: #ff3300;
+
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-brut-bg);
+    color: var(--color-brut-black);
+    font-family: var(--font-mono);
+    text-transform: lowercase;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    text-transform: lowercase;
+  }
+}
+
+@layer utilities {
+  .brut-box {
+    @apply border-2 border-black bg-white;
+  }
+  .brut-btn {
+    @apply border-2 border-black bg-white px-4 py-2 font-bold transition-none
+      hover:bg-brut-yellow active:bg-brut-red active:text-white;
+  }
+}

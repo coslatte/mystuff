@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { api } from "../services/api";
 
-export default function CommentForm({ songId, onCreated }: { songId: number; onCreated?: () => void }) {
+type Props = {
+  songId: number;
+  onCreated?: () => void;
+};
+
+export default function CommentForm({ songId, onCreated }: Props) {
   const [author, setAuthor] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  async function submit() {
     setLoading(true);
     try {
       await api.postComment(songId, { author, content });
@@ -20,27 +24,28 @@ export default function CommentForm({ songId, onCreated }: { songId: number; onC
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-3">
+    <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="flex flex-col gap-2">
       <input
         value={author}
         onChange={(e) => setAuthor(e.target.value)}
-        placeholder="Tu nombre"
+        placeholder="your name"
         required
-        className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm"
+        className="border-2 border-black bg-white px-3 py-2 font-mono text-sm focus:outline-none"
       />
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder="Deja un comentario"
+        placeholder="leave your opinion"
         required
         rows={3}
-        className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm"
+        className="border-2 border-black bg-white px-3 py-2 font-mono text-sm focus:outline-none"
       />
       <button
+        type="submit"
         disabled={loading}
-        className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-900 disabled:opacity-50"
+        className="brut-btn bg-brut-yellow font-mono text-sm disabled:opacity-50"
       >
-        {loading ? "Enviando..." : "Comentar"}
+        {loading ? "sending..." : "publish comment"}
       </button>
     </form>
   );
