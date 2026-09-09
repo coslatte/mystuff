@@ -1,0 +1,17 @@
+---
+import Layout from "../layouts/Layout.astro";
+import AdminUpload from "../components/AdminUpload";
+---
+
+<Layout title="admin | cosmiclatte">
+  <section class="border-b-2 border-black bg-brut-yellow p-8">
+    <h1 class="font-display text-4xl font-black tracking-tighter sm:text-6xl">admin.</h1>
+    <p class="mt-4 max-w-md font-mono text-sm text-gray-800">
+      sube, reemplaza y borra tus tracks. necesitas la clave de administrador.
+    </p>
+  </section>
+
+  <section class="p-6">
+    <AdminUpload client:load />
+  </section>
+</Layout>

@@ -1,0 +1,199 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { api } from "../services/api";
+import type { Song } from "../types";
+
+const ADMIN_KEY_STORAGE = "clm_admin_key";
+
+export default function AdminUpload() {
+  const [adminKey, setAdminKey] = useState("");
+  const [title, setTitle] = useState("");
+  const [artist, setArtist] = useState("");
+  const [duration, setDuration] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(ADMIN_KEY_STORAGE);
+    if (saved) setAdminKey(saved);
+  }, []);
+
+  const persistKey = (key: string) => {
+    setAdminKey(key);
+    if (key) localStorage.setItem(ADMIN_KEY_STORAGE, key);
+    else localStorage.removeItem(ADMIN_KEY_STORAGE);
+  };
+
+  const loadSongs = useCallback(async () => {
+    try {
+      setSongs(await api.getSongs());
+    } catch {
+      /* la lista es secundaria */
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSongs();
+  }, [loadSongs]);
+
+  async function handleUpload(e: React.FormEvent) {
+    e.preventDefault();
+    if (!adminKey) return setMessage("Falta la clave de administrador.");
+    if (!file) return setMessage("Selecciona un archivo de audio.");
+    if (!title || !artist) return setMessage("Título y artista son obligatorios.");
+
+    setBusy(true);
+    setMessage("");
+    try {
+      const form = new FormData();
+      form.append("title", title);
+      form.append("artist", artist);
+      if (duration) form.append("duration", duration);
+      form.append("file", file);
+      await api.uploadSong(form, adminKey);
+      setTitle("");
+      setArtist("");
+      setDuration("");
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      setMessage("✓ Canción subida.");
+      await loadSongs();
+    } catch (err) {
+      setMessage("✗ " + (err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleReplace(song: Song) {
+    const replacement = fileInputRef.current?.files?.[0];
+    if (!replacement) return setMessage("Selecciona un archivo para reemplazar el audio.");
+    if (!adminKey) return setMessage("Falta la clave de administrador.");
+    setBusy(true);
+    setMessage("");
+    try {
+      const form = new FormData();
+      form.append("file", replacement);
+      await api.replaceSongAudio(song.id, form, adminKey);
+      setMessage(`✓ Audio de "${song.title}" reemplazado.`);
+      await loadSongs();
+    } catch (err) {
+      setMessage("✗ " + (err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDelete(song: Song) {
+    if (!adminKey) return setMessage("Falta la clave de administrador.");
+    if (!confirm(`¿Borrar "${song.title}"?`)) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      await api.deleteSong(song.id, adminKey);
+      setMessage(`✓ "${song.title}" borrada.`);
+      await loadSongs();
+    } catch (err) {
+      setMessage("✗ " + (err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div className="border-2 border-black bg-white p-6">
+        <h2 className="mb-4 font-display text-2xl font-bold">subir canción</h2>
+
+        <label className="mb-3 block font-mono text-xs font-bold uppercase">
+          clave de admin
+          <input
+            type="password"
+            value={adminKey}
+            onChange={(e) => persistKey(e.target.value)}
+            placeholder="X-Admin-Key"
+            className="mt-1 w-full border-2 border-black bg-neutral-100 px-3 py-2 font-mono text-sm outline-none focus:bg-brut-yellow"
+          />
+        </label>
+
+        <form onSubmit={handleUpload} className="flex flex-col gap-3">
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="título"
+            className="border-2 border-black bg-neutral-100 px-3 py-2 font-mono text-sm outline-none focus:bg-brut-yellow"
+          />
+          <input
+            value={artist}
+            onChange={(e) => setArtist(e.target.value)}
+            placeholder="artista"
+            className="border-2 border-black bg-neutral-100 px-3 py-2 font-mono text-sm outline-none focus:bg-brut-yellow"
+          />
+          <input
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+            placeholder="duración (opcional, ej. 3:24)"
+            className="border-2 border-black bg-neutral-100 px-3 py-2 font-mono text-sm outline-none focus:bg-brut-yellow"
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="audio/*"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            className="border-2 border-black bg-neutral-100 px-3 py-2 font-mono text-sm"
+          />
+          <button
+            type="submit"
+            disabled={busy}
+            className="brut-btn mt-2 bg-brut-yellow text-sm disabled:opacity-50"
+          >
+            {busy ? "subiendo..." : "subir"}
+          </button>
+        </form>
+
+        {message && (
+          <p className="mt-4 border-2 border-black bg-black px-3 py-2 font-mono text-sm text-white">
+            {message}
+          </p>
+        )}
+      </div>
+
+      <div className="border-2 border-black bg-neutral-100 p-6">
+        <h2 className="mb-4 font-display text-2xl font-bold">canciones ({songs.length})</h2>
+        {songs.length === 0 && (
+          <p className="font-mono text-sm text-gray-500">no hay canciones todavía.</p>
+        )}
+        <ul className="flex flex-col gap-2">
+          {songs.map((song) => (
+            <li
+              key={song.id}
+              className="flex flex-wrap items-center justify-between gap-2 border-2 border-black bg-white p-3"
+            >
+              <span className="font-mono text-sm">
+                <span className="font-bold">{song.title}</span> — {song.artist}
+              </span>
+              <span className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleReplace(song)}
+                  className="border-2 border-black bg-white px-2 py-1 font-mono text-xs hover:bg-brut-yellow"
+                >
+                  reemplazar audio
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(song)}
+                  className="border-2 border-black bg-black px-2 py-1 font-mono text-xs text-white hover:bg-brut-red"
+                >
+                  borrar
+                </button>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
