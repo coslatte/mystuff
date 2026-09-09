@@ -41,10 +41,10 @@ public class SongService {
     @Transactional
     public SongResponse createSong(String title, String artist, String duration, MultipartFile file) {
         if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("El título es requerido.");
+            throw new IllegalArgumentException("Title is required.");
         }
         if (artist == null || artist.isBlank()) {
-            throw new IllegalArgumentException("El artista es requerido.");
+            throw new IllegalArgumentException("Artist is required.");
         }
         String objectPath = fileStorage.store(file);
         Song song = new Song();
@@ -80,7 +80,7 @@ public class SongService {
 
     private Song findById(Long id) {
         return songRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Canción no encontrada: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Song not found: " + id));
     }
 
     private SongResponse toResponse(Song song) {

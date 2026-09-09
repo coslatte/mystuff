@@ -13,7 +13,7 @@ const projects: Project[] = [
     title: "cosmiclatte api",
     category: "backend",
     description:
-      "api rest para portafolio personal construida con spring boot, jpa, flyway y postgresql. incluye sistema de autenticación.",
+      "REST API for personal portfolio built with Spring Boot, JPA, Flyway and PostgreSQL. Includes authentication system.",
     tags: ["java", "springboot", "jpa", "postgresql", "flyway"],
     imageSrc: "/images/previews/cosmiclatte-api.jpg",
     githubUrl: "https://github.com/coslatte/cosmiclatte-api",
@@ -22,7 +22,7 @@ const projects: Project[] = [
     title: "cosmiclatte frontend",
     category: "frontend",
     description:
-      "interfaz de usuario del portafolio en modo ssr/ssg. stack moderno con astro, typescript, tailwind css v4 y bun.",
+      "Portfolio UI in SSR/SSG mode. Modern stack with Astro, TypeScript, Tailwind CSS v4 and Bun.",
     tags: ["astro", "typescript", "tailwindcss", "bun"],
     imageSrc: "/images/previews/cosmiclatte-frontend.jpg",
     githubUrl: "https://github.com/coslatte/cosmiclatte-frontend",
@@ -31,7 +31,7 @@ const projects: Project[] = [
     title: "cosmiclatte infra",
     category: "devops",
     description:
-      "infraestructura y despliegue continuo. configuración de docker-compose para entorno local y scripts de ci/cd para render/vercel.",
+      "Infrastructure and continuous deployment. Docker Compose configuration for local environment and CI/CD scripts for Render/Vercel.",
     tags: ["docker", "ci/cd", "devops", "bash"],
     imageSrc: "/images/previews/cosmiclatte-infra.jpg",
     githubUrl: "https://github.com/coslatte/cosmiclatte-infra",
@@ -40,7 +40,7 @@ const projects: Project[] = [
     title: "audio track engine",
     category: "r&d / audio",
     description:
-      "motor de procesamiento de audio experimental en la nube. investigación sobre streaming y análisis espectral.",
+      "Experimental cloud audio processing engine. Research on streaming and spectral analysis.",
     tags: ["webaudioapi", "typescript", "rust", "research"],
     imageSrc: "/images/previews/audio-track-engine.jpg",
     githubUrl: "https://github.com/coslatte/audio-track-engine",

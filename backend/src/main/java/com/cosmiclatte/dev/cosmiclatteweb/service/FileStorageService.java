@@ -71,12 +71,12 @@ public class FileStorageService {
                     .build();
             HttpResponse<String> resp = http.send(request, HttpResponse.BodyHandlers.ofString());
             if (resp.statusCode() < 200 || resp.statusCode() >= 300) {
-                throw new RuntimeException("Supabase upload falló (" + resp.statusCode() + "): " + resp.body());
+                throw new RuntimeException("Supabase upload failed (" + resp.statusCode() + "): " + resp.body());
             }
             return filename;
         } catch (IOException | InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("No se pudo subir el audio a Supabase: " + e.getMessage(), e);
+            throw new RuntimeException("Could not upload audio to Supabase: " + e.getMessage(), e);
         }
     }
 
@@ -99,13 +99,13 @@ public class FileStorageService {
                 return;
             }
             if (code == 400 || code == 404 || code == 410) {
-                log.warn("Supabase delete {} -> tratado como ya inexistente ({})", objectPath, code);
+                log.warn("Supabase delete {} -> treated as already non-existent ({})", objectPath, code);
                 return;
             }
-            throw new RuntimeException("Supabase delete falló (" + code + "): " + resp.body());
+            throw new RuntimeException("Supabase delete failed (" + code + "): " + resp.body());
         } catch (IOException | InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("No se pudo borrar el audio de Supabase: " + e.getMessage(), e);
+            throw new RuntimeException("Could not delete audio from Supabase: " + e.getMessage(), e);
         }
     }
 
@@ -123,13 +123,13 @@ public class FileStorageService {
                     .build();
             HttpResponse<String> resp = http.send(request, HttpResponse.BodyHandlers.ofString());
             if (resp.statusCode() < 200 || resp.statusCode() >= 300) {
-                throw new RuntimeException("Supabase signed URL falló (" + resp.statusCode() + "): " + resp.body());
+                throw new RuntimeException("Supabase signed URL failed (" + resp.statusCode() + "): " + resp.body());
             }
             String signedUrl = extractSignedUrl(resp.body());
             return signedUrl.startsWith("http") ? signedUrl : storageBase + signedUrl;
         } catch (IOException | InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("No se pudo firmar la URL del audio: " + e.getMessage(), e);
+            throw new RuntimeException("Could not sign audio URL: " + e.getMessage(), e);
         }
     }
 
@@ -138,31 +138,31 @@ public class FileStorageService {
         if (matcher.find()) {
             return matcher.group(1);
         }
-        throw new RuntimeException("Supabase no devolvió signedURL: " + body);
+        throw new RuntimeException("Supabase did not return signedURL: " + body);
     }
 
     private void requireConfigured() {
         if (storageBase.equals("/storage/v1") || serviceKey.isBlank()) {
             throw new IllegalStateException(
-                    "Supabase Storage no configurado. Define SUPABASE_URL y SUPABASE_STORAGE_SERVICE_KEY en .env.");
+                    "Supabase Storage not configured. Set SUPABASE_URL and SUPABASE_STORAGE_SERVICE_KEY in .env.");
         }
     }
 
     private void validate(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("El archivo de audio es requerido.");
+            throw new IllegalArgumentException("Audio file is required.");
         }
         if (file.getSize() > maxBytes) {
             throw new IllegalArgumentException(
-                    "El archivo excede el tamaño máximo de " + (maxBytes / 1024 / 1024) + " MB.");
+                    "File exceeds maximum size of " + (maxBytes / 1024 / 1024) + " MB.");
         }
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
-            throw new IllegalArgumentException("Tipo de archivo no permitido: " + contentType);
+            throw new IllegalArgumentException("File type not allowed: " + contentType);
         }
         String extension = extensionOf(file.getOriginalFilename());
         if (!ALLOWED_EXTENSIONS.contains(extension)) {
-            throw new IllegalArgumentException("Extensión de archivo no permitida: " + extension);
+            throw new IllegalArgumentException("File extension not allowed: " + extension);
         }
     }
 

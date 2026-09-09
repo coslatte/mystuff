@@ -35,13 +35,13 @@ public class CommentService {
     @Transactional
     public CommentResponse create(Long songId, String author, String content) {
         if (author == null || author.isBlank()) {
-            throw new IllegalArgumentException("El autor es requerido.");
+            throw new IllegalArgumentException("Author is required.");
         }
         if (content == null || content.isBlank()) {
-            throw new IllegalArgumentException("El comentario no puede estar vacío.");
+            throw new IllegalArgumentException("Comment cannot be empty.");
         }
         Song song = songRepository.findById(songId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Canción no encontrada: " + songId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Song not found: " + songId));
         Comment comment = new Comment();
         comment.setSong(song);
         comment.setAuthor(author.trim());
@@ -53,14 +53,14 @@ public class CommentService {
     @Transactional
     public CommentResponse update(Long commentId, String content, String adminKey, String editToken) {
         if (content == null || content.isBlank()) {
-            throw new IllegalArgumentException("El comentario no puede estar vacío.");
+            throw new IllegalArgumentException("Comment cannot be empty.");
         }
         Comment comment = findById(commentId);
         boolean isAdmin = adminAuth.isAdmin(adminKey);
         boolean isOwner = editToken != null && editToken.equals(comment.getEditToken());
         if (!isAdmin && !isOwner) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "No tienes permiso para editar este comentario.");
+                    "You don't have permission to edit this comment.");
         }
         comment.setContent(content.trim());
         return toResponse(commentRepository.save(comment));
@@ -70,7 +70,7 @@ public class CommentService {
     public void delete(Long commentId, String adminKey) {
         if (!adminAuth.isAdmin(adminKey)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Se requiere clave de administrador para eliminar comentarios.");
+                    "Admin key is required to delete comments.");
         }
         Comment comment = findById(commentId);
         commentRepository.delete(comment);
@@ -78,7 +78,7 @@ public class CommentService {
 
     private Comment findById(Long id) {
         return commentRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comentario no encontrado: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found: " + id));
     }
 
     private CommentResponse toResponse(Comment comment) {

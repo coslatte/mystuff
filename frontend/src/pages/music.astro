@@ -10,26 +10,22 @@ const socials = [
 ---
 
 <Layout title="music | cosmiclatte">
-  <section class="grid grid-cols-1 border-b-2 border-black md:grid-cols-[3fr_2fr]">
-    <div class="flex flex-col justify-between gap-4 border-black p-6 md:border-r-2 md:p-8">
+  <section class="grid grid-cols-1 border-b-2 border-black md:grid-cols-[3fr_3fr]">
+    <div class="flex flex-col justify-between gap-4 p-6 md:p-8">
       <h1 class="font-display text-4xl font-black tracking-tighter sm:text-6xl">music.</h1>
-      <div class="flex flex-wrap gap-2 font-mono text-xs">
+      <div class="flex flex-wrap gap-2 font-mono text-xs text-white">
         {socials.map((social) => (
           <a
             href={social.url}
             target="_blank"
             rel="noopener noreferrer"
-            class="border-2 border-black bg-white px-3 py-1.5 font-bold hover:bg-brut-yellow"
+            class="bg-black px-3 py-1.5 font-bold hover:bg-brut-red"
           >
             {social.label}
           </a>
         ))}
       </div>
       <p class="max-w-md font-mono text-sm text-gray-700">play, rate and comment.</p>
-    </div>
-
-    <div class="flex items-end justify-between bg-black p-4 md:p-6">
-      <span class="bg-brut-red px-2 py-1 font-mono text-xs font-bold text-white">(2016—2026)</span>
     </div>
   </section>
 

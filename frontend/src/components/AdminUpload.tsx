@@ -30,7 +30,7 @@ export default function AdminUpload() {
     try {
       setSongs(await api.getSongs());
     } catch {
-      /* la lista es secundaria */
+      /* list is secondary */
     }
   }, []);
 
@@ -40,9 +40,9 @@ export default function AdminUpload() {
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
-    if (!adminKey) return setMessage("Falta la clave de administrador.");
-    if (!file) return setMessage("Selecciona un archivo de audio.");
-    if (!title || !artist) return setMessage("Título y artista son obligatorios.");
+    if (!adminKey) return setMessage("Admin key is required.");
+    if (!file) return setMessage("Select an audio file.");
+    if (!title || !artist) return setMessage("Title and artist are required.");
 
     setBusy(true);
     setMessage("");
@@ -58,7 +58,7 @@ export default function AdminUpload() {
       setDuration("");
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
-      setMessage("✓ Canción subida.");
+      setMessage("✓ Song uploaded.");
       await loadSongs();
     } catch (err) {
       setMessage("✗ " + (err as Error).message);
@@ -69,15 +69,15 @@ export default function AdminUpload() {
 
   async function handleReplace(song: Song) {
     const replacement = fileInputRef.current?.files?.[0];
-    if (!replacement) return setMessage("Selecciona un archivo para reemplazar el audio.");
-    if (!adminKey) return setMessage("Falta la clave de administrador.");
+    if (!replacement) return setMessage("Select a file to replace the audio.");
+    if (!adminKey) return setMessage("Admin key is required.");
     setBusy(true);
     setMessage("");
     try {
       const form = new FormData();
       form.append("file", replacement);
       await api.replaceSongAudio(song.id, form, adminKey);
-      setMessage(`✓ Audio de "${song.title}" reemplazado.`);
+      setMessage(`✓ Audio for "${song.title}" replaced.`);
       await loadSongs();
     } catch (err) {
       setMessage("✗ " + (err as Error).message);
@@ -87,13 +87,13 @@ export default function AdminUpload() {
   }
 
   async function handleDelete(song: Song) {
-    if (!adminKey) return setMessage("Falta la clave de administrador.");
-    if (!confirm(`¿Borrar "${song.title}"?`)) return;
+    if (!adminKey) return setMessage("Admin key is required.");
+    if (!confirm(`Delete "${song.title}"?`)) return;
     setBusy(true);
     setMessage("");
     try {
       await api.deleteSong(song.id, adminKey);
-      setMessage(`✓ "${song.title}" borrada.`);
+      setMessage(`✓ "${song.title}" deleted.`);
       await loadSongs();
     } catch (err) {
       setMessage("✗ " + (err as Error).message);
@@ -105,10 +105,10 @@ export default function AdminUpload() {
   return (
     <div className="flex flex-col gap-8">
       <div className="border-2 border-black bg-white p-6">
-        <h2 className="mb-4 font-display text-2xl font-bold">subir canción</h2>
+        <h2 className="mb-4 font-display text-2xl font-bold">upload song</h2>
 
         <label className="mb-3 block font-mono text-xs font-bold uppercase">
-          clave de admin
+          admin key
           <input
             type="password"
             value={adminKey}
@@ -122,19 +122,19 @@ export default function AdminUpload() {
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="título"
+            placeholder="title"
             className="border-2 border-black bg-neutral-100 px-3 py-2 font-mono text-sm outline-none focus:bg-brut-yellow"
           />
           <input
             value={artist}
             onChange={(e) => setArtist(e.target.value)}
-            placeholder="artista"
+            placeholder="artist"
             className="border-2 border-black bg-neutral-100 px-3 py-2 font-mono text-sm outline-none focus:bg-brut-yellow"
           />
           <input
             value={duration}
             onChange={(e) => setDuration(e.target.value)}
-            placeholder="duración (opcional, ej. 3:24)"
+            placeholder="duration (optional, e.g. 3:24)"
             className="border-2 border-black bg-neutral-100 px-3 py-2 font-mono text-sm outline-none focus:bg-brut-yellow"
           />
           <input
@@ -149,7 +149,7 @@ export default function AdminUpload() {
             disabled={busy}
             className="brut-btn mt-2 bg-brut-yellow text-sm disabled:opacity-50"
           >
-            {busy ? "subiendo..." : "subir"}
+            {busy ? "uploading..." : "upload"}
           </button>
         </form>
 
@@ -161,9 +161,9 @@ export default function AdminUpload() {
       </div>
 
       <div className="border-2 border-black bg-neutral-100 p-6">
-        <h2 className="mb-4 font-display text-2xl font-bold">canciones ({songs.length})</h2>
+        <h2 className="mb-4 font-display text-2xl font-bold">songs ({songs.length})</h2>
         {songs.length === 0 && (
-          <p className="font-mono text-sm text-gray-500">no hay canciones todavía.</p>
+          <p className="font-mono text-sm text-gray-500">no songs yet.</p>
         )}
         <ul className="flex flex-col gap-2">
           {songs.map((song) => (
@@ -180,14 +180,14 @@ export default function AdminUpload() {
                   onClick={() => handleReplace(song)}
                   className="border-2 border-black bg-white px-2 py-1 font-mono text-xs hover:bg-brut-yellow"
                 >
-                  reemplazar audio
+                  replace audio
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDelete(song)}
                   className="border-2 border-black bg-black px-2 py-1 font-mono text-xs text-white hover:bg-brut-red"
                 >
-                  borrar
+                  delete
                 </button>
               </span>
             </li>

@@ -24,10 +24,10 @@ public class RatingService {
     @Transactional
     public RatingResponse addRating(Long songId, int stars) {
         if (stars < 1 || stars > 5) {
-            throw new IllegalArgumentException("La valoración debe estar entre 1 y 5 estrellas.");
+            throw new IllegalArgumentException("Rating must be between 1 and 5 stars.");
         }
         Song song = songRepository.findById(songId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Canción no encontrada: " + songId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Song not found: " + songId));
         Rating rating = new Rating();
         rating.setSong(song);
         rating.setStars(stars);
