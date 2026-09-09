@@ -30,6 +30,10 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    # El schema "public" de Supabase ya viene ocupado (o de un deploy previo) sin
+    # flyway_schema_history. baseline-on-migrate crea la tabla de historial y aplica
+    # las migraciones (V2/V3); asume que V1 ya está aplicada porque las tablas existen.
+    baseline-on-migrate: true
     # usa las mismas vars que el datasource (necesario si Flyway corre con otro usuario)
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:cosmiclatte}?sslmode=${DB_SSLMODE:disable}
     user: ${DB_USERNAME:postgres}
