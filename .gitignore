@@ -1,0 +1,16 @@
+.idea/
+backend/.idea/
+.vscode/
+*.iml
+*.iws
+.DS_Store
+Thumbs.db
+
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+frontend/node_modules/
+frontend/dist/
+frontend/.astro/
+frontend/bun.lockb
+.env
+.env.local
