@@ -108,7 +108,10 @@ export async function fetchPinnedRepos(username: string = "coslatte"): Promise<P
 
     if (result.errors || !result.data?.user) return [];
 
-    return result.data.user.pinnedItems.nodes;
+    const EXCLUDED_REPOS = new Set(["cosmiclatteweb", "mystuff"]);
+    return result.data.user.pinnedItems.nodes.filter(
+      (repo) => !EXCLUDED_REPOS.has(repo.name.toLowerCase())
+    );
   } catch {
     return [];
   }

@@ -15,22 +15,33 @@ type RepoSource = {
   githubUrl: string;
 };
 
+const EXCLUDED_REPOS = new Set(["cosmiclatteweb", "mystuff"]);
+const isExcluded = (name: string, url: string) => {
+  const n = name.toLowerCase();
+  const u = url.toLowerCase();
+  return EXCLUDED_REPOS.has(n) || u.includes("cosmiclatteweb") || u.includes("mystuff");
+};
+
+const filteredRemote = remote.filter((repo) => !isExcluded(repo.name, repo.url));
+
 const sources: RepoSource[] =
-  remote.length > 0
-    ? remote.map((repo) => ({
+  filteredRemote.length > 0
+    ? filteredRemote.map((repo) => ({
         name: repo.name,
         category: repo.primaryLanguage?.name?.toLowerCase() || "project",
         description: repo.description?.toLowerCase() || "no description provided.",
         tags: repo.repositoryTopics.nodes.map((node) => node.topic.name),
         githubUrl: repo.url,
       }))
-    : projects.map((project) => ({
-        name: project.title,
-        category: project.category,
-        description: project.description,
-        tags: project.tags,
-        githubUrl: project.githubUrl ?? "",
-      }));
+    : projects
+        .filter((project) => !isExcluded(project.title, project.githubUrl ?? ""))
+        .map((project) => ({
+          name: project.title,
+          category: project.category,
+          description: project.description,
+          tags: project.tags,
+          githubUrl: project.githubUrl ?? "",
+        }));
 
 const repos = await Promise.all(
   sources.map(async (source, index) => ({
@@ -65,7 +76,7 @@ const repos = await Promise.all(
 
     {repos.map((repo) => <RepoRow {...repo} />)}
 
-    <div class="border-b-2 border-black bg-white p-8 text-center font-mono">
+    <div class="border-black bg-white p-8 text-center font-mono">
       want to contact me?{" "}
       <a href="mailto:hola@coslatte.dev" class="text-brut-red underline">send me an email</a>.
     </div>

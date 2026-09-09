@@ -1,5 +1,6 @@
 server:
-  port: 8080
+  # Render inyecta la variable PORT; local usa 8080
+  port: ${PORT:8080}
 
 spring:
   application:
@@ -36,11 +37,16 @@ spring:
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4321,http://localhost:3000}
-  # URL pública usada para construir audioUrl absoluto (accesible desde el frontend en otro origen)
-  public-url: ${APP_PUBLIC_URL:http://localhost:8080}
-  # Directorio donde se guardan los audios (relativo al directorio de ejecución)
-  upload-dir: ${APP_UPLOAD_DIR:uploads}
   # Tamaño máximo por archivo de audio (bytes). ~20 MB por defecto
   upload-max-bytes: ${APP_UPLOAD_MAX_BYTES:20971520}
   # Clave de administrador enviada por header X-Admin-Key para subir/reemplazar/borrar canciones y borrar comentarios
   admin-api-key: ${ADMIN_API_KEY:changeme}
+  # Supabase Storage (REST, bucket privado + URLs firmadas). El audio se guarda en Supabase,
+  # ya no en disco. El frontend recibe audioUrl como URL firmada directa de Supabase.
+  supabase:
+    url: ${SUPABASE_URL:}
+    bucket: ${SUPABASE_STORAGE_BUCKET:music}
+    # service_role key (NUNCA la anon/public). Solo va en variables del backend (.env), nunca al frontend.
+    service-key: ${SUPABASE_STORAGE_SERVICE_KEY:}
+    # Segundos de validez de la URL firmada que recibe el frontend
+    signed-url-expiry-seconds: ${SUPABASE_SIGNED_URL_EXPIRY:3600}

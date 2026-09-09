@@ -3,23 +3,27 @@ package com.cosmiclatte.dev.cosmiclatteweb.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class FileStorageService {
 
     private static final Logger log = LoggerFactory.getLogger(FileStorageService.class);
+
+    private static final Pattern SIGNED_URL_PATTERN =
+            Pattern.compile("\"signedURL\"\\s*:\\s*\"([^\"]+)\"");
 
     private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
             "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav",
@@ -31,19 +35,120 @@ public class FileStorageService {
             ".mp3", ".wav", ".ogg", ".webm", ".aac", ".flac", ".m4a", ".mp4"
     );
 
-    private final Path root;
+    private final String storageBase;
+    private final String bucket;
+    private final String serviceKey;
     private final long maxBytes;
+    private final long signedUrlExpiry;
+    private final HttpClient http;
 
     public FileStorageService(
-            @Value("${app.upload-dir:uploads}") String uploadDir,
-            @Value("${app.upload-max-bytes:20971520}") long maxBytes) throws IOException {
-        this.root = Paths.get(uploadDir).toAbsolutePath().normalize();
-        Files.createDirectories(this.root);
+            @Value("${app.supabase.url:}") String supabaseUrl,
+            @Value("${app.supabase.bucket:music}") String bucket,
+            @Value("${app.supabase.service-key:}") String serviceKey,
+            @Value("${app.upload-max-bytes:20971520}") long maxBytes,
+            @Value("${app.supabase.signed-url-expiry-seconds:3600}") long signedUrlExpiry) {
+        this.storageBase = trimTrailingSlash(supabaseUrl) + "/storage/v1";
+        this.bucket = bucket;
+        this.serviceKey = serviceKey;
         this.maxBytes = maxBytes;
-        log.info("File storage initialized at {}", this.root);
+        this.signedUrlExpiry = signedUrlExpiry;
+        this.http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).build();
     }
 
     public String store(MultipartFile file) {
+        requireConfigured();
+        validate(file);
+        String filename = UUID.randomUUID() + extensionOf(file.getOriginalFilename());
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(storageBase + "/object/" + bucket + "/" + filename))
+                    .timeout(Duration.ofSeconds(60))
+                    .header("Authorization", "Bearer " + serviceKey)
+                    .header("apikey", serviceKey)
+                    .header("Content-Type", contentTypeOf(file))
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(file.getBytes()))
+                    .build();
+            HttpResponse<String> resp = http.send(request, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() < 200 || resp.statusCode() >= 300) {
+                throw new RuntimeException("Supabase upload falló (" + resp.statusCode() + "): " + resp.body());
+            }
+            return filename;
+        } catch (IOException | InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("No se pudo subir el audio a Supabase: " + e.getMessage(), e);
+        }
+    }
+
+    public void delete(String objectPath) {
+        if (objectPath == null || objectPath.isBlank()) {
+            return;
+        }
+        requireConfigured();
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(storageBase + "/object/" + bucket + "/" + objectPath))
+                    .timeout(Duration.ofSeconds(30))
+                    .header("Authorization", "Bearer " + serviceKey)
+                    .header("apikey", serviceKey)
+                    .DELETE()
+                    .build();
+            HttpResponse<String> resp = http.send(request, HttpResponse.BodyHandlers.ofString());
+            int code = resp.statusCode();
+            if (code >= 200 && code < 300) {
+                return;
+            }
+            if (code == 400 || code == 404 || code == 410) {
+                log.warn("Supabase delete {} -> tratado como ya inexistente ({})", objectPath, code);
+                return;
+            }
+            throw new RuntimeException("Supabase delete falló (" + code + "): " + resp.body());
+        } catch (IOException | InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("No se pudo borrar el audio de Supabase: " + e.getMessage(), e);
+        }
+    }
+
+    public String signedUrl(String objectPath) {
+        requireConfigured();
+        try {
+            String body = "{\"expiresIn\":" + signedUrlExpiry + "}";
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(storageBase + "/object/sign/" + bucket + "/" + objectPath))
+                    .timeout(Duration.ofSeconds(30))
+                    .header("Authorization", "Bearer " + serviceKey)
+                    .header("apikey", serviceKey)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build();
+            HttpResponse<String> resp = http.send(request, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() < 200 || resp.statusCode() >= 300) {
+                throw new RuntimeException("Supabase signed URL falló (" + resp.statusCode() + "): " + resp.body());
+            }
+            String signedUrl = extractSignedUrl(resp.body());
+            return signedUrl.startsWith("http") ? signedUrl : storageBase + signedUrl;
+        } catch (IOException | InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("No se pudo firmar la URL del audio: " + e.getMessage(), e);
+        }
+    }
+
+    private String extractSignedUrl(String body) {
+        Matcher matcher = SIGNED_URL_PATTERN.matcher(body);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        throw new RuntimeException("Supabase no devolvió signedURL: " + body);
+    }
+
+    private void requireConfigured() {
+        if (storageBase.equals("/storage/v1") || serviceKey.isBlank()) {
+            throw new IllegalStateException(
+                    "Supabase Storage no configurado. Define SUPABASE_URL y SUPABASE_STORAGE_SERVICE_KEY en .env.");
+        }
+    }
+
+    private void validate(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("El archivo de audio es requerido.");
         }
@@ -55,60 +160,26 @@ public class FileStorageService {
         if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
             throw new IllegalArgumentException("Tipo de archivo no permitido: " + contentType);
         }
-
-        String original = file.getOriginalFilename();
-        String extension = "";
-        if (original != null) {
-            int dot = original.lastIndexOf('.');
-            if (dot >= 0) {
-                extension = original.substring(dot).toLowerCase();
-            }
-        }
+        String extension = extensionOf(file.getOriginalFilename());
         if (!ALLOWED_EXTENSIONS.contains(extension)) {
             throw new IllegalArgumentException("Extensión de archivo no permitida: " + extension);
         }
-
-        String filename = UUID.randomUUID() + extension;
-        try {
-            Path destination = root.resolve(filename).normalize();
-            if (!destination.startsWith(root)) {
-                throw new IllegalArgumentException("Nombre de archivo inválido.");
-            }
-            Files.copy(file.getInputStream(), destination);
-            return filename;
-        } catch (IOException e) {
-            throw new RuntimeException("No se pudo guardar el archivo: " + e.getMessage(), e);
-        }
     }
 
-    public Resource load(String filename) {
-        Path file = resolveSafe(filename);
-        try {
-            Resource resource = new UrlResource(file.toUri());
-            if (resource.exists() && resource.isReadable()) {
-                return resource;
-            }
-            throw new IllegalArgumentException("Archivo no encontrado: " + filename);
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("Archivo no encontrado: " + filename, e);
+    private String extensionOf(String original) {
+        if (original == null) {
+            return "";
         }
+        int dot = original.lastIndexOf('.');
+        return dot >= 0 ? original.substring(dot).toLowerCase() : "";
     }
 
-    public void delete(String filename) {
-        if (filename == null || filename.isBlank()) {
-            return;
+    private String contentTypeOf(MultipartFile file) {
+        String ct = file.getContentType();
+        if (ct != null && !ct.isBlank()) {
+            return ct;
         }
-        try {
-            Files.deleteIfExists(resolveSafe(filename));
-        } catch (IOException e) {
-            log.warn("No se pudo eliminar el archivo {}: {}", filename, e.getMessage());
-        }
-    }
-
-    public String contentType(String filename) {
-        int dot = filename.lastIndexOf('.');
-        String ext = dot >= 0 ? filename.substring(dot).toLowerCase() : "";
-        return switch (ext) {
+        return switch (extensionOf(file.getOriginalFilename())) {
             case ".mp3" -> "audio/mpeg";
             case ".wav" -> "audio/wav";
             case ".ogg" -> "audio/ogg";
@@ -121,11 +192,7 @@ public class FileStorageService {
         };
     }
 
-    private Path resolveSafe(String filename) {
-        Path file = root.resolve(filename).normalize();
-        if (!file.startsWith(root)) {
-            throw new IllegalArgumentException("Nombre de archivo inválido: " + filename);
-        }
-        return file;
+    private static String trimTrailingSlash(String value) {
+        return value == null ? "" : value.replaceAll("/+$", "");
     }
 }

@@ -1,0 +1,12 @@
+target/
+
+.env
+.env.local
+.env.example
+*.iml
+
+.idea/
+
+.mvn/
+mvnw
+mvnw.cmd
