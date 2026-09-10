@@ -77,7 +77,8 @@ class PlayerEngine {
         const ctx = new Ctx();
         const source = ctx.createMediaElementSource(audio);
         const analyser = ctx.createAnalyser();
-        analyser.fftSize = 128;
+        analyser.fftSize = 4096;
+        analyser.smoothingTimeConstant = 0.75;
         source.connect(analyser);
         analyser.connect(ctx.destination);
         this.ctx = ctx;

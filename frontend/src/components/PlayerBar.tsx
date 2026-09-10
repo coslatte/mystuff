@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef } from "react";
 import { player } from "../services/player";
 import { usePlayer } from "../hooks/usePlayer";
 
-const BARS = 44;
+const BARS = 800;
+const MIN_HZ = 30;
+const MAX_HZ = 16000;
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -31,9 +33,15 @@ export default function PlayerBar() {
       peaks = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
       analyser.getByteFrequencyData(peaks);
     }
+    const sampleRate = analyser ? analyser.context.sampleRate : 44100;
+    const fftSize = analyser ? analyser.fftSize : 4096;
+    const binHz = sampleRate / fftSize;
+    const maxBin = peaks ? peaks.length - 1 : Math.floor(fftSize / 2) - 1;
     const bw = width / BARS;
     for (let i = 0; i < BARS; i++) {
-      const v = peaks ? peaks[Math.floor((i * peaks.length) / Math.max(BARS, 1))] / 255 : 0.12;
+      const freq = MIN_HZ + (i / BARS) * (MAX_HZ - MIN_HZ);
+      const bin = Math.min(maxBin, Math.max(0, Math.round(freq / binHz)));
+      const v = peaks ? peaks[bin] / 255 : 0.12;
       const bh = Math.max(3, v * height);
       const x = i * bw + bw * 0.12;
       cctx.fillStyle = i % 2 === 0 ? "#ff3300" : "#ffd600";
@@ -76,7 +84,7 @@ export default function PlayerBar() {
           className="flex-1 border-2 border-black bg-black p-1"
           aria-label="seek"
         >
-          <canvas ref={canvasRef} width={512} height={88} className="h-16 w-full md:h-20" />
+          <canvas ref={canvasRef} width={1600} height={88} className="h-16 w-full md:h-20" />
         </button>
         <div className="shrink-0 border-2 border-black bg-white px-2 py-1 font-mono text-xs font-bold text-black">
           {formatTime(currentTime)} / {duration > 0 ? formatTime(duration) : "—"}
