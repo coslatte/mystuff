@@ -3,8 +3,11 @@ import NowPlaying from "./NowPlaying";
 ---
 
 <footer class="sticky bottom-0 z-40 border-t-2 border-black bg-white">
-  <div class="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-6 py-3">
-    <NowPlaying client:load transition:persist />
-    <span class="hidden shrink-0 font-mono text-xs text-gray-400 sm:block">cosmiclatte</span>
+  <div class="mx-auto grid w-full max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-3">
+    <div aria-hidden="true"></div>
+    <div class="flex justify-center">
+      <NowPlaying client:load transition:persist />
+    </div>
+    <span class="hidden justify-self-end font-mono text-xs text-gray-400 sm:block">cosmiclatte</span>
   </div>
 </footer>
