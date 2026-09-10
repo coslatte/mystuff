@@ -7,6 +7,7 @@ public record SongResponse(
         String title,
         String artist,
         String duration,
+        String category,
         String audioUrl,
         Instant createdAt,
         Double avgRating,

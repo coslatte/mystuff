@@ -27,14 +27,15 @@ public class FileStorageService {
             Pattern.compile("\"signedURL\"\\s*:\\s*\"([^\"]+)\"");
 
     private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
-            "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav",
-            "audio/ogg", "audio/webm", "audio/aac", "audio/flac",
-            "audio/mp4", "audio/x-m4a", "video/mp4"
+            "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/wave",
+            "audio/flac", "audio/x-flac", "audio/vnd.wave"
     );
 
     private static final List<String> ALLOWED_EXTENSIONS = List.of(
-            ".mp3", ".wav", ".ogg", ".webm", ".aac", ".flac", ".m4a", ".mp4"
+            ".mp3", ".wav", ".flac"
     );
+
+    private static final String ALLOWED_FORMATS_HINT = "Allowed formats are .mp3, .wav and .flac.";
 
     private final String storageBase;
     private final String bucket;
@@ -159,11 +160,11 @@ public class FileStorageService {
         }
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
-            throw new BadRequestException("File type not allowed: " + contentType);
+            throw new BadRequestException("File type not allowed: " + contentType + ". " + ALLOWED_FORMATS_HINT);
         }
         String extension = extensionOf(file.getOriginalFilename());
         if (!ALLOWED_EXTENSIONS.contains(extension)) {
-            throw new BadRequestException("File extension not allowed: " + extension);
+            throw new BadRequestException("File extension not allowed: " + extension + ". " + ALLOWED_FORMATS_HINT);
         }
     }
 
@@ -183,12 +184,7 @@ public class FileStorageService {
         return switch (extensionOf(file.getOriginalFilename())) {
             case ".mp3" -> "audio/mpeg";
             case ".wav" -> "audio/wav";
-            case ".ogg" -> "audio/ogg";
-            case ".webm" -> "audio/webm";
-            case ".aac" -> "audio/aac";
             case ".flac" -> "audio/flac";
-            case ".m4a" -> "audio/mp4";
-            case ".mp4" -> "video/mp4";
             default -> "application/octet-stream";
         };
     }

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./brutal-button.css";
 
 @theme {
   --color-brut-bg: #f2f2f2;

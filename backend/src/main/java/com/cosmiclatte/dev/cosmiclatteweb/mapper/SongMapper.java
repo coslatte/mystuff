@@ -21,6 +21,7 @@ public interface SongMapper {
                 response.title(),
                 response.artist(),
                 response.duration(),
+                response.category(),
                 audioUrl,
                 response.createdAt(),
                 avgRating,

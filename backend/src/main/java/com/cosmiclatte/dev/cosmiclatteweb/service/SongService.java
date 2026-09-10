@@ -21,10 +21,14 @@ public class SongService {
     private final SongRepository songRepository;
     private final RatingRepository ratingRepository;
     private final FileStorageService fileStorage;
+    private final AudioMetadataService audioMetadata;
     private final SongMapper songMapper;
 
-    public List<SongResponse> listSongs() {
-        return songRepository.findAll().stream()
+    public List<SongResponse> listSongs(String category) {
+        List<Song> songs = (category == null || category.isBlank())
+                ? songRepository.findAllByOrderByCreatedAtDesc()
+                : songRepository.findByCategoryOrderByCreatedAtDesc(category.trim().toLowerCase());
+        return songs.stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -34,18 +38,21 @@ public class SongService {
     }
 
     @Transactional
-    public SongResponse createSong(String title, String artist, String duration, MultipartFile file) {
+    public SongResponse createSong(String title, String artist, String category, MultipartFile file) {
         if (title == null || title.isBlank()) {
             throw new BadRequestException("Title is required.");
         }
         if (artist == null || artist.isBlank()) {
             throw new BadRequestException("Artist is required.");
         }
+        String normalizedCategory = normalizeCategory(category);
+        String duration = audioMetadata.readDuration(file);
         String objectPath = fileStorage.store(file);
         Song song = Song.builder()
                 .title(title.trim())
                 .artist(artist.trim())
-                .duration(duration != null ? duration.trim() : null)
+                .category(normalizedCategory)
+                .duration(duration)
                 .audioUrl(objectPath)
                 .build();
         return toResponse(songRepository.save(song));
@@ -55,11 +62,13 @@ public class SongService {
     public SongResponse replaceAudio(Long id, MultipartFile file) {
         Song song = findById(id);
         String oldPath = song.getAudioUrl();
+        String duration = audioMetadata.readDuration(file);
         String newPath = fileStorage.store(file);
         if (oldPath != null && !oldPath.isBlank()) {
             fileStorage.delete(oldPath);
         }
         song.setAudioUrl(newPath);
+        song.setDuration(duration);
         return toResponse(songRepository.save(song));
     }
 
@@ -76,6 +85,17 @@ public class SongService {
     private Song findById(Long id) {
         return songRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Song not found: " + id));
+    }
+
+    private String normalizeCategory(String category) {
+        if (category == null || category.isBlank()) {
+            return "official";
+        }
+        String value = category.trim().toLowerCase();
+        if (!value.equals("wip") && !value.equals("official")) {
+            throw new BadRequestException("Category must be 'wip' or 'official'.");
+        }
+        return value;
     }
 
     private SongResponse toResponse(Song song) {

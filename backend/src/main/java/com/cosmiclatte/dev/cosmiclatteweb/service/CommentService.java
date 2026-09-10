@@ -13,11 +13,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class CommentService {
+
+    private static final Duration EDIT_WINDOW = Duration.ofMinutes(5);
 
     private final CommentRepository commentRepository;
     private final SongRepository songRepository;
@@ -49,6 +53,10 @@ public class CommentService {
         boolean isOwner = editToken != null && editToken.equals(comment.getEditToken());
         if (!isAdmin && !isOwner) {
             throw new ForbiddenException("You don't have permission to edit this comment.");
+        }
+        if (!isAdmin && comment.getCreatedAt() != null
+                && Duration.between(comment.getCreatedAt(), Instant.now()).compareTo(EDIT_WINDOW) > 0) {
+            throw new ForbiddenException("The 5 minute edit window for this comment has expired.");
         }
         comment.setContent(content.trim());
         return commentMapper.toResponse(commentRepository.save(comment));

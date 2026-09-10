@@ -34,7 +34,7 @@ export default function CommentForm({ songId, onCreated }: Props) {
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder="leave your opinion"
+        placeholder="leave comment"
         required
         rows={3}
         className="border-2 border-black bg-white px-3 py-2 font-mono text-sm focus:outline-none"
@@ -44,7 +44,7 @@ export default function CommentForm({ songId, onCreated }: Props) {
         disabled={loading}
         className="brut-btn bg-brut-yellow font-mono text-sm disabled:opacity-50"
       >
-        {loading ? "sending..." : "publish comment"}
+        {loading ? "sending..." : "publish"}
       </button>
     </form>
   );

@@ -1,0 +1,72 @@
+/*
+ * Brutalist "up" button.
+ * Black button that reveals a yellow fill sliding up from the bottom on
+ * hover/focus, while the whole button lifts slightly. Mirrors the motion
+ * language used by `.soc` social buttons.
+ */
+.brut-up {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 2px solid #000;
+  background: #000;
+  color: #fff;
+  padding: 0.5rem 0.9rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.75rem;
+  line-height: 1;
+  text-decoration: none;
+  overflow: hidden;
+  transition:
+    color 0.3s ease,
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.brut-up::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: #ffd600;
+  transform: translateY(101%);
+  transition: transform 0.35s cubic-bezier(0.7, 0, 0.3, 1);
+}
+
+.brut-up > * {
+  position: relative;
+  z-index: 1;
+}
+
+.brut-up:hover,
+.brut-up:focus-visible {
+  color: #000;
+  outline: none;
+}
+
+.brut-up:hover::before,
+.brut-up:focus-visible::before {
+  transform: translateY(0);
+}
+
+/* Visible on black surfaces. */
+.brut-up--on-dark {
+  border-color: #fff;
+}
+
+/* Right edge shows a white line to visually detach the button. */
+.brut-up--seam {
+  border-right-color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brut-up,
+  .brut-up::before {
+    transition: none;
+  }
+  .brut-up:hover,
+  .brut-up:focus-visible {
+    transform: none;
+  }
+}

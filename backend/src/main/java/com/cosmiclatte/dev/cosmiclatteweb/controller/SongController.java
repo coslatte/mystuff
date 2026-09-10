@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,8 +29,9 @@ public class SongController {
     private final AdminAuth adminAuth;
 
     @GetMapping
-    public ResponseEntity<ResponseFormat<?>> list() {
-        return ResponseEntity.ok(ResponseFormat.success(songService.listSongs()));
+    public ResponseEntity<ResponseFormat<?>> list(
+            @RequestParam(value = "category", required = false) String category) {
+        return ResponseEntity.ok(ResponseFormat.success(songService.listSongs(category)));
     }
 
     @GetMapping(ApiPaths.SONG_ID)
@@ -41,12 +43,12 @@ public class SongController {
     public ResponseEntity<ResponseFormat<?>> create(
             @RequestPart("title") String title,
             @RequestPart("artist") String artist,
-            @RequestPart(value = "duration", required = false) String duration,
+            @RequestPart(value = "category", required = false) String category,
             @RequestPart("file") MultipartFile file,
             @RequestHeader(value = "X-Admin-Key", required = false) String adminKey) {
         requireAdmin(adminKey);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ResponseFormat.success(songService.createSong(title, artist, duration, file)));
+                .body(ResponseFormat.success(songService.createSong(title, artist, category, file)));
     }
 
     @PutMapping(value = ApiPaths.SONG_AUDIO, consumes = "multipart/form-data")

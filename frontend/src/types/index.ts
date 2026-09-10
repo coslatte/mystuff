@@ -2,6 +2,7 @@ export type Song = {
   id: number;
   title: string;
   artist: string;
+  category?: "wip" | "official";
   duration?: string;
   audioUrl?: string;
   avgRating?: number;

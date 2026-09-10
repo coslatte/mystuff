@@ -27,11 +27,11 @@ public class SoundCloudService {
 
     public List<SoundCloudAlbumDto> listAlbums() {
         if (clientId == null || clientId.isBlank()) {
-            return List.of();
+            return staticAlbums();
         }
         Long userId = resolveUserId();
         if (userId == null) {
-            return List.of();
+            return staticAlbums();
         }
         try {
             SoundCloudPlaylistsResponse response = restClient.get()
@@ -39,10 +39,43 @@ public class SoundCloudService {
                             userId, clientId)
                     .retrieve()
                     .body(SoundCloudPlaylistsResponse.class);
-            return mapAlbums(response);
+            List<SoundCloudAlbumDto> albums = mapAlbums(response);
+            return albums.isEmpty() ? staticAlbums() : albums;
         } catch (Exception ignored) {
-            return List.of();
+            return staticAlbums();
         }
+    }
+
+    /**
+     * Albums published on SoundCloud, used while the SoundCloud API is not configured.
+     */
+    private List<SoundCloudAlbumDto> staticAlbums() {
+        return List.of(
+                new SoundCloudAlbumDto(
+                        "amb-album",
+                        "amb",
+                        null,
+                        null,
+                        null,
+                        "album",
+                        "https://soundcloud.com/cosmiclattemusic/sets/amb-album"),
+                new SoundCloudAlbumDto(
+                        "en-futuro-ep",
+                        "en futuro",
+                        null,
+                        null,
+                        null,
+                        "ep",
+                        "https://soundcloud.com/cosmiclattemusic/sets/en-futuro-ep"),
+                new SoundCloudAlbumDto(
+                        "discography",
+                        "discography",
+                        null,
+                        null,
+                        null,
+                        "compilation",
+                        "https://soundcloud.com/cosmiclattemusic/sets/discography")
+        );
     }
 
     private Long resolveUserId() {
