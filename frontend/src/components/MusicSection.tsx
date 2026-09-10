@@ -85,9 +85,9 @@ export default function MusicSection() {
     }
   }
 
-  if (loading) return <p className="border-black bg-white p-6 font-mono text-sm">loading tracks...</p>;
-  if (error) return <p className="border-black bg-brut-red p-6 font-mono text-sm text-white">{error}</p>;
-  if (!current) return <p className="border-black bg-white p-6 font-mono text-sm">no tracks available.</p>;
+  if (loading) return <p className="border-b-2 border-black bg-white p-6 font-mono text-sm md:p-8">loading tracks...</p>;
+  if (error) return <p className="border-b-2 border-black bg-brut-red p-6 font-mono text-sm text-white md:p-8">{error}</p>;
+  if (!current) return <p className="border-b-2 border-black bg-white p-6 font-mono text-sm md:p-8">no tracks available.</p>;
 
   return (
     <div className="border-b-2 border-black">

@@ -29,7 +29,7 @@ function readLocalEnvToken(): string | undefined {
       }
     }
   } catch {
-    /* .env no disponible (p.ej. produccion): se ignora */
+    /* .env not available (e.g. production): ignored */
   }
 
   cachedLocalToken = undefined;

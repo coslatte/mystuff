@@ -3,7 +3,7 @@ const { pathname } = Astro.url;
 ---
 
 <header class="border-b-2 border-black bg-white">
-  <div class="mx-auto flex max-w-7xl items-stretch justify-between">
+  <div class="mx-auto flex w-full max-w-7xl items-stretch justify-between">
     <a href="/" class="flex items-center border-r-2 border-black bg-black px-6 py-4 font-display text-2xl font-black tracking-tighter text-white">
       mystuff
     </a>
@@ -12,17 +12,17 @@ const { pathname } = Astro.url;
       <a
         href="/"
         class:list={[
-          "flex items-center border-r-2 border-l-2 border-black px-6 font-bold",
-          { "bg-brut-yellow": pathname === "/" },
+          "flex items-center border-r-2 border-l-2 border-black px-6 font-bold hover:bg-brut-black hover:text-white",
+          { "bg-brut-black text-white": pathname === "/" },
         ]}
       >
-        repos
+        coding
       </a>
       <a
         href="/music"
         class:list={[
           "flex items-center border-r-2 border-black px-6 font-bold hover:bg-brut-red hover:text-white",
-          { "bg-brut-yellow": pathname === "/music" },
+          { "bg-brut-black text-white hover:bg-brut-black hover:text-white": pathname === "/music" },
         ]}
       >
         music

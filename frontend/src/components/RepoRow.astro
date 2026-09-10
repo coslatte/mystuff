@@ -13,29 +13,32 @@ interface Props {
 const { index, title, category, description, tags, imageSrc, demoUrl, githubUrl } = Astro.props;
 ---
 
-<div class="grid grid-cols-1 border-b-2 border-black bg-white hover:bg-neutral-50 md:grid-cols-12">
-  <div class="flex items-center justify-center border-b-2 border-black bg-neutral-100 p-4 md:col-span-2 md:border-b-0 md:border-r-2">
-    <span class="font-display text-6xl font-black tracking-tighter">{index}</span>
+<div class="grid grid-cols-1 border-b-2 border-black bg-white hover:bg-neutral-50 md:grid-cols-[15%_60%_25%]">
+  <!-- index -->
+  <div class="flex min-w-0 items-center justify-center overflow-hidden border-b-2 border-black bg-neutral-100 px-1 py-1.5 md:border-b-0 md:border-r-2">
+    <span class="truncate font-display text-5xl font-black leading-none tracking-tighter">{index}</span>
   </div>
 
-  <div class="flex flex-col justify-between border-b-2 border-black p-4 md:col-span-6 md:border-b-0 md:border-r-2">
-    <div>
-      <span class="mb-2 inline-block bg-black px-2 py-0.5 font-mono text-xs font-bold text-white">
+  <!-- metadata -->
+  <div class="flex min-w-0 flex-col justify-between overflow-hidden border-b-2 border-black px-2.5 py-1.5 md:border-b-0 md:border-r-2">
+    <div class="min-w-0 overflow-hidden">
+      <span class="mb-1 inline-block max-w-full truncate bg-black px-1.5 py-0.5 font-mono text-xs font-bold leading-none tracking-tight text-white">
         {category}
       </span>
-      <h3 class="mb-2 font-display text-3xl font-bold">{title}</h3>
-      <p class="mb-3 font-mono text-sm text-gray-700">{description}</p>
+      <h3 class="mb-1 truncate font-display text-2xl font-black leading-none tracking-tighter">{title}</h3>
+      <p class="mb-1 line-clamp-2 font-mono text-sm leading-tight tracking-tight text-gray-700">{description}</p>
     </div>
 
-    <div class="flex flex-wrap gap-2">
+    <div class="flex flex-wrap gap-1 overflow-hidden">
       {tags.map((tag) => (
-        <span class="border border-black bg-neutral-100 px-2 py-0.5 font-mono text-xs">#{tag}</span>
+        <span class="max-w-full truncate border border-black bg-neutral-100 px-1.5 py-0.5 font-mono text-xs leading-none tracking-tight">#{tag}</span>
       ))}
     </div>
   </div>
 
-  <div class="flex flex-col justify-between bg-neutral-200 p-3 md:col-span-4">
-    <div class="relative mb-3 aspect-video overflow-hidden border-2 border-black bg-black">
+  <!-- preview -->
+  <div class="flex min-w-0 flex-col justify-between overflow-hidden bg-neutral-200 p-1.5">
+    <div class="relative mb-1 aspect-[2/1] overflow-hidden border-2 border-black bg-black">
       {imageSrc ? (
         <>
           <img src={imageSrc} alt={title} class="h-full w-full object-cover contrast-90" />
@@ -59,9 +62,9 @@ const { index, title, category, description, tags, imageSrc, demoUrl, githubUrl 
       )}
     </div>
 
-    <div class="grid grid-cols-1 gap-2">
+    <div class="grid grid-cols-1 gap-1">
       {demoUrl && (
-        <a href={demoUrl} target="_blank" rel="noopener noreferrer" class="brut-btn text-center text-xs">
+        <a href={demoUrl} target="_blank" rel="noopener noreferrer" class="brut-btn !py-1 text-center text-xs leading-none">
           demo ↗
         </a>
       )}
@@ -70,7 +73,7 @@ const { index, title, category, description, tags, imageSrc, demoUrl, githubUrl 
           href={githubUrl}
           target="_blank"
           rel="noopener noreferrer"
-          class="border-2 border-black bg-black py-2 text-center text-xs font-bold text-white transition-none hover:bg-brut-red"
+          class="border-2 border-black bg-black py-1 text-center text-xs font-bold leading-none text-white transition-none hover:bg-brut-red"
         >
           code
         </a>

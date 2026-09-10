@@ -5,12 +5,26 @@
   --color-brut-black: #000000;
   --color-brut-yellow: #ffd600;
   --color-brut-red: #ff3300;
+  --color-brut-violet: #9900ff;
+  --color-brut-blue: #0055ff;
+  --color-brut-green: #00cc33;
 
   --font-display: "Space Grotesk", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 }
 
 @layer base {
+  html {
+    scrollbar-gutter: stable;
+  }
+
+  /* Fallback for browsers without scrollbar-gutter support */
+  @supports not (scrollbar-gutter: stable) {
+    html {
+      overflow-y: scroll;
+    }
+  }
+
   body {
     background-color: var(--color-brut-bg);
     color: var(--color-brut-black);
@@ -18,7 +32,12 @@
     text-transform: lowercase;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-display);
     text-transform: lowercase;
   }
