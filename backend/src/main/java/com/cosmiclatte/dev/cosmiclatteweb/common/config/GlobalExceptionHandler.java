@@ -19,38 +19,41 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    public static final String ERROR_ID_HEADER = "X-Error-Id";
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ResponseFormat<?>> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, Object> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors()
                 .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ResponseFormat.error("Validation error", errors));
+        return buildError(HttpStatus.BAD_REQUEST,
+                "Some fields are invalid. Please review them and try again.", errors, ex);
     }
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ResponseFormat<?>> handleNotFound(NotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ResponseFormat.error(ex.getMessage(), null));
+        return buildError(HttpStatus.NOT_FOUND, ex.getMessage(), null, ex);
     }
 
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ResponseFormat<?>> handleForbidden(ForbiddenException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ResponseFormat.error(ex.getMessage(), null));
+        return buildError(HttpStatus.FORBIDDEN, ex.getMessage(), null, ex);
     }
 
     @ExceptionHandler({BadRequestException.class, IllegalArgumentException.class})
     public ResponseEntity<ResponseFormat<?>> handleBadRequest(RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ResponseFormat.error(ex.getMessage(), null));
+        return buildError(HttpStatus.BAD_REQUEST, ex.getMessage(), null, ex);
     }
 
     @ExceptionHandler({
@@ -60,39 +63,59 @@ public class GlobalExceptionHandler {
             MissingServletRequestPartException.class
     })
     public ResponseEntity<ResponseFormat<?>> handleMalformedRequest(Exception ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ResponseFormat.error("Malformed request.", null));
+        return buildError(HttpStatus.BAD_REQUEST, "Malformed request.", null, ex);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ResponseFormat<?>> handleNoResource(NoResourceFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ResponseFormat.error("Resource not found.", null));
+        return buildError(HttpStatus.NOT_FOUND, "Resource not found.", null, ex);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ResponseFormat<?>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
-        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
-                .body(ResponseFormat.error("Method not allowed.", null));
+        return buildError(HttpStatus.METHOD_NOT_ALLOWED, "Method not allowed.", null, ex);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ResponseFormat<?>> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ResponseFormat.error("File exceeds the maximum allowed size.", null));
+        return buildError(HttpStatus.BAD_REQUEST, "File exceeds the maximum allowed size.", null, ex);
     }
 
     @ExceptionHandler(MultipartException.class)
     public ResponseEntity<ResponseFormat<?>> handleMultipart(MultipartException ex) {
-        log.error("Multipart error", ex);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ResponseFormat.error("Invalid file request.", null));
+        return buildError(HttpStatus.BAD_REQUEST, "Invalid file request.", null, ex);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResponseFormat<?>> handleGeneric(Exception ex) {
-        log.error("Unhandled error", ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ResponseFormat.error("Unexpected error.", null));
+        return buildError(HttpStatus.INTERNAL_SERVER_ERROR,
+                "An unexpected error occurred. Please try again later.", null, ex);
+    }
+
+    private ResponseEntity<ResponseFormat<?>> buildError(
+            HttpStatus status, String message, Object errors, Exception ex) {
+        String errorId = generateErrorId();
+
+        if (status.is5xxServerError()) {
+            log.error("Unhandled error [{}]: {}", errorId, ex.getMessage(), ex);
+        } else {
+            log.warn("Request failed [{}] {} - {}", errorId, status.value(), ex.getMessage());
+        }
+
+        return ResponseEntity.status(status)
+                .header(ERROR_ID_HEADER, errorId)
+                .body(ResponseFormat.error(message, errors, metaOf(errorId, status)));
+    }
+
+    private Map<String, Object> metaOf(String errorId, HttpStatus status) {
+        Map<String, Object> meta = new LinkedHashMap<>();
+        meta.put("errorId", errorId);
+        meta.put("status", status.value());
+        meta.put("timestamp", Instant.now().toString());
+        return meta;
+    }
+
+    private String generateErrorId() {
+        return "ERR-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase(Locale.ROOT);
     }
 }

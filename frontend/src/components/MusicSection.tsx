@@ -5,6 +5,7 @@ import AudioPlayer, { type AudioPlayerHandle } from "./AudioPlayer";
 import SongCard from "./SongCard";
 import StarRating from "./StarRating";
 import CommentForm from "./CommentForm";
+import ErrorNotice from "./ErrorNotice";
 
 type Tab = "tracks" | "wip" | "albums";
 
@@ -19,21 +20,29 @@ export default function MusicSection() {
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<unknown>(null);
   const [tab, setTab] = useState<Tab>("tracks");
   const [isPlaying, setIsPlaying] = useState(false);
 
   const [albums, setAlbums] = useState<SoundCloudAlbum[]>([]);
   const [albumsLoading, setAlbumsLoading] = useState(false);
-  const [albumsError, setAlbumsError] = useState("");
+  const [albumsError, setAlbumsError] = useState<unknown>(null);
 
   const playerRef = useRef<AudioPlayerHandle>(null);
   const current = songs.find((song) => song.id === currentId) ?? null;
 
   const loadSongs = useCallback(async () => {
-    const data = await api.getSongs();
-    setSongs(data);
-    setCurrentId((prev) => prev ?? data[0]?.id ?? null);
+    setError(null);
+    setLoading(true);
+    try {
+      const data = await api.getSongs();
+      setSongs(data);
+      setCurrentId((prev) => prev ?? data[0]?.id ?? null);
+    } catch (e) {
+      setError(e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const loadComments = useCallback(async (songId: number) => {
@@ -42,24 +51,22 @@ export default function MusicSection() {
 
   const loadAlbums = useCallback(async () => {
     setAlbumsLoading(true);
-    setAlbumsError("");
+    setAlbumsError(null);
     try {
       setAlbums(await api.getSoundCloudAlbums());
     } catch (e) {
-      setAlbumsError((e as Error).message);
+      setAlbumsError(e);
     } finally {
       setAlbumsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadSongs()
-      .catch((e) => setError((e as Error).message))
-      .finally(() => setLoading(false));
+    loadSongs();
   }, [loadSongs]);
 
   useEffect(() => {
-    if (currentId != null) loadComments(currentId).catch((e) => setError((e as Error).message));
+    if (currentId != null) loadComments(currentId).catch((e) => setError(e));
   }, [currentId, loadComments]);
 
   useEffect(() => {
@@ -72,7 +79,7 @@ export default function MusicSection() {
       await api.postRating(current.id, { stars });
       await loadSongs();
     } catch (e) {
-      setError((e as Error).message);
+      setError(e);
     }
   }
 
@@ -86,7 +93,7 @@ export default function MusicSection() {
   }
 
   if (loading) return <p className="border-b-2 border-black bg-white p-6 font-mono text-sm md:p-8">loading tracks...</p>;
-  if (error) return <p className="border-b-2 border-black bg-brut-red p-6 font-mono text-sm text-white md:p-8">{error}</p>;
+  if (error) return <ErrorNotice error={error} onRetry={loadSongs} className="border-b-2" />;
   if (!current) return <p className="border-b-2 border-black bg-white p-6 font-mono text-sm md:p-8">no tracks available.</p>;
 
   return (
@@ -193,7 +200,7 @@ export default function MusicSection() {
           <div>
             <h3 className="mb-4 font-display text-xl font-bold">albums & compilations</h3>
             {albumsLoading && <p className="font-mono text-sm">loading albums...</p>}
-            {albumsError && <p className="font-mono text-sm text-brut-red">{albumsError}</p>}
+            {albumsError != null && <ErrorNotice error={albumsError} onRetry={loadAlbums} className="mt-2" />}
             {!albumsLoading && !albumsError && albums.length === 0 && (
               <p className="font-mono text-sm text-gray-600">no albums connected yet. set up soundcloud and they'll appear here.</p>
             )}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../services/api";
 import type { Song } from "../types";
+import ErrorNotice from "./ErrorNotice";
 
 const ADMIN_KEY_STORAGE = "clm_admin_key";
 
@@ -12,6 +13,7 @@ export default function AdminUpload() {
   const [file, setFile] = useState<File | null>(null);
   const [songs, setSongs] = useState<Song[]>([]);
   const [message, setMessage] = useState("");
+  const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,6 +48,7 @@ export default function AdminUpload() {
 
     setBusy(true);
     setMessage("");
+    setError(null);
     try {
       const form = new FormData();
       form.append("title", title);
@@ -61,7 +64,7 @@ export default function AdminUpload() {
       setMessage("✓ Song uploaded.");
       await loadSongs();
     } catch (err) {
-      setMessage("✗ " + (err as Error).message);
+      setError(err);
     } finally {
       setBusy(false);
     }
@@ -73,6 +76,7 @@ export default function AdminUpload() {
     if (!adminKey) return setMessage("Admin key is required.");
     setBusy(true);
     setMessage("");
+    setError(null);
     try {
       const form = new FormData();
       form.append("file", replacement);
@@ -80,7 +84,7 @@ export default function AdminUpload() {
       setMessage(`✓ Audio for "${song.title}" replaced.`);
       await loadSongs();
     } catch (err) {
-      setMessage("✗ " + (err as Error).message);
+      setError(err);
     } finally {
       setBusy(false);
     }
@@ -91,12 +95,13 @@ export default function AdminUpload() {
     if (!confirm(`Delete "${song.title}"?`)) return;
     setBusy(true);
     setMessage("");
+    setError(null);
     try {
       await api.deleteSong(song.id, adminKey);
       setMessage(`✓ "${song.title}" deleted.`);
       await loadSongs();
     } catch (err) {
-      setMessage("✗ " + (err as Error).message);
+      setError(err);
     } finally {
       setBusy(false);
     }
@@ -158,6 +163,8 @@ export default function AdminUpload() {
             {message}
           </p>
         )}
+
+        {error != null && <ErrorNotice error={error} className="mt-4" />}
       </div>
 
       <div className="border-2 border-black bg-neutral-100 p-6">

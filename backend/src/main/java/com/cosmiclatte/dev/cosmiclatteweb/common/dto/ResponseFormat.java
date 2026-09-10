@@ -21,4 +21,8 @@ public record ResponseFormat<T>(
     public static <T> ResponseFormat<T> error(String message, Object errors) {
         return new ResponseFormat<>(false, message, null, null, errors);
     }
+
+    public static <T> ResponseFormat<T> error(String message, Object errors, Map<String, Object> meta) {
+        return new ResponseFormat<>(false, message, null, meta, errors);
+    }
 }

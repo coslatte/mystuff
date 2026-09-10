@@ -2,12 +2,33 @@ import type { Comment, Rating, Song, SoundCloudAlbum } from "../types";
 
 const API_URL = import.meta.env.PUBLIC_API_URL ?? "http://localhost:8080";
 
+export type ApiMeta = {
+  errorId?: string;
+  status?: number;
+  timestamp?: string;
+};
+
 type ApiResponse<T> = {
   success: boolean;
   message?: string | null;
   data?: T;
+  meta?: ApiMeta | null;
   errors?: unknown;
 };
+
+export class ApiError extends Error {
+  readonly status: number;
+  readonly errorId?: string;
+  readonly details?: unknown;
+
+  constructor(message: string, status: number, errorId?: string, details?: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.errorId = errorId;
+    this.details = details;
+  }
+}
 
 async function request<T>(
   path: string,
@@ -28,7 +49,13 @@ async function request<T>(
   let url = `${API_URL}${path}`;
   if (editToken) url += `${url.includes("?") ? "&" : "?"}editToken=${encodeURIComponent(editToken)}`;
 
-  const res = await fetch(url, finalInit);
+  let res: Response;
+  try {
+    res = await fetch(url, finalInit);
+  } catch (cause) {
+    throw new ApiError("Network request failed.", 0, undefined, cause);
+  }
+
   if (res.status === 204) return undefined as T;
 
   const text = await res.text();
@@ -40,7 +67,13 @@ async function request<T>(
   }
 
   if (!res.ok) {
-    throw new Error(payload?.message || text || `Request failed: ${res.status}`);
+    const errorId = payload?.meta?.errorId ?? res.headers.get("X-Error-Id") ?? undefined;
+    throw new ApiError(
+      payload?.message || `Request failed: ${res.status}`,
+      res.status,
+      errorId,
+      payload?.errors
+    );
   }
   return payload?.data as T;
 }
