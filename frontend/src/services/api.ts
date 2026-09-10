@@ -88,11 +88,14 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  postRating: (songId: number, body: { stars: number }) =>
+  postRating: (songId: number, body: { stars: number; visitorId: string }) =>
     request<Rating>(`/api/songs/${songId}/ratings`, {
       method: "POST",
       body: JSON.stringify(body),
     }),
+
+  getMyRating: (songId: number, visitorId: string) =>
+    request<number | null>(`/api/songs/${songId}/ratings/mine?visitorId=${encodeURIComponent(visitorId)}`),
 
   getSoundCloudAlbums: () => request<SoundCloudAlbum[]>("/api/albums/soundcloud"),
 

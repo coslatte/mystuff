@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../services/api";
+import { getVisitorId } from "../lib/visitor";
 import type { Song, SoundCloudAlbum } from "../types";
 import { usePlayer } from "../hooks/usePlayer";
 import PlayerBar from "./PlayerBar";
@@ -8,6 +9,7 @@ import ErrorNotice from "./ErrorNotice";
 
 export default function MusicSection() {
   const [songs, setSongs] = useState<Song[]>([]);
+  const [userRatings, setUserRatings] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
 
@@ -21,7 +23,23 @@ export default function MusicSection() {
     setError(null);
     setLoading(true);
     try {
-      setSongs(await api.getSongs());
+      const data = await api.getSongs();
+      setSongs(data);
+      const visitor = getVisitorId();
+      const mine = await Promise.all(
+        data.map(async (s): Promise<[number, number | null]> => {
+          try {
+            return [s.id, await api.getMyRating(s.id, visitor)];
+          } catch {
+            return [s.id, null];
+          }
+        })
+      );
+      const ratings: Record<number, number> = {};
+      for (const [id, stars] of mine) {
+        if (stars != null) ratings[id] = stars;
+      }
+      setUserRatings(ratings);
     } catch (e) {
       setError(e);
     } finally {
@@ -47,28 +65,42 @@ export default function MusicSection() {
   }, [loadSongs, loadAlbums]);
 
   const handleRate = useCallback(async (song: Song, stars: number) => {
-    // optimistic update first
+    const visitor = getVisitorId();
+    const previous = userRatings[song.id];
+    const isFirstVote = previous === undefined;
+
+    // optimistic update: a visitor only has one vote, so the first vote adds
+    // a count and any later vote replaces the previous stars (no inflation).
     setSongs((prev) =>
       prev.map((s) => {
         if (s.id !== song.id) return s;
         const total = s.totalVotes ?? 0;
         const avg = s.avgRating ?? 0;
-        const totalVotes = total + 1;
-        const avgRating = (avg * total + stars) / totalVotes;
+        const totalVotes = isFirstVote ? total + 1 : total;
+        const avgRating = isFirstVote
+          ? (avg * total + stars) / totalVotes
+          : avg - (previous ?? 0) / total + stars / total;
         return { ...s, avgRating, totalVotes };
       })
     );
+    setUserRatings((prev) => ({ ...prev, [song.id]: stars }));
 
     try {
-      await api.postRating(song.id, { stars });
+      await api.postRating(song.id, { stars, visitorId: visitor });
       // reconcile with the authoritative value from the server
       const fresh = await api.getSong(song.id);
       setSongs((prev) => prev.map((s) => (s.id === fresh.id ? fresh : s)));
     } catch (e) {
       setSongs((prev) => prev.map((s) => (s.id === song.id ? song : s)));
+      setUserRatings((prev) => {
+        const next = { ...prev };
+        if (isFirstVote) delete next[song.id];
+        else next[song.id] = previous as number;
+        return next;
+      });
       setError(e);
     }
-  }, []);
+  }, [userRatings]);
 
   const singles = songs.filter((song) => song.category !== "wip");
   const wip = songs.filter((song) => song.category === "wip");
@@ -104,7 +136,12 @@ export default function MusicSection() {
           </h3>
           <div className="flex flex-col gap-2 bg-neutral-100 p-3">
             {singles.map((song) => (
-              <TrackBlock key={song.id} song={song} onRate={handleRate} />
+              <TrackBlock
+                key={song.id}
+                song={song}
+                userRating={userRatings[song.id]}
+                onRate={handleRate}
+              />
             ))}
             {!singles.length && (
               <p className="p-3 font-mono text-xs text-gray-500">no singles yet.</p>
@@ -160,7 +197,12 @@ export default function MusicSection() {
           </h3>
           <div className="flex flex-col gap-2 bg-neutral-100 p-3">
             {wip.map((song) => (
-              <TrackBlock key={song.id} song={song} onRate={handleRate} />
+              <TrackBlock
+                key={song.id}
+                song={song}
+                userRating={userRatings[song.id]}
+                onRate={handleRate}
+              />
             ))}
             {!wip.length && <p className="p-3 font-mono text-xs text-gray-500">no wip tracks yet.</p>}
           </div>

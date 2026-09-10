@@ -7,10 +7,11 @@ import CommentThread from "./CommentThread";
 
 type Props = {
   song: Song;
+  userRating?: number;
   onRate: (song: Song, stars: number) => void;
 };
 
-export default function TrackBlock({ song, onRate }: Props) {
+export default function TrackBlock({ song, userRating, onRate }: Props) {
   const { song: currentSong, isPlaying } = usePlayer();
   const [showComments, setShowComments] = useState(true);
 
@@ -62,7 +63,7 @@ export default function TrackBlock({ song, onRate }: Props) {
 
       <div className="px-3 pb-3">
         <StarRating
-          value={song.totalVotes ? Math.round(song.avgRating ?? 0) : 0}
+          value={userRating ?? 0}
           onRate={(stars) => onRate(song, stars)}
         />
         {showComments && <CommentThread songId={song.id} />}

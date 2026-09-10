@@ -29,18 +29,18 @@ public class SongController {
     private final AdminAuth adminAuth;
 
     @GetMapping
-    public ResponseEntity<ResponseFormat<?>> list(
+    public ResponseEntity<?> list(
             @RequestParam(value = "category", required = false) String category) {
         return ResponseEntity.ok(ResponseFormat.success(songService.listSongs(category)));
     }
 
     @GetMapping(ApiPaths.SONG_ID)
-    public ResponseEntity<ResponseFormat<?>> get(@PathVariable Long id) {
+    public ResponseEntity<?> get(@PathVariable Long id) {
         return ResponseEntity.ok(ResponseFormat.success(songService.getSong(id)));
     }
 
     @PostMapping(consumes = "multipart/form-data")
-    public ResponseEntity<ResponseFormat<?>> create(
+    public ResponseEntity<?> create(
             @RequestPart("title") String title,
             @RequestPart("artist") String artist,
             @RequestPart(value = "category", required = false) String category,
@@ -52,7 +52,7 @@ public class SongController {
     }
 
     @PutMapping(value = ApiPaths.SONG_AUDIO, consumes = "multipart/form-data")
-    public ResponseEntity<ResponseFormat<?>> replaceAudio(
+    public ResponseEntity<?> replaceAudio(
             @PathVariable Long id,
             @RequestPart("file") MultipartFile file,
             @RequestHeader(value = "X-Admin-Key", required = false) String adminKey) {

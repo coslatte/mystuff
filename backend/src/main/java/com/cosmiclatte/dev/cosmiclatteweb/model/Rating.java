@@ -29,6 +29,12 @@ public class Rating {
     @Column(nullable = false)
     private int stars;
 
+    @Column(name = "visitor_id")
+    private String visitorId;
+
+    @Column(name = "ip_hash")
+    private String ipHash;
+
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 

@@ -13,6 +13,10 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
 
     List<Rating> findBySongIdOrderByCreatedAtAsc(Long songId);
 
+    Rating findBySongIdAndVisitorId(Long songId, String visitorId);
+
+    Rating findBySongIdAndIpHash(Long songId, String ipHash);
+
     long countBySongId(Long songId);
 
     @Query("select coalesce(avg(r.stars), 0) from Rating r where r.song = :song")

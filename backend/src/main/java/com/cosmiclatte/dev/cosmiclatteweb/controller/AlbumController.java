@@ -17,7 +17,7 @@ public class AlbumController {
     private final SoundCloudService soundCloudService;
 
     @GetMapping(ApiPaths.SOUNDCLOUD)
-    public ResponseEntity<ResponseFormat<?>> soundcloud() {
+    public ResponseEntity<?> soundcloud() {
         return ResponseEntity.ok(ResponseFormat.success(soundCloudService.listAlbums()));
     }
 }

@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
     public static final String ERROR_ID_HEADER = "X-Error-Id";
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ResponseFormat<?>> handleValidation(MethodArgumentNotValidException ex) {
+    public ResponseEntity<?> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, Object> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors()
                 .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
@@ -42,17 +42,17 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ResponseFormat<?>> handleNotFound(NotFoundException ex) {
+    public ResponseEntity<?> handleNotFound(NotFoundException ex) {
         return buildError(HttpStatus.NOT_FOUND, ex.getMessage(), null, ex);
     }
 
     @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ResponseFormat<?>> handleForbidden(ForbiddenException ex) {
+    public ResponseEntity<?> handleForbidden(ForbiddenException ex) {
         return buildError(HttpStatus.FORBIDDEN, ex.getMessage(), null, ex);
     }
 
     @ExceptionHandler({BadRequestException.class, IllegalArgumentException.class})
-    public ResponseEntity<ResponseFormat<?>> handleBadRequest(RuntimeException ex) {
+    public ResponseEntity<?> handleBadRequest(RuntimeException ex) {
         return buildError(HttpStatus.BAD_REQUEST, ex.getMessage(), null, ex);
     }
 
@@ -62,37 +62,37 @@ public class GlobalExceptionHandler {
             MissingServletRequestParameterException.class,
             MissingServletRequestPartException.class
     })
-    public ResponseEntity<ResponseFormat<?>> handleMalformedRequest(Exception ex) {
+    public ResponseEntity<?> handleMalformedRequest(Exception ex) {
         return buildError(HttpStatus.BAD_REQUEST, "Malformed request.", null, ex);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<ResponseFormat<?>> handleNoResource(NoResourceFoundException ex) {
+    public ResponseEntity<?> handleNoResource(NoResourceFoundException ex) {
         return buildError(HttpStatus.NOT_FOUND, "Resource not found.", null, ex);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<ResponseFormat<?>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+    public ResponseEntity<?> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
         return buildError(HttpStatus.METHOD_NOT_ALLOWED, "Method not allowed.", null, ex);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<ResponseFormat<?>> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+    public ResponseEntity<?> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
         return buildError(HttpStatus.BAD_REQUEST, "File exceeds the maximum allowed size.", null, ex);
     }
 
     @ExceptionHandler(MultipartException.class)
-    public ResponseEntity<ResponseFormat<?>> handleMultipart(MultipartException ex) {
+    public ResponseEntity<?> handleMultipart(MultipartException ex) {
         return buildError(HttpStatus.BAD_REQUEST, "Invalid file request.", null, ex);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ResponseFormat<?>> handleGeneric(Exception ex) {
+    public ResponseEntity<?> handleGeneric(Exception ex) {
         return buildError(HttpStatus.INTERNAL_SERVER_ERROR,
                 "An unexpected error occurred. Please try again later.", null, ex);
     }
 
-    private ResponseEntity<ResponseFormat<?>> buildError(
+    private ResponseEntity<?> buildError(
             HttpStatus status, String message, Object errors, Exception ex) {
         String errorId = generateErrorId();
 

@@ -29,12 +29,12 @@ public class CommentController {
     private final CommentService commentService;
 
     @GetMapping(ApiPaths.SONG_COMMENTS)
-    public ResponseEntity<ResponseFormat<?>> list(@PathVariable Long songId) {
+    public ResponseEntity<?> list(@PathVariable Long songId) {
         return ResponseEntity.ok(ResponseFormat.success(commentService.listBySong(songId)));
     }
 
     @PostMapping(ApiPaths.SONG_COMMENTS)
-    public ResponseEntity<ResponseFormat<?>> create(
+    public ResponseEntity<?> create(
             @PathVariable Long songId,
             @Valid @RequestBody CreateCommentRequest request) {
         CommentResponse created = commentService.create(songId, request.author(), request.content());
@@ -42,7 +42,7 @@ public class CommentController {
     }
 
     @PutMapping(ApiPaths.COMMENT_ID)
-    public ResponseEntity<ResponseFormat<?>> update(
+    public ResponseEntity<?> update(
             @PathVariable Long id,
             @Valid @RequestBody UpdateCommentRequest request,
             @RequestHeader(value = "X-Admin-Key", required = false) String adminKey,
