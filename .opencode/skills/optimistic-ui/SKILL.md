@@ -1,6 +1,6 @@
 ---
 name: optimistic-ui
-description: Apply the optimistic UI pattern for mutations (ratings, comments, edits) so the interface updates instantly instead of reloading, sends the change to the backend in the background, then reconciles with the server response and rolls back on failure. Use when adding or editing ratings, comments or any user-generated data. Triggers on: rating, comment, comentario, optimistic, reload, recargar, edicion, optimistico.
+description: Apply the optimistic UI pattern for mutations (ratings, comments, edits) so the interface updates instantly instead of reloading, sends the change to the backend in the background, then reconciles with the server response and rolls back on failure. Use when adding or editing ratings, comments or any user-generated data. Triggers on: rating, comment, optimistic, reload, edit.
 ---
 
 # Optimistic UI updates

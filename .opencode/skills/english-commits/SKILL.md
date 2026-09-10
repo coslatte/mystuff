@@ -1,6 +1,6 @@
 ---
 name: english-commits
-description: Enforce English conventional commits for homogeneity. Use when creating commits, PR titles, branch names, code comments or any git artifact. Triggers on: commit, conventional commits, mensaje de commit, commits en ingles.
+description: Enforce English conventional commits for homogeneity. Use when creating commits, PR titles, branch names, code comments or any git artifact. Triggers on: commit, conventional commits, commit message.
 ---
 
 # English Commits

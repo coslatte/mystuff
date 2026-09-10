@@ -1,6 +1,6 @@
 ---
 name: brutalist-button
-description: Reusable brutalist hover animation for buttons/links (black surface that reveals a yellow fill sliding up from the bottom, with a slight lift). Use when adding CTA buttons, navigation actions or any interactive element that must match the site's motion language. Triggers on: boton, button, hover, animacion, brutalist, brut-up, repos button.
+description: Reusable brutalist hover animation for buttons/links (black surface that reveals a yellow fill sliding up from the bottom, with a slight lift). Use when adding CTA buttons, navigation actions or any interactive element that must match the site's motion language. Triggers on: button, hover, animation, brutalist, brut-up, repos button.
 ---
 
 # Brutalist "up" button
