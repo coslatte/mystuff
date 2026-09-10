@@ -13,7 +13,7 @@ export default function ErrorNotice({ error, onRetry, className }: Props) {
   return (
     <div
       role="alert"
-      className={`border-2 border-black bg-brut-red p-4 font-mono text-sm text-white ${className ?? ""}`}
+      className={`bg-brut-red p-4 font-mono text-sm text-white ${className ?? ""}`}
     >
       <p>{userMessage(error)}</p>
 
