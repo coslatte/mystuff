@@ -115,15 +115,18 @@ export default function MusicSection() {
   return (
     <div className="border-b-2 border-black">
       <section className="flex flex-col gap-4 border-b-2 border-black bg-black p-6">
-        <div>
-          <span className="font-mono text-xs font-bold text-brut-yellow">
-            {currentSong ? `now playing — ${currentSong.title}` : "select a track"}
-          </span>
-          {currentSong && (
-            <p className="mt-1 font-mono text-sm normal-case text-neutral-300">
-              {currentSong.artist}
-              {currentSong.duration ? ` · ${currentSong.duration}` : ""}
+        <div className="border-2 border-black bg-black p-3">
+          {currentSong ? (
+            <p className="font-mono text-xs font-bold leading-tight normal-case text-white">
+              now playing —{" "}
+              <span className="text-brut-red">{currentSong.title}</span>
+              <span className="text-white">
+                {currentSong.artist ? ` · ${currentSong.artist}` : ""}
+                {currentSong.duration ? ` · ${currentSong.duration}` : ""}
+              </span>
             </p>
+          ) : (
+            <p className="font-mono text-xs font-bold normal-case text-white">select a track</p>
           )}
         </div>
         <PlayerBar />

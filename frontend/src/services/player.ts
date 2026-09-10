@@ -5,6 +5,7 @@ export type PlayerState = {
   isPlaying: boolean;
   currentTime: number;
   duration: number;
+  buffered: number;
   error: boolean;
 };
 
@@ -20,6 +21,7 @@ class PlayerEngine {
     isPlaying: false,
     currentTime: 0,
     duration: 0,
+    buffered: 0,
     error: false,
   };
 
@@ -60,6 +62,14 @@ class PlayerEngine {
       audio.addEventListener("pause", () => this.patch({ isPlaying: false }));
       audio.addEventListener("ended", () => this.patch({ isPlaying: false, currentTime: 0 }));
       audio.addEventListener("error", () => this.patch({ isPlaying: false, error: true }));
+      audio.addEventListener("progress", () => {
+        const dur = audio.duration;
+        if (Number.isFinite(dur) && dur > 0 && audio.buffered.length > 0) {
+          // Track how much of the track has downloaded so the UI can preview it.
+          const end = audio.buffered.end(audio.buffered.length - 1);
+          this.patch({ buffered: end });
+        }
+      });
       this.audio = audio;
     }
     return this.audio;
@@ -103,7 +113,7 @@ class PlayerEngine {
     if (!sameSource) {
       audio.src = song.audioUrl;
       audio.load();
-      this.patch({ song, currentTime: 0, duration: 0, error: false });
+      this.patch({ song, currentTime: 0, duration: 0, buffered: 0, error: false });
     } else {
       this.patch({ song, error: false });
     }
