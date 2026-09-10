@@ -1,7 +1,9 @@
 package com.cosmiclatte.dev.cosmiclatteweb.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 public record CreateCommentRequest(
-        String author,
-        String content
+        @NotBlank String author,
+        @NotBlank String content
 ) {
 }

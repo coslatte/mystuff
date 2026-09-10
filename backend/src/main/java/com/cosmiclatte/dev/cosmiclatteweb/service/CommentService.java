@@ -1,94 +1,69 @@
 package com.cosmiclatte.dev.cosmiclatteweb.service;
 
+import com.cosmiclatte.dev.cosmiclatteweb.common.exception.ForbiddenException;
+import com.cosmiclatte.dev.cosmiclatteweb.common.exception.NotFoundException;
 import com.cosmiclatte.dev.cosmiclatteweb.config.AdminAuth;
 import com.cosmiclatte.dev.cosmiclatteweb.dto.CommentResponse;
+import com.cosmiclatte.dev.cosmiclatteweb.mapper.CommentMapper;
 import com.cosmiclatte.dev.cosmiclatteweb.model.Comment;
 import com.cosmiclatte.dev.cosmiclatteweb.model.Song;
 import com.cosmiclatte.dev.cosmiclatteweb.repository.CommentRepository;
 import com.cosmiclatte.dev.cosmiclatteweb.repository.SongRepository;
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class CommentService {
 
     private final CommentRepository commentRepository;
     private final SongRepository songRepository;
+    private final CommentMapper commentMapper;
     private final AdminAuth adminAuth;
-
-    public CommentService(CommentRepository commentRepository, SongRepository songRepository, AdminAuth adminAuth) {
-        this.commentRepository = commentRepository;
-        this.songRepository = songRepository;
-        this.adminAuth = adminAuth;
-    }
 
     public List<CommentResponse> listBySong(Long songId) {
         return commentRepository.findBySongIdOrderByCreatedAtAsc(songId).stream()
-                .map(this::toResponse)
+                .map(commentMapper::toResponse)
                 .toList();
     }
 
     @Transactional
     public CommentResponse create(Long songId, String author, String content) {
-        if (author == null || author.isBlank()) {
-            throw new IllegalArgumentException("Author is required.");
-        }
-        if (content == null || content.isBlank()) {
-            throw new IllegalArgumentException("Comment cannot be empty.");
-        }
         Song song = songRepository.findById(songId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Song not found: " + songId));
-        Comment comment = new Comment();
-        comment.setSong(song);
-        comment.setAuthor(author.trim());
-        comment.setContent(content.trim());
-        Comment saved = commentRepository.save(comment);
-        return toResponse(saved);
+                .orElseThrow(() -> new NotFoundException("Song not found: " + songId));
+        Comment comment = Comment.builder()
+                .song(song)
+                .author(author.trim())
+                .content(content.trim())
+                .build();
+        return commentMapper.toResponse(commentRepository.save(comment));
     }
 
     @Transactional
     public CommentResponse update(Long commentId, String content, String adminKey, String editToken) {
-        if (content == null || content.isBlank()) {
-            throw new IllegalArgumentException("Comment cannot be empty.");
-        }
         Comment comment = findById(commentId);
         boolean isAdmin = adminAuth.isAdmin(adminKey);
         boolean isOwner = editToken != null && editToken.equals(comment.getEditToken());
         if (!isAdmin && !isOwner) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "You don't have permission to edit this comment.");
+            throw new ForbiddenException("You don't have permission to edit this comment.");
         }
         comment.setContent(content.trim());
-        return toResponse(commentRepository.save(comment));
+        return commentMapper.toResponse(commentRepository.save(comment));
     }
 
     @Transactional
     public void delete(Long commentId, String adminKey) {
         if (!adminAuth.isAdmin(adminKey)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Admin key is required to delete comments.");
+            throw new ForbiddenException("Admin key is required to delete comments.");
         }
-        Comment comment = findById(commentId);
-        commentRepository.delete(comment);
+        commentRepository.delete(findById(commentId));
     }
 
     private Comment findById(Long id) {
         return commentRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found: " + id));
-    }
-
-    private CommentResponse toResponse(Comment comment) {
-        return new CommentResponse(
-                comment.getId(),
-                comment.getSong().getId(),
-                comment.getAuthor(),
-                comment.getContent(),
-                comment.getCreatedAt(),
-                comment.getUpdatedAt(),
-                comment.getEditToken());
+                .orElseThrow(() -> new NotFoundException("Comment not found: " + id));
     }
 }

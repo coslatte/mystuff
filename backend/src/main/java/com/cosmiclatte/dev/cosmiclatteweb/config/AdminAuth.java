@@ -15,8 +15,8 @@ public class AdminAuth {
     public AdminAuth(@Value("${app.admin-api-key:changeme}") String adminApiKey) {
         this.adminApiKey = adminApiKey;
         if ("changeme".equals(adminApiKey)) {
-            log.warn("ADMIN_API_KEY usa el valor por defecto 'changeme'. "
-                    + "Define ADMIN_API_KEY con un secreto en producción.");
+            log.warn("ADMIN_API_KEY uses the default value 'changeme'. "
+                    + "Set ADMIN_API_KEY to a secret in production.");
         }
     }
 

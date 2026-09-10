@@ -1,6 +1,9 @@
 package com.cosmiclatte.dev.cosmiclatteweb.dto;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+
 public record CreateRatingRequest(
-        int stars
+        @Min(1) @Max(5) int stars
 ) {
 }

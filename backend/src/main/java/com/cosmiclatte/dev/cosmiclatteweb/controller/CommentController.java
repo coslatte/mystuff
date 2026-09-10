@@ -1,48 +1,57 @@
 package com.cosmiclatte.dev.cosmiclatteweb.controller;
 
+import com.cosmiclatte.dev.cosmiclatteweb.common.ApiPaths;
+import com.cosmiclatte.dev.cosmiclatteweb.common.dto.ResponseFormat;
 import com.cosmiclatte.dev.cosmiclatteweb.dto.CommentResponse;
 import com.cosmiclatte.dev.cosmiclatteweb.dto.CreateCommentRequest;
 import com.cosmiclatte.dev.cosmiclatteweb.dto.UpdateCommentRequest;
 import com.cosmiclatte.dev.cosmiclatteweb.service.CommentService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping(ApiPaths.API)
+@RequiredArgsConstructor
 public class CommentController {
 
     private final CommentService commentService;
 
-    public CommentController(CommentService commentService) {
-        this.commentService = commentService;
+    @GetMapping(ApiPaths.SONG_COMMENTS)
+    public ResponseEntity<ResponseFormat<?>> list(@PathVariable Long songId) {
+        return ResponseEntity.ok(ResponseFormat.success(commentService.listBySong(songId)));
     }
 
-    @GetMapping("/songs/{songId}/comments")
-    public List<CommentResponse> list(@PathVariable Long songId) {
-        return commentService.listBySong(songId);
-    }
-
-    @PostMapping("/songs/{songId}/comments")
-    public ResponseEntity<CommentResponse> create(
+    @PostMapping(ApiPaths.SONG_COMMENTS)
+    public ResponseEntity<ResponseFormat<?>> create(
             @PathVariable Long songId,
-            @RequestBody CreateCommentRequest request) {
+            @Valid @RequestBody CreateCommentRequest request) {
         CommentResponse created = commentService.create(songId, request.author(), request.content());
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ResponseFormat.success(created));
     }
 
-    @PutMapping("/comments/{id}")
-    public CommentResponse update(
+    @PutMapping(ApiPaths.COMMENT_ID)
+    public ResponseEntity<ResponseFormat<?>> update(
             @PathVariable Long id,
-            @RequestBody UpdateCommentRequest request,
+            @Valid @RequestBody UpdateCommentRequest request,
             @RequestHeader(value = "X-Admin-Key", required = false) String adminKey,
             @RequestParam(value = "editToken", required = false) String editToken) {
-        return commentService.update(id, request.content(), adminKey, editToken);
+        return ResponseEntity.ok(
+                ResponseFormat.success(commentService.update(id, request.content(), adminKey, editToken)));
     }
 
-    @DeleteMapping("/comments/{id}")
+    @DeleteMapping(ApiPaths.COMMENT_ID)
     public ResponseEntity<Void> delete(
             @PathVariable Long id,
             @RequestHeader(value = "X-Admin-Key", required = false) String adminKey) {

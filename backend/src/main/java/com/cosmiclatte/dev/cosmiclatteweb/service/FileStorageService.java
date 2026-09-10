@@ -1,5 +1,6 @@
 package com.cosmiclatte.dev.cosmiclatteweb.service;
 
+import com.cosmiclatte.dev.cosmiclatteweb.common.exception.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -150,19 +151,19 @@ public class FileStorageService {
 
     private void validate(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Audio file is required.");
+            throw new BadRequestException("Audio file is required.");
         }
         if (file.getSize() > maxBytes) {
-            throw new IllegalArgumentException(
+            throw new BadRequestException(
                     "File exceeds maximum size of " + (maxBytes / 1024 / 1024) + " MB.");
         }
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
-            throw new IllegalArgumentException("File type not allowed: " + contentType);
+            throw new BadRequestException("File type not allowed: " + contentType);
         }
         String extension = extensionOf(file.getOriginalFilename());
         if (!ALLOWED_EXTENSIONS.contains(extension)) {
-            throw new IllegalArgumentException("File extension not allowed: " + extension);
+            throw new BadRequestException("File extension not allowed: " + extension);
         }
     }
 
