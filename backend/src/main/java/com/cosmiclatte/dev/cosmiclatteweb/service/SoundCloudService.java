@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,13 +50,15 @@ public class SoundCloudService {
 
     /**
      * Albums published on SoundCloud, used while the SoundCloud API is not configured.
+     * Artwork URLs are resolved via SoundCloud oEmbed (public, no clientId needed) and
+     * hard-coded as fallback so the card always shows the cover you set on SoundCloud.
      */
     private List<SoundCloudAlbumDto> staticAlbums() {
         return List.of(
                 new SoundCloudAlbumDto(
                         "amb-album",
                         "amb",
-                        null,
+                        "https://i1.sndcdn.com/artworks-pIuJZ0yydSGTykZE-qZWmrQ-t500x500.jpg",
                         null,
                         null,
                         "album",
@@ -62,7 +66,7 @@ public class SoundCloudService {
                 new SoundCloudAlbumDto(
                         "en-futuro-ep",
                         "en futuro",
-                        null,
+                        "https://i1.sndcdn.com/artworks-FPmDgeKzK3zWuEP7-7jpFXg-t500x500.jpg",
                         null,
                         null,
                         "ep",
@@ -70,12 +74,27 @@ public class SoundCloudService {
                 new SoundCloudAlbumDto(
                         "discography",
                         "discography",
-                        null,
+                        "https://i1.sndcdn.com/artworks-rZ2E90GgJ6ld6p5p-zwmCAw-t500x500.jpg",
                         null,
                         null,
                         "compilation",
                         "https://soundcloud.com/cosmiclattemusic/sets/discography")
         );
+    }
+
+    private String fetchArtworkViaOEmbed(String permalinkUrl) {
+        if (permalinkUrl == null || permalinkUrl.isBlank()) return null;
+        try {
+            String oEmbedUrl = "https://soundcloud.com/oembed?format=json&url="
+                    + URLEncoder.encode(permalinkUrl, StandardCharsets.UTF_8);
+            SoundCloudOEmbed oEmbed = restClient.get()
+                    .uri(oEmbedUrl)
+                    .retrieve()
+                    .body(SoundCloudOEmbed.class);
+            return oEmbed != null ? oEmbed.thumbnail_url() : null;
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private Long resolveUserId() {
@@ -103,10 +122,14 @@ public class SoundCloudService {
             if (releaseDate != null && releaseDate.length() >= 4) {
                 releaseDate = releaseDate.substring(0, 4);
             }
+            String artwork = item.artwork_url();
+            if (artwork == null || artwork.isBlank()) {
+                artwork = fetchArtworkViaOEmbed(item.permalink_url());
+            }
             albums.add(new SoundCloudAlbumDto(
                     String.valueOf(item.id()),
                     item.title(),
-                    item.artwork_url(),
+                    artwork,
                     item.track_count() != null && item.track_count() > 0 ? item.track_count() : null,
                     releaseDate,
                     item.set_type() == null ? "album" : item.set_type(),
@@ -132,5 +155,8 @@ public class SoundCloudService {
     }
 
     private record SoundCloudUser(Long id) {
+    }
+
+    private record SoundCloudOEmbed(String thumbnail_url) {
     }
 }
