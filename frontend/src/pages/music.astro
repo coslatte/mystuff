@@ -1,11 +1,12 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import MusicSection from "../components/MusicSection";
+import SocialButton from "../components/SocialButton.astro";
 
 const socials = [
-  { label: "soundcloud", url: "https://soundcloud.com/cosmiclattemusic" },
-  { label: "spotify", url: "https://open.spotify.com/intl-es/artist/35cspPwQYNmbLf76EbI0oP" },
-  { label: "bandcamp", url: "https://cosmiclatteedm.bandcamp.com/" },
+  { name: "soundcloud", url: "https://soundcloud.com/cosmiclattemusic" },
+  { name: "spotify", url: "https://open.spotify.com/intl-es/artist/35cspPwQYNmbLf76EbI0oP" },
+  { name: "bandcamp", url: "https://cosmiclatteedm.bandcamp.com/" },
 ];
 ---
 
@@ -13,16 +14,9 @@ const socials = [
   <section class="grid grid-cols-1 border-b-2 border-black md:grid-cols-[3fr_3fr]">
     <div class="flex flex-col justify-between gap-4 p-6 md:p-8">
       <h1 class="font-display text-4xl font-black tracking-tighter sm:text-6xl">music.</h1>
-      <div class="flex flex-wrap gap-2 font-mono text-xs text-white">
+      <div class="flex flex-wrap gap-2">
         {socials.map((social) => (
-          <a
-            href={social.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="bg-black px-3 py-1.5 font-bold hover:bg-brut-red"
-          >
-            {social.label}
-          </a>
+          <SocialButton name={social.name} url={social.url} />
         ))}
       </div>
       <p class="max-w-md font-mono text-sm text-gray-700">play, rate and comment.</p>
