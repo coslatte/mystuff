@@ -1,3 +1,4 @@
+# structs
 .idea/
 backend/.idea/
 .vscode/
@@ -6,6 +7,7 @@ backend/.idea/
 .DS_Store
 Thumbs.db
 
+# dirs
 backend/target/
 backend/.mvn/wrapper/maven-wrapper.jar
 frontend/node_modules/
@@ -14,3 +16,6 @@ frontend/.astro/
 frontend/bun.lockb
 .env
 .env.local
+
+# others
+opencode.json
