@@ -5,18 +5,19 @@ import com.cosmiclatte.dev.cosmiclatteweb.common.dto.ResponseFormat;
 import com.cosmiclatte.dev.cosmiclatteweb.dto.CreateRatingRequest;
 import com.cosmiclatte.dev.cosmiclatteweb.dto.RatingResponse;
 import com.cosmiclatte.dev.cosmiclatteweb.service.RatingService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -34,8 +35,8 @@ public class RatingController {
             @PathVariable Long songId,
             @Valid @RequestBody CreateRatingRequest request,
             @RequestHeader(value = "X-Forwarded-For", required = false) String forwardedFor,
-            jakarta.servlet.http.HttpServletRequest request) {
-        String ipHash = hashIp(resolveClientIp(forwardedFor, request));
+            HttpServletRequest httpRequest) {
+        String ipHash = hashIp(resolveClientIp(forwardedFor, httpRequest));
         RatingResponse rating = ratingService.addRating(songId, request.stars(), request.visitorId(), ipHash);
         return ResponseEntity.status(HttpStatus.CREATED).body(ResponseFormat.success(rating));
     }
@@ -45,14 +46,13 @@ public class RatingController {
             @PathVariable Long songId,
             @RequestParam(value = "visitorId", required = false) String visitorId,
             @RequestHeader(value = "X-Forwarded-For", required = false) String forwardedFor,
-            jakarta.servlet.http.HttpServletRequest request) {
-        String ipHash = hashIp(resolveClientIp(forwardedFor, request));
+            HttpServletRequest httpRequest) {
+        String ipHash = hashIp(resolveClientIp(forwardedFor, httpRequest));
         return ResponseEntity.ok(ResponseFormat.success(ratingService.getVisitorStars(songId, visitorId, ipHash)));
     }
 
-    private static String resolveClientIp(String forwardedFor, jakarta.servlet.http.HttpServletRequest request) {
+    private static String resolveClientIp(String forwardedFor, HttpServletRequest request) {
         if (forwardedFor != null && !forwardedFor.isBlank()) {
-            // X-Forwarded-For may contain a comma-separated list; the first is the client.
             return forwardedFor.split(",")[0].trim();
         }
         return request.getRemoteAddr();
