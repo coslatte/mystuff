@@ -3,12 +3,12 @@ const { pathname } = Astro.url;
 ---
 
 <header class="border-b-2 border-black bg-white">
-  <div class="mx-auto grid w-full max-w-7xl grid-cols-3 items-stretch">
-    <a href="/" class="flex items-center justify-start border-r-2 border-black bg-black px-6 py-4 font-display text-2xl font-black tracking-tighter text-white">
+  <div class="mx-auto flex w-full max-w-7xl items-stretch justify-between">
+    <a href="/" class="flex items-center border-r-2 border-black bg-black px-6 py-4 font-display text-2xl font-black tracking-tighter text-white">
       cosmiclatte
     </a>
 
-    <nav class="flex items-stretch justify-center font-mono text-sm">
+    <nav class="flex items-stretch font-mono text-sm">
       <a
         href="/"
         class:list={[
