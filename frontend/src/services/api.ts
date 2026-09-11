@@ -79,8 +79,8 @@ async function request<T>(
 }
 
 export const api = {
-  getSongs: (category?: "wip" | "official") =>
-    request<Song[]>(`/api/songs${category ? `?category=${category}` : ""}`),
+  getSongs: (visitorId?: string) =>
+    request<Song[]>(`/api/songs${visitorId ? `?visitorId=${encodeURIComponent(visitorId)}` : ""}`),
   getSong: (songId: number) => request<Song>(`/api/songs/${songId}`),
   getComments: (songId: number) => request<Comment[]>(`/api/songs/${songId}/comments`),
   postComment: (songId: number, body: { author: string; content: string }) =>

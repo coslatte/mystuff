@@ -9,7 +9,6 @@ export default function AdminUpload() {
   const [adminKey, setAdminKey] = useState("");
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
-  const [category, setCategory] = useState<"official" | "wip">("official");
   const [file, setFile] = useState<File | null>(null);
   const [songs, setSongs] = useState<Song[]>([]);
   const [message, setMessage] = useState("");
@@ -53,12 +52,10 @@ export default function AdminUpload() {
       const form = new FormData();
       form.append("title", title);
       form.append("artist", artist);
-      form.append("category", category);
       form.append("file", file);
       await api.uploadSong(form, adminKey);
       setTitle("");
       setArtist("");
-      setCategory("official");
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       setMessage("✓ Song uploaded.");
@@ -136,17 +133,6 @@ export default function AdminUpload() {
             placeholder="artist"
             className="border-2 border-black bg-neutral-100 px-3 py-2 font-mono text-sm outline-none focus:bg-brut-yellow"
           />
-          <label className="flex items-center gap-2 font-mono text-xs font-bold uppercase">
-            category
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value as "official" | "wip")}
-              className="flex-1 border-2 border-black bg-neutral-100 px-3 py-2 font-mono text-sm outline-none focus:bg-brut-yellow"
-            >
-              <option value="official">official (single)</option>
-              <option value="wip">wip</option>
-            </select>
-          </label>
           <input
             ref={fileInputRef}
             type="file"
@@ -189,9 +175,6 @@ export default function AdminUpload() {
               <span className="font-mono text-sm">
                 <span className="font-bold">{song.title}</span> —{" "}
                 <span className="normal-case">{song.artist}</span>
-                {song.category === "wip" && (
-                  <span className="ml-2 border border-black bg-black px-1 py-0.5 text-[10px] text-white">wip</span>
-                )}
               </span>
               <span className="flex gap-2">
                 <button
