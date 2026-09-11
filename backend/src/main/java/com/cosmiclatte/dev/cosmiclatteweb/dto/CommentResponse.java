@@ -8,7 +8,6 @@ public record CommentResponse(
         String author,
         String content,
         Instant createdAt,
-        Instant updatedAt,
-        String editToken
+        Instant updatedAt
 ) {
 }

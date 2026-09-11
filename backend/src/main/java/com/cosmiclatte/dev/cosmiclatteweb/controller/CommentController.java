@@ -3,6 +3,7 @@ package com.cosmiclatte.dev.cosmiclatteweb.controller;
 import com.cosmiclatte.dev.cosmiclatteweb.common.ApiPaths;
 import com.cosmiclatte.dev.cosmiclatteweb.common.dto.ResponseFormat;
 import com.cosmiclatte.dev.cosmiclatteweb.dto.CommentResponse;
+import com.cosmiclatte.dev.cosmiclatteweb.dto.CreatedCommentResponse;
 import com.cosmiclatte.dev.cosmiclatteweb.dto.CreateCommentRequest;
 import com.cosmiclatte.dev.cosmiclatteweb.dto.UpdateCommentRequest;
 import com.cosmiclatte.dev.cosmiclatteweb.service.CommentService;
@@ -37,7 +38,7 @@ public class CommentController {
     public ResponseEntity<?> create(
             @PathVariable Long songId,
             @Valid @RequestBody CreateCommentRequest request) {
-        CommentResponse created = commentService.create(songId, request.author(), request.content());
+        CreatedCommentResponse created = commentService.create(songId, request.author(), request.content());
         return ResponseEntity.status(HttpStatus.CREATED).body(ResponseFormat.success(created));
     }
 

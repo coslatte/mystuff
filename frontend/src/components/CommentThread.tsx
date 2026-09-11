@@ -8,12 +8,57 @@ type Props = {
 };
 
 const AUTHOR_STORAGE = "clm_author";
+const EDIT_TOKENS_STORAGE = "clm_edit_tokens";
 const EDIT_WINDOW_MS = 5 * 60 * 1000;
 
 function canEdit(comment: Comment) {
   if (!comment.editToken || comment.id < 0) return false;
   const created = new Date(comment.createdAt).getTime();
   return Number.isFinite(created) && Date.now() - created <= EDIT_WINDOW_MS;
+}
+
+// Edit tokens are bearer secrets: they live only in the creator's browser,
+// never in the public listing. This keeps edit rights across reloads.
+function readEditTokens(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(EDIT_TOKENS_STORAGE);
+    const parsed: unknown = raw ? JSON.parse(raw) : {};
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, string>;
+    }
+  } catch {
+    // corrupted storage: ignore and start fresh
+  }
+  return {};
+}
+
+function writeEditTokens(tokens: Record<string, string>) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(EDIT_TOKENS_STORAGE, JSON.stringify(tokens));
+  } catch {
+    // storage full or unavailable: editing still works for this session
+  }
+}
+
+function rememberEditToken(commentId: number, editToken?: string) {
+  if (!editToken) return;
+  writeEditTokens({ ...readEditTokens(), [commentId]: editToken });
+}
+
+function withLocalEditTokens(comments: Comment[]): Comment[] {
+  const tokens = readEditTokens();
+  const merged = comments.map((c) =>
+    tokens[c.id] != null ? { ...c, editToken: tokens[c.id] } : c
+  );
+  // prune tokens for comments that are gone so the map stays small
+  const alive: Record<string, string> = {};
+  for (const c of merged) {
+    if (c.editToken) alive[c.id] = c.editToken;
+  }
+  writeEditTokens(alive);
+  return merged;
 }
 
 export default function CommentThread({ songId }: Props) {
@@ -32,7 +77,7 @@ export default function CommentThread({ songId }: Props) {
   const load = useCallback(async () => {
     setError(null);
     try {
-      setComments(await api.getComments(songId));
+      setComments(withLocalEditTokens(await api.getComments(songId)));
     } catch (e) {
       setError(e);
     }
@@ -63,6 +108,8 @@ export default function CommentThread({ songId }: Props) {
     try {
       if (typeof window !== "undefined") window.localStorage.setItem(AUTHOR_STORAGE, trimmedAuthor);
       const created = await api.postComment(songId, { author: trimmedAuthor, content: trimmedContent });
+      // the server only hands the edit token to the creator: persist it locally
+      rememberEditToken(created.id, created.editToken);
       // reconcile with the server response
       setComments((prev) => prev.map((c) => (c.id === optimistic.id ? created : c)));
     } catch (err) {
@@ -91,8 +138,10 @@ export default function CommentThread({ songId }: Props) {
 
     try {
       const updated = await api.updateComment(comment.id, nextContent, { editToken: comment.editToken });
-      // reconcile with the server response
-      setComments((prev) => prev.map((c) => (c.id === comment.id ? updated : c)));
+      // the update response carries no token: keep the locally held one
+      setComments((prev) =>
+        prev.map((c) => (c.id === comment.id ? { ...updated, editToken: comment.editToken } : c))
+      );
     } catch (err) {
       setComments((prev) => prev.map((c) => (c.id === comment.id ? { ...c, content: previous } : c)));
       setError(err);

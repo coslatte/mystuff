@@ -4,6 +4,7 @@ import com.cosmiclatte.dev.cosmiclatteweb.common.exception.ForbiddenException;
 import com.cosmiclatte.dev.cosmiclatteweb.common.exception.NotFoundException;
 import com.cosmiclatte.dev.cosmiclatteweb.config.AdminAuth;
 import com.cosmiclatte.dev.cosmiclatteweb.dto.CommentResponse;
+import com.cosmiclatte.dev.cosmiclatteweb.dto.CreatedCommentResponse;
 import com.cosmiclatte.dev.cosmiclatteweb.mapper.CommentMapper;
 import com.cosmiclatte.dev.cosmiclatteweb.model.Comment;
 import com.cosmiclatte.dev.cosmiclatteweb.model.Song;
@@ -35,7 +36,7 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentResponse create(Long songId, String author, String content) {
+    public CreatedCommentResponse create(Long songId, String author, String content) {
         Song song = songRepository.findById(songId)
                 .orElseThrow(() -> new NotFoundException("Song not found: " + songId));
         Comment comment = Comment.builder()
@@ -43,7 +44,7 @@ public class CommentService {
                 .author(author.trim())
                 .content(content.trim())
                 .build();
-        return commentMapper.toResponse(commentRepository.save(comment));
+        return commentMapper.toCreatedResponse(commentRepository.save(comment));
     }
 
     @Transactional
