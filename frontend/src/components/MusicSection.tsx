@@ -109,7 +109,7 @@ export default function MusicSection() {
   }, [userRatings]);
 
   if (loading) {
-    return <p className="border-b-2 border-black bg-white p-6 font-mono text-sm md:p-8">loading tracks...</p>;
+    return <p className="border-b-2 border-black bg-white p-6 font-mono text-sm tablet:p-8">loading tracks...</p>;
   }
   if (error) {
     return <ErrorNotice error={error} onRetry={loadSongs} className="border-b-2" />;
@@ -117,7 +117,7 @@ export default function MusicSection() {
 
   return (
     <div className="border-b-2 border-black">
-      <section className="flex flex-col gap-4 border-b-2 border-black bg-black p-6">
+      <section className="flex flex-col gap-4 border-b-2 border-black bg-black p-4 tablet:p-6 laptop:p-8">
         <div className="border-2 border-black bg-black p-3">
           {currentSong ? (
             <p className="font-mono text-xs font-bold leading-tight normal-case text-white">
@@ -135,12 +135,12 @@ export default function MusicSection() {
         <PlayerBar />
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2">
-        <section className="flex flex-col border-b-2 border-black lg:border-b-0 lg:border-r-2">
-          <h3 className="border-b-2 border-black bg-brut-yellow p-3 font-display text-lg font-bold">
+      <div className="grid grid-cols-1 laptop:grid-cols-2">
+        <section className="flex flex-col border-b-2 border-black laptop:border-b-0 laptop:border-r-2">
+          <h3 className="border-b-2 border-black bg-brut-yellow p-3 font-display text-lg font-bold laptop:text-xl">
             albums
           </h3>
-          <div className="flex flex-col gap-2 bg-neutral-100 p-3">
+          <div className="flex flex-col gap-2 bg-neutral-100 p-3 tablet:p-4 laptop:p-5">
             {albumsLoading && <p className="font-mono text-xs">loading albums...</p>}
             {albumsError != null && <ErrorNotice error={albumsError} onRetry={loadAlbums} />}
             {!albumsLoading && !albumsError && !albums.length && (
@@ -157,7 +157,7 @@ export default function MusicSection() {
                       aria-expanded={open}
                       className="flex min-w-0 flex-1 items-center gap-3 text-left transition-colors hover:bg-brut-yellow"
                     >
-                      <span className="block h-14 w-14 shrink-0 overflow-hidden border-2 border-black bg-black">
+                      <span className="block h-14 w-14 shrink-0 overflow-hidden border-2 border-black bg-black laptop:h-16 laptop:w-16">
                         {album.artworkUrl ? (
                           <img src={album.artworkUrl} alt={album.title} loading="lazy" className="h-full w-full object-cover" />
                         ) : (
@@ -190,11 +190,9 @@ export default function MusicSection() {
                   {open && (
                     <iframe
                       title={`${album.title} player`}
-                      width="100%"
-                      height={300}
                       allow="autoplay"
                       loading="lazy"
-                      className="block border-t-2 border-black"
+                      className="block h-[400px] w-full border-t-2 border-black tablet:h-[480px] laptop:h-[560px] tv:h-[640px]"
                       src={soundCloudEmbedUrl(album.url)}
                     />
                   )}
@@ -205,10 +203,10 @@ export default function MusicSection() {
         </section>
 
         <section className="flex flex-col">
-          <h3 className="border-b-2 border-black bg-brut-yellow p-3 font-display text-lg font-bold">
+          <h3 className="border-b-2 border-black bg-brut-yellow p-3 font-display text-lg font-bold laptop:text-xl">
             tracks
           </h3>
-          <div className="flex flex-col gap-2 bg-neutral-100 p-3">
+          <div className="flex flex-col gap-2 bg-neutral-100 p-3 tablet:p-4 laptop:p-5">
             {songs.map((song) => (
               <TrackBlock
                 key={song.id}

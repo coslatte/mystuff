@@ -12,6 +12,11 @@
 
   --font-display: "Space Grotesk", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
+
+  /* Responsive scale (mobile-first): phone is the base with no prefix. */
+  --breakpoint-tablet: 40rem; /* >= 640px */
+  --breakpoint-laptop: 64rem; /* >= 1024px */
+  --breakpoint-tv: 100rem; /* >= 1600px */
 }
 
 @layer base {
