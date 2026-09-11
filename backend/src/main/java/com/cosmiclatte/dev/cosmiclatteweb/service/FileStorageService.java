@@ -15,6 +15,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,12 +38,15 @@ public class FileStorageService {
 
     private static final String ALLOWED_FORMATS_HINT = "Allowed formats are .mp3, .wav and .flac.";
 
+    private static final long SIGNED_URL_REFRESH_SKEW_MS = 60_000L;
+
     private final String storageBase;
     private final String bucket;
     private final String serviceKey;
     private final long maxBytes;
     private final long signedUrlExpiry;
     private final HttpClient http;
+    private final ConcurrentHashMap<String, CachedUrl> signedUrlCache = new ConcurrentHashMap<>();
 
     public FileStorageService(
             @Value("${app.supabase.url:}") String supabaseUrl,
@@ -87,6 +91,7 @@ public class FileStorageService {
             return;
         }
         requireConfigured();
+        signedUrlCache.remove(objectPath);
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(storageBase + "/object/" + bucket + "/" + objectPath))
@@ -113,6 +118,10 @@ public class FileStorageService {
 
     public String signedUrl(String objectPath) {
         requireConfigured();
+        CachedUrl cached = signedUrlCache.get(objectPath);
+        if (cached != null && cached.expiresAt() > System.currentTimeMillis()) {
+            return cached.url();
+        }
         try {
             String body = "{\"expiresIn\":" + signedUrlExpiry + "}";
             HttpRequest request = HttpRequest.newBuilder()
@@ -128,7 +137,10 @@ public class FileStorageService {
                 throw new RuntimeException("Supabase signed URL failed (" + resp.statusCode() + "): " + resp.body());
             }
             String signedUrl = extractSignedUrl(resp.body());
-            return signedUrl.startsWith("http") ? signedUrl : storageBase + signedUrl;
+            String absoluteUrl = signedUrl.startsWith("http") ? signedUrl : storageBase + signedUrl;
+            long expiresAt = System.currentTimeMillis() + signedUrlExpiry * 1000L - SIGNED_URL_REFRESH_SKEW_MS;
+            signedUrlCache.put(objectPath, new CachedUrl(absoluteUrl, expiresAt));
+            return absoluteUrl;
         } catch (IOException | InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Could not sign audio URL: " + e.getMessage(), e);
@@ -191,5 +203,8 @@ public class FileStorageService {
 
     private static String trimTrailingSlash(String value) {
         return value == null ? "" : value.replaceAll("/+$", "");
+    }
+
+    private record CachedUrl(String url, long expiresAt) {
     }
 }

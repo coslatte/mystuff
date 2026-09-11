@@ -1,6 +1,7 @@
 package com.cosmiclatte.dev.cosmiclatteweb.controller;
 
 import com.cosmiclatte.dev.cosmiclatteweb.common.ApiPaths;
+import com.cosmiclatte.dev.cosmiclatteweb.common.ClientIp;
 import com.cosmiclatte.dev.cosmiclatteweb.common.dto.ResponseFormat;
 import com.cosmiclatte.dev.cosmiclatteweb.dto.CreateRatingRequest;
 import com.cosmiclatte.dev.cosmiclatteweb.dto.RatingResponse;
@@ -19,10 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
 @RestController
 @RequestMapping(ApiPaths.API)
 @RequiredArgsConstructor
@@ -36,7 +33,7 @@ public class RatingController {
             @Valid @RequestBody CreateRatingRequest request,
             @RequestHeader(value = "X-Forwarded-For", required = false) String forwardedFor,
             HttpServletRequest httpRequest) {
-        String ipHash = hashIp(resolveClientIp(forwardedFor, httpRequest));
+        String ipHash = ClientIp.hash(ClientIp.resolve(forwardedFor, httpRequest));
         RatingResponse rating = ratingService.addRating(songId, request.stars(), request.visitorId(), ipHash);
         return ResponseEntity.status(HttpStatus.CREATED).body(ResponseFormat.success(rating));
     }
@@ -47,29 +44,7 @@ public class RatingController {
             @RequestParam(value = "visitorId", required = false) String visitorId,
             @RequestHeader(value = "X-Forwarded-For", required = false) String forwardedFor,
             HttpServletRequest httpRequest) {
-        String ipHash = hashIp(resolveClientIp(forwardedFor, httpRequest));
+        String ipHash = ClientIp.hash(ClientIp.resolve(forwardedFor, httpRequest));
         return ResponseEntity.ok(ResponseFormat.success(ratingService.getVisitorStars(songId, visitorId, ipHash)));
-    }
-
-    private static String resolveClientIp(String forwardedFor, HttpServletRequest request) {
-        if (forwardedFor != null && !forwardedFor.isBlank()) {
-            return forwardedFor.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
-    }
-
-    private static String hashIp(String ip) {
-        if (ip == null || ip.isBlank()) return null;
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(ip.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder();
-            for (byte b : hash) {
-                hex.append(String.format("%02x", b));
-            }
-            return hex.toString();
-        } catch (NoSuchAlgorithmException e) {
-            return null;
-        }
     }
 }

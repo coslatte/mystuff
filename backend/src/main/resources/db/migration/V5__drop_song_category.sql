@@ -1,0 +1,2 @@
+ALTER TABLE song DROP CONSTRAINT IF EXISTS chk_song_category;
+ALTER TABLE song DROP COLUMN IF EXISTS category;

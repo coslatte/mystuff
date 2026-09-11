@@ -12,19 +12,20 @@ public interface SongMapper {
     @Mapping(target = "audioUrl", ignore = true)
     @Mapping(target = "avgRating", ignore = true)
     @Mapping(target = "totalVotes", ignore = true)
+    @Mapping(target = "myRating", ignore = true)
     SongResponse toResponse(Song song);
 
-    default SongResponse toResponse(Song song, String audioUrl, Double avgRating, Long totalVotes) {
+    default SongResponse toResponse(Song song, String audioUrl, Double avgRating, Long totalVotes, Integer myRating) {
         SongResponse response = toResponse(song);
         return new SongResponse(
                 response.id(),
                 response.title(),
                 response.artist(),
                 response.duration(),
-                response.category(),
                 audioUrl,
                 response.createdAt(),
                 avgRating,
-                totalVotes);
+                totalVotes,
+                myRating);
     }
 }

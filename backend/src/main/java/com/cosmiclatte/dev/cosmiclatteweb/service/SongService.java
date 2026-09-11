@@ -6,13 +6,19 @@ import com.cosmiclatte.dev.cosmiclatteweb.dto.SongResponse;
 import com.cosmiclatte.dev.cosmiclatteweb.mapper.SongMapper;
 import com.cosmiclatte.dev.cosmiclatteweb.model.Song;
 import com.cosmiclatte.dev.cosmiclatteweb.repository.RatingRepository;
+import com.cosmiclatte.dev.cosmiclatteweb.repository.RatingRepository.MyRating;
+import com.cosmiclatte.dev.cosmiclatteweb.repository.RatingRepository.SongRatingSummary;
 import com.cosmiclatte.dev.cosmiclatteweb.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,38 +30,45 @@ public class SongService {
     private final AudioMetadataService audioMetadata;
     private final SongMapper songMapper;
 
-    public List<SongResponse> listSongs(String category) {
-        List<Song> songs = (category == null || category.isBlank())
-                ? songRepository.findAllByOrderByCreatedAtDesc()
-                : songRepository.findByCategoryOrderByCreatedAtDesc(category.trim().toLowerCase());
-        return songs.stream()
-                .map(this::toResponse)
+    public List<SongResponse> listSongs(String visitorId, String ipHash) {
+        List<Song> songs = songRepository.findAllByOrderByCreatedAtDesc();
+        if (songs.isEmpty()) {
+            return List.of();
+        }
+        List<Long> songIds = songs.stream().map(Song::getId).toList();
+        Map<Long, SongRatingSummary> summaries = Map.copyOf(ratingRepository.summarizeBySongIds(songIds).stream()
+                .collect(Collectors.toMap(SongRatingSummary::getSongId, Function.identity())));
+        MyRatings mine = loadMyRatings(songIds, visitorId, ipHash);
+        return songs.parallelStream()
+                .map(song -> toResponse(song, summaries.get(song.getId()), mine.pick(song.getId())))
                 .toList();
     }
 
     public SongResponse getSong(Long id) {
-        return toResponse(findById(id));
+        Song song = findById(id);
+        SongRatingSummary summary = ratingRepository.summarizeBySongIds(List.of(id)).stream()
+                .findFirst()
+                .orElse(null);
+        return toResponse(song, summary, null);
     }
 
     @Transactional
-    public SongResponse createSong(String title, String artist, String category, MultipartFile file) {
+    public SongResponse createSong(String title, String artist, MultipartFile file) {
         if (title == null || title.isBlank()) {
             throw new BadRequestException("Title is required.");
         }
         if (artist == null || artist.isBlank()) {
             throw new BadRequestException("Artist is required.");
         }
-        String normalizedCategory = normalizeCategory(category);
         String duration = audioMetadata.readDuration(file);
         String objectPath = fileStorage.store(file);
         Song song = Song.builder()
                 .title(title.trim())
                 .artist(artist.trim())
-                .category(normalizedCategory)
                 .duration(duration)
                 .audioUrl(objectPath)
                 .build();
-        return toResponse(songRepository.save(song));
+        return toResponse(songRepository.save(song), null, null);
     }
 
     @Transactional
@@ -69,7 +82,7 @@ public class SongService {
         }
         song.setAudioUrl(newPath);
         song.setDuration(duration);
-        return toResponse(songRepository.save(song));
+        return toResponse(songRepository.save(song), null, null);
     }
 
     @Transactional
@@ -87,21 +100,40 @@ public class SongService {
                 .orElseThrow(() -> new NotFoundException("Song not found: " + id));
     }
 
-    private String normalizeCategory(String category) {
-        if (category == null || category.isBlank()) {
-            return "official";
+    private MyRatings loadMyRatings(List<Long> songIds, String visitorId, String ipHash) {
+        String normalizedVisitor = visitorId == null || visitorId.isBlank() ? null : visitorId.trim();
+        String normalizedIp = ipHash == null || ipHash.isBlank() ? null : ipHash;
+        if (normalizedVisitor == null && normalizedIp == null) {
+            return MyRatings.empty();
         }
-        String value = category.trim().toLowerCase();
-        if (!value.equals("wip") && !value.equals("official")) {
-            throw new BadRequestException("Category must be 'wip' or 'official'.");
+        Map<Long, Integer> byVisitor = new HashMap<>();
+        Map<Long, Integer> byIp = new HashMap<>();
+        for (MyRating rating : ratingRepository.findMineForSongs(songIds, normalizedVisitor, normalizedIp)) {
+            if (normalizedVisitor != null && normalizedVisitor.equals(rating.getVisitorId())) {
+                byVisitor.put(rating.getSongId(), rating.getStars());
+            } else {
+                byIp.put(rating.getSongId(), rating.getStars());
+            }
         }
-        return value;
+        return new MyRatings(Map.copyOf(byVisitor), Map.copyOf(byIp));
     }
 
-    private SongResponse toResponse(Song song) {
-        long total = ratingRepository.countBySongId(song.getId());
-        Double avg = total == 0 ? null : ratingRepository.avgStars(song);
+    private SongResponse toResponse(Song song, SongRatingSummary summary, Integer myRating) {
+        long total = summary == null ? 0L : summary.getTotal();
+        Double avg = total == 0 ? null : summary.getAverage();
         String audioUrl = song.getAudioUrl() == null ? null : fileStorage.signedUrl(song.getAudioUrl());
-        return songMapper.toResponse(song, audioUrl, avg, total);
+        return songMapper.toResponse(song, audioUrl, avg, total, myRating);
+    }
+
+    private record MyRatings(Map<Long, Integer> byVisitor, Map<Long, Integer> byIp) {
+
+        static MyRatings empty() {
+            return new MyRatings(Map.of(), Map.of());
+        }
+
+        Integer pick(Long songId) {
+            Integer visitorStars = byVisitor.get(songId);
+            return visitorStars != null ? visitorStars : byIp.get(songId);
+        }
     }
 }

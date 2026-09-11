@@ -14,10 +14,13 @@ import java.util.List;
 public class SoundCloudService {
 
     private static final String API_BASE = "https://api-v2.soundcloud.com";
+    private static final long ALBUMS_CACHE_TTL_MS = 10 * 60 * 1000L;
 
     private final RestClient restClient;
     private final String clientId;
     private final String userUrl;
+    private volatile List<SoundCloudAlbumDto> cachedAlbums;
+    private volatile long cachedAlbumsAt;
 
     public SoundCloudService(
             @Value("${app.soundcloud.client-id:}") String clientId,
@@ -28,6 +31,17 @@ public class SoundCloudService {
     }
 
     public List<SoundCloudAlbumDto> listAlbums() {
+        List<SoundCloudAlbumDto> cached = cachedAlbums;
+        if (cached != null && System.currentTimeMillis() - cachedAlbumsAt < ALBUMS_CACHE_TTL_MS) {
+            return cached;
+        }
+        List<SoundCloudAlbumDto> albums = loadAlbums();
+        cachedAlbums = albums;
+        cachedAlbumsAt = System.currentTimeMillis();
+        return albums;
+    }
+
+    private List<SoundCloudAlbumDto> loadAlbums() {
         if (clientId == null || clientId.isBlank()) {
             return staticAlbums();
         }

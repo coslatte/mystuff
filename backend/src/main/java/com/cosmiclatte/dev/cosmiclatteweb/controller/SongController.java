@@ -1,10 +1,12 @@
 package com.cosmiclatte.dev.cosmiclatteweb.controller;
 
 import com.cosmiclatte.dev.cosmiclatteweb.common.ApiPaths;
+import com.cosmiclatte.dev.cosmiclatteweb.common.ClientIp;
 import com.cosmiclatte.dev.cosmiclatteweb.common.dto.ResponseFormat;
 import com.cosmiclatte.dev.cosmiclatteweb.common.exception.ForbiddenException;
 import com.cosmiclatte.dev.cosmiclatteweb.config.AdminAuth;
 import com.cosmiclatte.dev.cosmiclatteweb.service.SongService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,8 +32,11 @@ public class SongController {
 
     @GetMapping
     public ResponseEntity<?> list(
-            @RequestParam(value = "category", required = false) String category) {
-        return ResponseEntity.ok(ResponseFormat.success(songService.listSongs(category)));
+            @RequestParam(value = "visitorId", required = false) String visitorId,
+            @RequestHeader(value = "X-Forwarded-For", required = false) String forwardedFor,
+            HttpServletRequest httpRequest) {
+        String ipHash = ClientIp.hash(ClientIp.resolve(forwardedFor, httpRequest));
+        return ResponseEntity.ok(ResponseFormat.success(songService.listSongs(visitorId, ipHash)));
     }
 
     @GetMapping(ApiPaths.SONG_ID)
@@ -43,12 +48,11 @@ public class SongController {
     public ResponseEntity<?> create(
             @RequestPart("title") String title,
             @RequestPart("artist") String artist,
-            @RequestPart(value = "category", required = false) String category,
             @RequestPart("file") MultipartFile file,
             @RequestHeader(value = "X-Admin-Key", required = false) String adminKey) {
         requireAdmin(adminKey);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ResponseFormat.success(songService.createSong(title, artist, category, file)));
+                .body(ResponseFormat.success(songService.createSong(title, artist, file)));
     }
 
     @PutMapping(value = ApiPaths.SONG_AUDIO, consumes = "multipart/form-data")

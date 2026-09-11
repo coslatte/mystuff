@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -17,8 +18,41 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
 
     Rating findBySongIdAndIpHash(Long songId, String ipHash);
 
-    long countBySongId(Long songId);
+    @Query("""
+            select r.song.id as songId, count(r) as total, avg(r.stars) as average
+            from Rating r
+            where r.song.id in :songIds
+            group by r.song.id
+            """)
+    List<SongRatingSummary> summarizeBySongIds(@Param("songIds") Collection<Long> songIds);
 
-    @Query("select coalesce(avg(r.stars), 0) from Rating r where r.song = :song")
-    double avgStars(@Param("song") com.cosmiclatte.dev.cosmiclatteweb.model.Song song);
+    @Query("""
+            select r.song.id as songId, r.visitorId as visitorId, r.ipHash as ipHash, r.stars as stars
+            from Rating r
+            where r.song.id in :songIds
+              and ((:visitorId is not null and r.visitorId = :visitorId)
+                   or (:ipHash is not null and r.ipHash = :ipHash))
+            """)
+    List<MyRating> findMineForSongs(
+            @Param("songIds") Collection<Long> songIds,
+            @Param("visitorId") String visitorId,
+            @Param("ipHash") String ipHash);
+
+    interface SongRatingSummary {
+        Long getSongId();
+
+        long getTotal();
+
+        Double getAverage();
+    }
+
+    interface MyRating {
+        Long getSongId();
+
+        String getVisitorId();
+
+        String getIpHash();
+
+        Integer getStars();
+    }
 }

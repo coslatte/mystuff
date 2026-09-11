@@ -33,9 +33,6 @@ public class Song {
 
     private String duration;
 
-    @Column(nullable = false)
-    private String category;
-
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 
