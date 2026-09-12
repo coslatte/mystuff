@@ -79,6 +79,7 @@ async function request<T>(
 }
 
 export const api = {
+  health: () => request<{ status: string; service: string }>("/health"),
   getSongs: (visitorId?: string) =>
     request<Song[]>(`/api/songs${visitorId ? `?visitorId=${encodeURIComponent(visitorId)}` : ""}`),
   getSong: (songId: number) => request<Song>(`/api/songs/${songId}`),

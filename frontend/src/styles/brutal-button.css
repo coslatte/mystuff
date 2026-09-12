@@ -20,8 +20,8 @@
   text-decoration: none;
   overflow: hidden;
   transition:
-    color 0.3s ease,
-    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    color 0.15s ease,
+    transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .brut-up::before {
@@ -31,7 +31,7 @@
   z-index: 0;
   background: #ffd600;
   transform: translateY(101%);
-  transition: transform 0.35s cubic-bezier(0.7, 0, 0.3, 1);
+  transition: transform 0.2s cubic-bezier(0.7, 0, 0.3, 1);
 }
 
 .brut-up > * {
@@ -99,6 +99,36 @@
 
 @media (prefers-reduced-motion: reduce) {
   .icon-morph {
+    animation: none;
+  }
+}
+
+/*
+ * Loading status morph.
+ * Each rotating server-status message is remounted (React key) so it
+ * cross-fades in with a small rise + blur, making the wait feel alive
+ * without pretending to know more than we actually do.
+ */
+@keyframes text-morph {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+    filter: blur(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.text-morph {
+  display: inline-block;
+  animation: text-morph 0.35s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .text-morph {
     animation: none;
   }
 }

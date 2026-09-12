@@ -13,7 +13,9 @@ type Props = {
 
 export default function TrackBlock({ song, userRating, onRate }: Props) {
   const { song: currentSong, isPlaying } = usePlayer();
-  const [showComments, setShowComments] = useState(true);
+  // Collapsed by default: comments are fetched lazily only when expanded, so
+  // a large library never fires hundreds of comment requests up front.
+  const [showComments, setShowComments] = useState(false);
 
   const active = currentSong?.id === song.id;
   const showPause = active && isPlaying;
@@ -54,9 +56,10 @@ export default function TrackBlock({ song, userRating, onRate }: Props) {
           <button
             type="button"
             onClick={() => setShowComments((v) => !v)}
+            aria-expanded={showComments}
             className="font-mono text-[10px] text-gray-400 underline hover:text-black"
           >
-            {showComments ? "hide comments" : "comments"}
+            {showComments ? "hide comments ▲" : "comments ▼"}
           </button>
         </div>
       </div>

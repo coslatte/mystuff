@@ -6,6 +6,7 @@ import { usePlayer } from "../hooks/usePlayer";
 import PlayerBar from "./PlayerBar";
 import TrackBlock from "./TrackBlock";
 import ErrorNotice from "./ErrorNotice";
+import LoadingTracks from "./LoadingTracks";
 
 function soundCloudEmbedUrl(albumUrl: string) {
   const params = new URLSearchParams({
@@ -32,6 +33,11 @@ export default function MusicSection() {
   const [albumsLoading, setAlbumsLoading] = useState(true);
   const [albumsError, setAlbumsError] = useState<unknown>(null);
   const [openAlbumId, setOpenAlbumId] = useState<string | null>(null);
+
+  // Cold-start awareness: the API may be waking up, so we surface real
+  // progress (health probe answered?) instead of an opaque "loading".
+  const [serverReady, setServerReady] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
 
   const { song: currentSong } = usePlayer();
 
@@ -69,6 +75,35 @@ export default function MusicSection() {
     loadSongs();
     loadAlbums();
   }, [loadSongs, loadAlbums]);
+
+  // Poll the public health endpoint until the server answers. Each failed
+  // probe is retried, so a cold backend eventually flips this to ready.
+  useEffect(() => {
+    let cancelled = false;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const ping = async () => {
+      try {
+        await api.health();
+        if (!cancelled) setServerReady(true);
+      } catch {
+        if (!cancelled) retry = setTimeout(ping, 3000);
+      }
+    };
+    ping();
+    return () => {
+      cancelled = true;
+      if (retry) clearTimeout(retry);
+    };
+  }, []);
+
+  // Seconds since the track fetch began, used to pick an honest message.
+  useEffect(() => {
+    if (!loading) return;
+    const start = Date.now();
+    setElapsed(0);
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [loading]);
 
   const handleRate = useCallback(async (song: Song, stars: number) => {
     const visitor = getVisitorId();
@@ -109,7 +144,7 @@ export default function MusicSection() {
   }, [userRatings]);
 
   if (loading) {
-    return <p className="border-b-2 border-black bg-white p-6 font-mono text-sm tablet:p-8">loading tracks...</p>;
+    return <LoadingTracks serverReady={serverReady} elapsed={elapsed} />;
   }
   if (error) {
     return <ErrorNotice error={error} onRetry={loadSongs} className="border-b-2" />;
@@ -132,7 +167,9 @@ export default function MusicSection() {
             <p className="font-mono text-xs font-bold normal-case text-white">select a track</p>
           )}
         </div>
-        <PlayerBar />
+        <div className="hidden laptop:block">
+          <PlayerBar />
+        </div>
       </section>
 
       <div className="grid grid-cols-1 laptop:grid-cols-2">

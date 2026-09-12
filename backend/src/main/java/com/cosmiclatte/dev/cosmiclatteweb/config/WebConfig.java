@@ -16,11 +16,17 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
+        String[] origins = allowedOrigins.split(",");
         registry.addMapping("/api/**")
-                .allowedOrigins(allowedOrigins.split(","))
+                .allowedOrigins(origins)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .exposedHeaders("X-Error-Id")
                 .allowCredentials(true);
+        // Public health probe: lets the UI report real cold-start progress.
+        registry.addMapping("/health")
+                .allowedOrigins(origins)
+                .allowedMethods("GET", "OPTIONS")
+                .allowedHeaders("*");
     }
 }

@@ -1,5 +1,10 @@
 ---
-const { pathname } = Astro.url;
+const pathname = Astro.url.pathname.replace(/\/+$/, "") || "/";
+
+const links = [
+  { href: "/", label: "coding", active: pathname === "/" },
+  { href: "/music", label: "music", active: pathname === "/music" },
+];
 ---
 
 <header class="border-b-2 border-black bg-white">
@@ -9,24 +14,19 @@ const { pathname } = Astro.url;
     </a>
 
     <nav class="flex items-stretch font-mono text-sm">
-      <a
-        href="/"
-        class:list={[
-          "flex items-center border-r-2 border-l-2 border-black px-6 font-bold hover:bg-brut-black hover:text-white",
-          { "bg-brut-black text-white": pathname === "/" },
-        ]}
-      >
-        coding
-      </a>
-      <a
-        href="/music"
-        class:list={[
-          "flex items-center border-r-2 border-black px-6 font-bold hover:bg-brut-black hover:text-white",
-          { "bg-brut-black text-white hover:bg-brut-black hover:text-white": pathname === "/music" },
-        ]}
-      >
-        music
-      </a>
+      {links.map((link) => (
+        <a
+          href={link.href}
+          aria-current={link.active ? "page" : undefined}
+          class:list={[
+            "flex items-center border-r-2 border-black px-6 font-bold hover:bg-brut-black hover:text-white",
+            { "border-l-2": link.href === "/" },
+            { "bg-brut-black text-white": link.active },
+          ]}
+        >
+          {link.label}
+        </a>
+      ))}
     </nav>
   </div>
 </header>

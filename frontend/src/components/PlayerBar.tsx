@@ -123,7 +123,7 @@ export default function PlayerBar() {
           <canvas ref={canvasRef} width={1600} height={88} className="h-16 w-full md:h-20" />
         </button>
         <div className="shrink-0 border-2 border-black bg-white px-2 py-1 font-mono text-xs font-bold text-black">
-          {formatTime(currentTime)} / {duration > 0 ? formatTime(duration) : "—"}
+          {formatTime(currentTime)}
         </div>
       </div>
       <div
