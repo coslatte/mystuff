@@ -1,12 +1,19 @@
+/*
+ * Social buttons.
+ * Always rendered in their expanded form (icon + name side by side). The
+ * only motion is the background switching to black and the name rolling
+ * up into a fresh copy, so nothing changes size or causes layout shift.
+ */
 .soc {
   --brand: #000;
   position: relative;
   display: inline-flex;
   align-items: center;
+  gap: 0.5rem;
   border: 2px solid #000;
   background: var(--brand);
   color: #fff;
-  padding: 0.5rem 0.65rem;
+  padding: 0.5rem 0.85rem;
   font-family: var(--font-mono);
   font-weight: 700;
   font-size: 0.75rem;
@@ -14,13 +21,12 @@
   text-transform: lowercase;
   text-decoration: none;
   overflow: hidden;
-  transition: background 0.35s ease, padding 0.4s cubic-bezier(0.7, 0, 0.3, 1);
+  transition: background 0.3s ease;
 }
 
 .soc:hover,
 .soc:focus-visible {
   background: #000;
-  padding-right: 0.95rem;
   outline: none;
 }
 
@@ -31,90 +37,51 @@
   flex: none;
 }
 
-.soc__full,
-.soc__simple {
-  position: absolute;
-  inset: 0;
+.soc__icon svg {
+  display: block;
   width: 100%;
   height: 100%;
 }
 
-.soc__full {
-  z-index: 1;
-  clip-path: inset(0 0 0 0);
-  transition: clip-path 0.45s cubic-bezier(0.7, 0, 0.3, 1);
-}
-
-.soc__full path {
+.soc__icon path {
   fill: #fff;
 }
 
-.soc__simple {
-  z-index: 2;
-  transform: scale(0.82) rotate(-10deg);
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.soc__simple path {
-  fill: none;
-  stroke: #fff;
-  stroke-width: 1.4;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-}
-
-.soc:hover .soc__full,
-.soc:focus-visible .soc__full {
-  clip-path: inset(0 100% 0 0);
-}
-
-.soc:hover .soc__simple,
-.soc:focus-visible .soc__simple {
-  transform: scale(1) rotate(0deg);
-  animation: soc-draw 0.6s 0.12s cubic-bezier(0.65, 0, 0.35, 1) forwards;
-}
-
-@keyframes soc-draw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
+/* Name is always visible; on hover it rolls up and a copy takes its place. */
 .soc__name {
-  max-width: 0;
+  display: inline-block;
   overflow: hidden;
-  white-space: nowrap;
-  transform: translateX(-0.4rem);
-  transition:
-    max-width 0.45s cubic-bezier(0.7, 0, 0.3, 1),
-    transform 0.45s cubic-bezier(0.7, 0, 0.3, 1);
+  height: 1em;
+  line-height: 1;
 }
 
-.soc:hover .soc__name,
-.soc:focus-visible .soc__name {
-  max-width: 9rem;
-  transform: translateX(0);
+.soc__name-inner {
+  display: flex;
+  flex-direction: column;
+  transform: translateY(0);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.soc__name-a,
+.soc__name-b {
+  display: block;
+  height: 1em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.soc:hover .soc__name-inner,
+.soc:focus-visible .soc__name-inner {
+  transform: translateY(-1em);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .soc,
-  .soc__full,
-  .soc__simple,
-  .soc__name {
+  .soc__name-inner {
     transition: none;
   }
-  .soc:hover .soc__full,
-  .soc:focus-visible .soc__full {
-    clip-path: inset(0 100% 0 0);
-  }
-  .soc:hover .soc__simple,
-  .soc:focus-visible .soc__simple {
+  .soc:hover .soc__name-inner,
+  .soc:focus-visible .soc__name-inner {
     transform: none;
-    animation: none;
-  }
-  .soc__simple path {
-    stroke-dashoffset: 0;
   }
 }

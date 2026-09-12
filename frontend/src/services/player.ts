@@ -163,3 +163,57 @@ class PlayerEngine {
 }
 
 export const player = new PlayerEngine();
+
+export type WaveformPeaks = Float32Array;
+
+// High-resolution peak envelope kept per song so switching tracks (and
+// resizing the bar) never triggers another decode. Peaks are normalized
+// to 0..1 and resampled to whatever bar count the canvas needs at draw time.
+const WAVEFORM_RESOLUTION = 2048;
+const waveformCache = new Map<number, WaveformPeaks>();
+
+export async function computeWaveform(song: Song): Promise<WaveformPeaks | null> {
+  if (typeof window === "undefined" || !song.audioUrl) return null;
+  const cached = waveformCache.get(song.id);
+  if (cached) return cached;
+
+  try {
+    const response = await fetch(song.audioUrl, { mode: "cors" });
+    if (!response.ok) return null;
+    const encoded = await response.arrayBuffer();
+
+    const Ctor =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctor) return null;
+
+    const ctx = new Ctor();
+    try {
+      const buffer = await ctx.decodeAudioData(encoded);
+      const channel = buffer.getChannelData(0);
+      const peaks = new Float32Array(WAVEFORM_RESOLUTION);
+      const block = Math.max(1, Math.floor(channel.length / WAVEFORM_RESOLUTION));
+      let max = 0;
+      for (let i = 0; i < WAVEFORM_RESOLUTION; i++) {
+        const start = i * block;
+        const end = Math.min(channel.length, start + block);
+        let peak = 0;
+        for (let j = start; j < end; j++) {
+          const sample = channel[j] < 0 ? -channel[j] : channel[j];
+          if (sample > peak) peak = sample;
+        }
+        peaks[i] = peak;
+        if (peak > max) max = peak;
+      }
+      if (max > 0) {
+        for (let i = 0; i < peaks.length; i++) peaks[i] /= max;
+      }
+      waveformCache.set(song.id, peaks);
+      return peaks;
+    } finally {
+      void ctx.close();
+    }
+  } catch {
+    return null;
+  }
+}

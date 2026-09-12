@@ -18,7 +18,7 @@ function soundCloudEmbedUrl(albumUrl: string) {
     show_user: "true",
     show_reposts: "false",
     show_teaser: "false",
-    visual: "false",
+    visual: "true",
   });
   return `https://w.soundcloud.com/player/?${params.toString()}`;
 }
@@ -229,7 +229,9 @@ export default function MusicSection() {
                       title={`${album.title} player`}
                       allow="autoplay"
                       loading="lazy"
-                      className="block h-[400px] w-full border-t-2 border-black tablet:h-[480px] laptop:h-[560px] tv:h-[640px]"
+                      scrolling="no"
+                      className="block w-full border-t-2 border-black"
+                      style={{ height: `${album.embedHeight ?? 450}px` }}
                       src={soundCloudEmbedUrl(album.url)}
                     />
                   )}

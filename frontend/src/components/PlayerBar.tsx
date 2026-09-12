@@ -1,13 +1,6 @@
-import { useCallback, useEffect, useRef } from "react";
-import { player } from "../services/player";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { computeWaveform, player, type WaveformPeaks } from "../services/player";
 import { usePlayer } from "../hooks/usePlayer";
-
-const BARS = 800;
-const MIN_HZ = 30;
-const MAX_HZ = 16000;
-
-const MIN_LOG = Math.log10(MIN_HZ);
-const MAX_LOG = Math.log10(MAX_HZ);
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -18,11 +11,29 @@ function formatTime(seconds: number) {
 }
 
 export default function PlayerBar() {
-  const { song, isPlaying, currentTime, duration, buffered, error } = usePlayer();
+  const { song, isPlaying, currentTime, duration, error } = usePlayer();
+  const [peaks, setPeaks] = useState<WaveformPeaks | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
   const seekBarRef = useRef<HTMLDivElement>(null);
   const scrubbingRef = useRef(false);
+  const progressRef = useRef(0);
+
+  progressRef.current = duration > 0 ? Math.min(1, currentTime / duration) : 0;
+
+  useEffect(() => {
+    if (!song?.audioUrl) {
+      setPeaks(null);
+      return;
+    }
+    let cancelled = false;
+    computeWaveform(song).then((result) => {
+      if (!cancelled) setPeaks(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [song?.id, song?.audioUrl]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -32,28 +43,27 @@ export default function PlayerBar() {
     const width = canvas.width;
     const height = canvas.height;
     cctx.clearRect(0, 0, width, height);
-    const analyser = player.getAnalyser();
-    let peaks: Uint8Array<ArrayBuffer> | null = null;
-    if (analyser && isPlaying) {
-      peaks = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
-      analyser.getByteFrequencyData(peaks);
+
+    // One bar every 3 device pixels: dense enough to read as a waveform,
+    // light enough to stay fluid on every frame.
+    const bars = Math.max(1, Math.floor(width / 3));
+    const barW = width / bars;
+    const mid = height / 2;
+    const played = progressRef.current * bars;
+
+    for (let i = 0; i < bars; i++) {
+      let value = 0.14;
+      if (peaks && peaks.length) {
+        const idx = Math.min(peaks.length - 1, Math.floor((i / bars) * peaks.length));
+        value = peaks[idx];
+      }
+      const bh = Math.max(2, value * height * 0.94);
+      const x = i * barW + barW * 0.15;
+      const w = Math.max(1, barW * 0.7);
+      cctx.fillStyle = i < played ? "#ff3300" : "#ffffff";
+      cctx.fillRect(x, mid - bh / 2, w, bh);
     }
-    const sampleRate = analyser ? analyser.context.sampleRate : 44100;
-    const fftSize = analyser ? analyser.fftSize : 4096;
-    const binHz = sampleRate / fftSize;
-    const maxBin = peaks ? peaks.length - 1 : Math.floor(fftSize / 2) - 1;
-    const bw = width / BARS;
-    for (let i = 0; i < BARS; i++) {
-      // Logarithmic frequency mapping so sub-bass / subwoofer content is visible.
-      const freq = Math.pow(10, MIN_LOG + (i / BARS) * (MAX_LOG - MIN_LOG));
-      const bin = Math.min(maxBin, Math.max(0, Math.round(freq / binHz)));
-      const v = peaks ? peaks[bin] / 255 : 0.12;
-      const bh = Math.max(3, v * height);
-      const x = i * bw + bw * 0.12;
-      cctx.fillStyle = "#ffffff";
-      cctx.fillRect(x, height - bh, bw * 0.76, bh);
-    }
-  }, [isPlaying]);
+  }, [peaks]);
 
   useEffect(() => {
     const animate = () => {
@@ -90,9 +100,6 @@ export default function PlayerBar() {
     };
   }, [seekFromPointer]);
 
-  const progress = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
-  const bufferedPct = duration > 0 ? Math.min(100, (buffered / duration) * 100) : 0;
-
   return (
     <div className="flex w-full flex-col gap-3">
       <div className="flex items-center gap-3">
@@ -111,37 +118,27 @@ export default function PlayerBar() {
             {isPlaying ? "𐋃" : "▶"}
           </span>
         </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            player.seek((e.clientX - rect.left) / rect.width);
-          }}
-          className="flex-1 border-2 border-black bg-black p-1"
+
+        <div
+          ref={seekBarRef}
+          role="slider"
           aria-label="seek"
+          aria-valuemin={0}
+          aria-valuemax={Math.round(duration) || 0}
+          aria-valuenow={Math.round(currentTime)}
+          tabIndex={0}
+          onPointerDown={(e) => {
+            scrubbingRef.current = true;
+            seekFromPointer(e.clientX);
+          }}
+          className="relative flex-1 cursor-pointer touch-none border-2 border-black bg-black p-0.5"
         >
-          <canvas ref={canvasRef} width={1600} height={88} className="h-16 w-full md:h-20" />
-        </button>
+          <canvas ref={canvasRef} width={1600} height={96} className="block h-10 w-full laptop:h-12" />
+        </div>
+
         <div className="shrink-0 border-2 border-black bg-white px-2 py-1 font-mono text-xs font-bold text-black">
           {formatTime(currentTime)}
         </div>
-      </div>
-      <div
-        ref={seekBarRef}
-        role="slider"
-        aria-label="seek"
-        aria-valuemin={0}
-        aria-valuemax={Math.round(duration) || 0}
-        aria-valuenow={Math.round(currentTime)}
-        tabIndex={0}
-        onPointerDown={(e) => {
-          scrubbingRef.current = true;
-          seekFromPointer(e.clientX);
-        }}
-        className="relative h-2 w-full cursor-pointer touch-none border-2 border-black bg-white"
-      >
-        <div className="absolute inset-y-0 left-0 bg-neutral-400" style={{ width: `${bufferedPct}%` }} />
-        <div className="absolute inset-y-0 left-0 bg-brut-red transition-none" style={{ width: `${progress}%` }} />
       </div>
       {error && (
         <p className="font-mono text-[10px] font-bold text-brut-red">

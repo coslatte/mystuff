@@ -35,4 +35,5 @@ export type SoundCloudAlbum = {
   setType?: string;
   url: string;
   artist?: string;
+  embedHeight?: number;
 };

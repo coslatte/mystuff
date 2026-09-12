@@ -15,6 +15,8 @@ public class SoundCloudService {
 
     private static final String API_BASE = "https://api-v2.soundcloud.com";
     private static final long ALBUMS_CACHE_TTL_MS = 10 * 60 * 1000L;
+    /** SoundCloud's default embed height for a playlist/set. */
+    private static final int DEFAULT_EMBED_HEIGHT = 450;
 
     private final RestClient restClient;
     private final String clientId;
@@ -76,7 +78,8 @@ public class SoundCloudService {
                         null,
                         null,
                         "album",
-                        "https://soundcloud.com/cosmiclattemusic/sets/amb-album"),
+                        "https://soundcloud.com/cosmiclattemusic/sets/amb-album",
+                        DEFAULT_EMBED_HEIGHT),
                 new SoundCloudAlbumDto(
                         "en-futuro-ep",
                         "en futuro",
@@ -84,7 +87,8 @@ public class SoundCloudService {
                         null,
                         null,
                         "ep",
-                        "https://soundcloud.com/cosmiclattemusic/sets/en-futuro-ep"),
+                        "https://soundcloud.com/cosmiclattemusic/sets/en-futuro-ep",
+                        DEFAULT_EMBED_HEIGHT),
                 new SoundCloudAlbumDto(
                         "discography",
                         "discography",
@@ -92,20 +96,25 @@ public class SoundCloudService {
                         null,
                         null,
                         "compilation",
-                        "https://soundcloud.com/cosmiclattemusic/sets/discography")
+                        "https://soundcloud.com/cosmiclattemusic/sets/discography",
+                        DEFAULT_EMBED_HEIGHT)
         );
     }
 
-    private String fetchArtworkViaOEmbed(String permalinkUrl) {
+    /**
+     * Resolves SoundCloud's public oEmbed payload for a resource. It carries the
+     * canonical embed height (450 for sets) and a thumbnail, so the UI can size
+     * the iframe to exactly what SoundCloud renders instead of guessing.
+     */
+    private SoundCloudOEmbed fetchOEmbed(String permalinkUrl) {
         if (permalinkUrl == null || permalinkUrl.isBlank()) return null;
         try {
             String oEmbedUrl = "https://soundcloud.com/oembed?format=json&url="
                     + URLEncoder.encode(permalinkUrl, StandardCharsets.UTF_8);
-            SoundCloudOEmbed oEmbed = restClient.get()
+            return restClient.get()
                     .uri(oEmbedUrl)
                     .retrieve()
                     .body(SoundCloudOEmbed.class);
-            return oEmbed != null ? oEmbed.thumbnail_url() : null;
         } catch (Exception ignored) {
             return null;
         }
@@ -137,9 +146,16 @@ public class SoundCloudService {
                 releaseDate = releaseDate.substring(0, 4);
             }
             String artwork = item.artwork_url();
+            SoundCloudOEmbed oEmbed = null;
             if (artwork == null || artwork.isBlank()) {
-                artwork = fetchArtworkViaOEmbed(item.permalink_url());
+                oEmbed = fetchOEmbed(item.permalink_url());
+                if (oEmbed != null) {
+                    artwork = oEmbed.thumbnail_url();
+                }
             }
+            Integer embedHeight = oEmbed != null && oEmbed.height() != null
+                    ? oEmbed.height()
+                    : DEFAULT_EMBED_HEIGHT;
             albums.add(new SoundCloudAlbumDto(
                     String.valueOf(item.id()),
                     item.title(),
@@ -147,7 +163,8 @@ public class SoundCloudService {
                     item.track_count() != null && item.track_count() > 0 ? item.track_count() : null,
                     releaseDate,
                     item.set_type() == null ? "album" : item.set_type(),
-                    item.permalink_url()
+                    item.permalink_url(),
+                    embedHeight
             ));
         }
         return albums;
@@ -171,6 +188,6 @@ public class SoundCloudService {
     private record SoundCloudUser(Long id) {
     }
 
-    private record SoundCloudOEmbed(String thumbnail_url) {
+    private record SoundCloudOEmbed(String thumbnail_url, Integer height, String width) {
     }
 }

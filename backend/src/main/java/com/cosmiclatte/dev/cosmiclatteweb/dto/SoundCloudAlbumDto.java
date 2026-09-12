@@ -7,6 +7,7 @@ public record SoundCloudAlbumDto(
         Integer trackCount,
         String releaseDate,
         String setType,
-        String url
+        String url,
+        Integer embedHeight
 ) {
 }
