@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../services/api";
 import { getVisitorId } from "../lib/visitor";
-import type { Song, SoundCloudAlbum } from "../types";
+import type { Album, Song, StreamingPlatform } from "../types";
+import { activeLink, spotifyEmbedUrl, STREAMING_PLATFORMS, toAlbums } from "../data/streaming-albums";
 import { usePlayer } from "../hooks/usePlayer";
 import PlayerBar from "./PlayerBar";
 import TrackBlock from "./TrackBlock";
@@ -17,7 +18,10 @@ const SC_TRACK_ROW_PX = 32;
 const SC_MIN_HEIGHT_PX = 180;
 const SC_BOTTOM_BUFFER_PX = 8;
 
-function albumEmbedHeight(album: SoundCloudAlbum): number {
+// Spotify's album embed ships a fixed 352px frame.
+const SPOTIFY_EMBED_HEIGHT = 352;
+
+function albumEmbedHeight(album: Album): number {
   const trackCount = album.trackCount ?? 0;
   if (trackCount > 0) {
     return Math.max(
@@ -49,10 +53,11 @@ export default function MusicSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
 
-  const [albums, setAlbums] = useState<SoundCloudAlbum[]>([]);
+  const [albums, setAlbums] = useState<Album[]>([]);
   const [albumsLoading, setAlbumsLoading] = useState(true);
   const [albumsError, setAlbumsError] = useState<unknown>(null);
   const [openAlbumId, setOpenAlbumId] = useState<string | null>(null);
+  const [platform, setPlatform] = useState<StreamingPlatform>("soundcloud");
 
   // Cold-start awareness: the API may be waking up, so we surface real
   // progress (health probe answered?) instead of an opaque "loading".
@@ -83,7 +88,7 @@ export default function MusicSection() {
     setAlbumsLoading(true);
     setAlbumsError(null);
     try {
-      setAlbums(await api.getSoundCloudAlbums());
+      setAlbums(toAlbums(await api.getSoundCloudAlbums()));
     } catch (e) {
       setAlbumsError(e);
     } finally {
@@ -198,9 +203,27 @@ export default function MusicSection() {
 
       <div className="grid grid-cols-1 laptop:grid-cols-2">
         <section className="flex flex-col border-b-2 border-black laptop:border-b-0 laptop:border-r-2">
-          <h3 className="border-b-2 border-black bg-brut-yellow p-3 font-display text-lg font-bold laptop:text-xl">
-            albums
-          </h3>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-black bg-brut-yellow p-3">
+            <h3 className="font-display text-lg font-bold laptop:text-xl">albums</h3>
+            <div className="flex items-center gap-1">
+              <span className="hidden font-mono text-[10px] font-bold sm:inline">listen on</span>
+              {STREAMING_PLATFORMS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setPlatform(option.id)}
+                  aria-pressed={platform === option.id}
+                  className={`border-2 border-black px-2 py-1 font-mono text-[10px] font-bold transition-colors ${
+                    platform === option.id
+                      ? "bg-black text-white"
+                      : "bg-white hover:bg-black hover:text-white"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="flex flex-col gap-2 bg-neutral-100 p-3 tablet:p-4 laptop:p-5">
             {albumsLoading && <p className="font-mono text-xs">loading albums...</p>}
             {albumsError != null && <ErrorNotice error={albumsError} onRetry={loadAlbums} />}
@@ -209,6 +232,11 @@ export default function MusicSection() {
             )}
             {albums.map((album) => {
               const open = openAlbumId === album.id;
+              const link = activeLink(album, platform);
+              const embedSrc =
+                link.platform === "spotify" ? spotifyEmbedUrl(link.url) : soundCloudEmbedUrl(link.url);
+              const embedHeight =
+                link.platform === "spotify" ? SPOTIFY_EMBED_HEIGHT : albumEmbedHeight(album);
               return (
                 <div key={album.id} className="border-2 border-black bg-white">
                   <div className="flex items-center gap-2 p-2">
@@ -239,25 +267,39 @@ export default function MusicSection() {
                       </span>
                     </button>
                     <a
-                      href={album.url}
+                      href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      aria-label={`open ${album.title} on soundcloud`}
+                      aria-label={`open ${album.title} on ${link.platform}`}
                       className="shrink-0 border-2 border-black bg-white px-2 py-1 font-mono text-xs hover:bg-brut-yellow"
                     >
                       ↗
                     </a>
                   </div>
                   {open && (
-                    <iframe
-                      title={`${album.title} player`}
-                      allow="autoplay"
-                      loading="lazy"
-                      scrolling="no"
-                      className="block w-full border-t-2 border-black"
-                      style={{ height: `${albumEmbedHeight(album)}px` }}
-                      src={soundCloudEmbedUrl(album.url)}
-                    />
+                    <>
+                      <div className="flex items-center justify-between gap-2 border-t-2 border-black bg-neutral-100 px-2 py-1">
+                        <span className="font-mono text-[10px] text-gray-600">
+                          playing from {link.platform}
+                        </span>
+                        {link.platform !== platform && (
+                          <span className="font-mono text-[10px] font-bold text-brut-red">
+                            not on {platform}
+                          </span>
+                        )}
+                      </div>
+                      {embedSrc && (
+                        <iframe
+                          title={`${album.title} player`}
+                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                          loading="lazy"
+                          scrolling="no"
+                          className="block w-full border-t-2 border-black"
+                          style={{ height: `${embedHeight}px` }}
+                          src={embedSrc}
+                        />
+                      )}
+                    </>
                   )}
                 </div>
               );

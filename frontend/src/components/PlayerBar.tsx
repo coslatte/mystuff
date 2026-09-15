@@ -6,11 +6,18 @@ import { usePlayer } from "../hooks/usePlayer";
 // from this width up, so decoding the waveform on phones is wasted work.
 const LAPTOP_QUERY = "(min-width: 64rem)";
 
-// The canvas is painted at a fixed backing resolution and scaled down by CSS,
-// so the bars stay crisp on retina screens. One bar every 3 backing pixels
+// Live spectrum: logarithmic frequency mapping so sub-bass content is visible.
+const SPECTRUM_BARS = 800;
+const MIN_HZ = 30;
+const MAX_HZ = 16000;
+const MIN_LOG = Math.log10(MIN_HZ);
+const MAX_LOG = Math.log10(MAX_HZ);
+
+// Static waveform: painted at a fixed backing resolution and scaled down by
+// CSS, so the bars stay crisp on retina screens. One bar every 3 backing pixels
 // gives a dense, SoundCloud-like waveform without hurting paint cost.
-const CANVAS_WIDTH = 1600;
-const CANVAS_HEIGHT = 96;
+const WAVE_WIDTH = 1600;
+const WAVE_HEIGHT = 96;
 const BAR_PITCH = 3;
 
 function formatTime(seconds: number) {
@@ -45,7 +52,9 @@ export default function PlayerBar() {
   const { song, isPlaying, currentTime, duration, error } = usePlayer();
   const [decoded, setDecoded] = useState<WaveformPeaks | null>(null);
   const [visible, setVisible] = useState(false);
+  const spectrumRef = useRef<HTMLCanvasElement>(null);
   const waveformRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number | null>(null);
   const seekBarRef = useRef<HTMLDivElement>(null);
   const scrubbingRef = useRef(false);
 
@@ -73,6 +82,53 @@ export default function PlayerBar() {
 
   const fallback = useMemo(() => (song ? syntheticPeaks(song.id) : null), [song?.id]);
   const peaks = decoded ?? fallback;
+
+  // Live frequency spectrum. Real-time analyser output, so it needs its own
+  // animation frame loop to stay fluid.
+  const drawSpectrum = useCallback(() => {
+    const canvas = spectrumRef.current;
+    if (!canvas) return;
+    const cctx = canvas.getContext("2d");
+    if (!cctx) return;
+    const width = canvas.width;
+    const height = canvas.height;
+    cctx.clearRect(0, 0, width, height);
+
+    const analyser = player.getAnalyser();
+    let bands: Uint8Array<ArrayBuffer> | null = null;
+    if (analyser && isPlaying) {
+      bands = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
+      analyser.getByteFrequencyData(bands);
+    }
+    const sampleRate = analyser ? analyser.context.sampleRate : 44100;
+    const fftSize = analyser ? analyser.fftSize : 4096;
+    const binHz = sampleRate / fftSize;
+    const maxBin = bands ? bands.length - 1 : Math.floor(fftSize / 2) - 1;
+    const bw = width / SPECTRUM_BARS;
+
+    for (let i = 0; i < SPECTRUM_BARS; i++) {
+      const freq = Math.pow(10, MIN_LOG + (i / SPECTRUM_BARS) * (MAX_LOG - MIN_LOG));
+      const bin = Math.min(maxBin, Math.max(0, Math.round(freq / binHz)));
+      const value = bands ? bands[bin] / 255 : 0.12;
+      const bh = Math.max(3, value * height);
+      const x = i * bw + bw * 0.12;
+      cctx.fillStyle = "#ffffff";
+      cctx.fillRect(x, height - bh, bw * 0.76, bh);
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const animate = () => {
+      drawSpectrum();
+      rafRef.current = requestAnimationFrame(animate);
+    };
+    rafRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    };
+  }, [visible, drawSpectrum]);
 
   // Static song waveform: doubles as the seek slider and the progress fill.
   // The played portion is painted red, the rest white, like SoundCloud.
@@ -151,26 +207,8 @@ export default function PlayerBar() {
           </span>
         </button>
 
-        <div
-          ref={seekBarRef}
-          role="slider"
-          aria-label="seek"
-          aria-valuemin={0}
-          aria-valuemax={Math.round(duration) || 0}
-          aria-valuenow={Math.round(currentTime)}
-          tabIndex={0}
-          onPointerDown={(e) => {
-            scrubbingRef.current = true;
-            seekFromPointer(e.clientX);
-          }}
-          className="relative h-12 flex-1 cursor-pointer touch-none border-2 border-black bg-black p-1"
-        >
-          <canvas
-            ref={waveformRef}
-            width={CANVAS_WIDTH}
-            height={CANVAS_HEIGHT}
-            className="block h-full w-full"
-          />
+        <div className="flex-1 border-2 border-black bg-black p-1" aria-hidden="true">
+          <canvas ref={spectrumRef} width={1600} height={88} className="block h-12 w-full" />
         </div>
 
         <div className="shrink-0 border-2 border-black bg-white px-2 py-1 font-mono text-xs font-bold text-black">
@@ -178,9 +216,31 @@ export default function PlayerBar() {
         </div>
       </div>
 
+      <div
+        ref={seekBarRef}
+        role="slider"
+        aria-label="seek"
+        aria-valuemin={0}
+        aria-valuemax={Math.round(duration) || 0}
+        aria-valuenow={Math.round(currentTime)}
+        tabIndex={0}
+        onPointerDown={(e) => {
+          scrubbingRef.current = true;
+          seekFromPointer(e.clientX);
+        }}
+        className="relative h-10 cursor-pointer touch-none border-2 border-black bg-black p-1"
+      >
+        <canvas
+          ref={waveformRef}
+          width={WAVE_WIDTH}
+          height={WAVE_HEIGHT}
+          className="block h-full w-full"
+        />
+      </div>
+
       {error && (
         <p className="font-mono text-[10px] font-bold text-brut-red">
-          playback error — could not stream this track.
+          playback error: could not stream this track. check your internet connectivity.
         </p>
       )}
     </div>

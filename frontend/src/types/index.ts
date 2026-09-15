@@ -37,3 +37,22 @@ export type SoundCloudAlbum = {
   artist?: string;
   embedHeight?: number;
 };
+
+export type StreamingPlatform = "soundcloud" | "spotify";
+
+export type AlbumLink = {
+  platform: StreamingPlatform;
+  url: string;
+};
+
+export type Album = {
+  id: string;
+  title: string;
+  artworkUrl?: string;
+  trackCount?: number;
+  releaseDate?: string;
+  setType?: string;
+  artist?: string;
+  links: AlbumLink[];
+  embedHeight?: number;
+};

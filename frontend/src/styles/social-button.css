@@ -1,20 +1,18 @@
 /*
  * Social buttons.
- * Always rendered in their expanded form (icon + name side by side), on every
- * viewport: they never collapse to a compact icon-only square and never start
- * small. The only motion is the background switching to black and the name
- * rolling up into a fresh copy, so nothing changes size or causes layout shift.
+ * Resting state is icon-only (just the platform logo). On hover/focus the
+ * platform name is revealed next to the icon and the background switches to
+ * black. Only the name and the background animate, so nothing else jumps.
  */
 .soc {
   --brand: #000;
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
   border: 2px solid #000;
   background: var(--brand);
   color: #fff;
-  padding: 0.5rem 0.85rem;
+  padding: 0.55rem;
   font-family: var(--font-mono);
   font-weight: 700;
   font-size: 0.75rem;
@@ -48,40 +46,31 @@
   fill: #fff;
 }
 
-/* Name is always visible; on hover it rolls up and a copy takes its place. */
+/* Name hidden at rest; on hover/focus it slides out to the right of the icon. */
 .soc__name {
   display: inline-block;
+  max-width: 0;
+  padding-left: 0;
+  opacity: 0;
   overflow: hidden;
-  height: 1.2em;
-}
-
-.soc__name-inner {
-  display: flex;
-  flex-direction: column;
-  transform: translateY(0);
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.soc__name-a,
-.soc__name-b {
-  display: block;
-  height: 1.2em;
-  line-height: 1.2;
   white-space: nowrap;
+  line-height: 1.2;
+  transition:
+    max-width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    padding-left 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.25s ease;
 }
 
-.soc:hover .soc__name-inner,
-.soc:focus-visible .soc__name-inner {
-  transform: translateY(-1.2em);
+.soc:hover .soc__name,
+.soc:focus-visible .soc__name {
+  max-width: 10rem;
+  padding-left: 0.5rem;
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .soc,
-  .soc__name-inner {
+  .soc__name {
     transition: none;
-  }
-  .soc:hover .soc__name-inner,
-  .soc:focus-visible .soc__name-inner {
-    transform: none;
   }
 }
