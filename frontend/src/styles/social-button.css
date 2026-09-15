@@ -1,8 +1,9 @@
 /*
  * Social buttons.
- * Always rendered in their expanded form (icon + name side by side). The
- * only motion is the background switching to black and the name rolling
- * up into a fresh copy, so nothing changes size or causes layout shift.
+ * Always rendered in their expanded form (icon + name side by side), on every
+ * viewport: they never collapse to a compact icon-only square and never start
+ * small. The only motion is the background switching to black and the name
+ * rolling up into a fresh copy, so nothing changes size or causes layout shift.
  */
 .soc {
   --brand: #000;
@@ -51,8 +52,7 @@
 .soc__name {
   display: inline-block;
   overflow: hidden;
-  height: 1em;
-  line-height: 1;
+  height: 1.2em;
 }
 
 .soc__name-inner {
@@ -65,14 +65,14 @@
 .soc__name-a,
 .soc__name-b {
   display: block;
-  height: 1em;
-  line-height: 1;
+  height: 1.2em;
+  line-height: 1.2;
   white-space: nowrap;
 }
 
 .soc:hover .soc__name-inner,
 .soc:focus-visible .soc__name-inner {
-  transform: translateY(-1em);
+  transform: translateY(-1.2em);
 }
 
 @media (prefers-reduced-motion: reduce) {

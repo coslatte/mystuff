@@ -8,6 +8,26 @@ import TrackBlock from "./TrackBlock";
 import ErrorNotice from "./ErrorNotice";
 import LoadingTracks from "./LoadingTracks";
 
+// SoundCloud's oEmbed always reports 450px for a set, which leaves empty space
+// under short albums and clips long ones. The widget renders a fixed header
+// (artwork + playlist title + controls) followed by one ~32px row per track, so
+// we derive the height from the track count and let the container grow with it.
+const SC_HEADER_PX = 100;
+const SC_TRACK_ROW_PX = 32;
+const SC_MIN_HEIGHT_PX = 180;
+const SC_BOTTOM_BUFFER_PX = 8;
+
+function albumEmbedHeight(album: SoundCloudAlbum): number {
+  const trackCount = album.trackCount ?? 0;
+  if (trackCount > 0) {
+    return Math.max(
+      SC_MIN_HEIGHT_PX,
+      SC_HEADER_PX + trackCount * SC_TRACK_ROW_PX + SC_BOTTOM_BUFFER_PX
+    );
+  }
+  return album.embedHeight ?? 450;
+}
+
 function soundCloudEmbedUrl(albumUrl: string) {
   const params = new URLSearchParams({
     url: albumUrl,
@@ -18,7 +38,7 @@ function soundCloudEmbedUrl(albumUrl: string) {
     show_user: "true",
     show_reposts: "false",
     show_teaser: "false",
-    visual: "true",
+    visual: "false",
   });
   return `https://w.soundcloud.com/player/?${params.toString()}`;
 }
@@ -77,16 +97,21 @@ export default function MusicSection() {
   }, [loadSongs, loadAlbums]);
 
   // Poll the public health endpoint until the server answers. Each failed
-  // probe is retried, so a cold backend eventually flips this to ready.
+  // probe is retried, so a cold backend eventually flips this to ready; the
+  // retry budget is capped so a permanently down API never polls forever.
   useEffect(() => {
     let cancelled = false;
     let retry: ReturnType<typeof setTimeout> | undefined;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 30;
     const ping = async () => {
       try {
         await api.health();
         if (!cancelled) setServerReady(true);
       } catch {
-        if (!cancelled) retry = setTimeout(ping, 3000);
+        if (!cancelled && attempts++ < MAX_ATTEMPTS) {
+          retry = setTimeout(ping, 3000);
+        }
       }
     };
     ping();
@@ -156,7 +181,6 @@ export default function MusicSection() {
         <div className="border-2 border-black bg-black p-3">
           {currentSong ? (
             <p className="font-mono text-xs font-bold leading-tight normal-case text-white">
-              now playing —{" "}
               <span className="text-brut-red">{currentSong.title}</span>
               <span className="text-white">
                 {currentSong.artist ? ` · ${currentSong.artist}` : ""}
@@ -231,7 +255,7 @@ export default function MusicSection() {
                       loading="lazy"
                       scrolling="no"
                       className="block w-full border-t-2 border-black"
-                      style={{ height: `${album.embedHeight ?? 450}px` }}
+                      style={{ height: `${albumEmbedHeight(album)}px` }}
                       src={soundCloudEmbedUrl(album.url)}
                     />
                   )}

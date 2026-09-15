@@ -24,12 +24,11 @@ export default function NowPlaying() {
             : "bg-brut-yellow text-black hover:bg-black hover:text-white"
         }`}
       >
-        <span key={isPlaying} className="icon-morph">
+        <span key={isPlaying ? "pause" : "play"} className="icon-morph">
           {isPlaying ? "𐋃" : "▶"}
         </span>
       </button>
       <p className="truncate font-mono text-xs font-bold leading-tight normal-case text-white">
-        now playing —{" "}
         <span className="text-brut-red">{song.title}</span>
         <span className="text-white">
           {song.artist ? ` · ${song.artist}` : ""}
