@@ -18,8 +18,13 @@ const SC_TRACK_ROW_PX = 32;
 const SC_MIN_HEIGHT_PX = 180;
 const SC_BOTTOM_BUFFER_PX = 8;
 
-// Spotify's album embed ships a fixed 352px frame.
-const SPOTIFY_EMBED_HEIGHT = 352;
+// Spotify's album embed stacks a ~232px cover/metadata header over a track
+// list that grows with the iframe height, so we size it to the track count
+// instead of leaving it at the fixed 352px frame (which clips long albums).
+const SPOTIFY_HEADER_PX = 232;
+const SPOTIFY_TRACK_ROW_PX = 32;
+const SPOTIFY_MIN_HEIGHT_PX = 352;
+const SPOTIFY_BOTTOM_BUFFER_PX = 8;
 
 function albumEmbedHeight(album: Album): number {
   const trackCount = album.trackCount ?? 0;
@@ -30,6 +35,17 @@ function albumEmbedHeight(album: Album): number {
     );
   }
   return album.embedHeight ?? 450;
+}
+
+function spotifyEmbedHeight(album: Album): number {
+  const trackCount = album.trackCount ?? 0;
+  if (trackCount > 0) {
+    return Math.max(
+      SPOTIFY_MIN_HEIGHT_PX,
+      SPOTIFY_HEADER_PX + trackCount * SPOTIFY_TRACK_ROW_PX + SPOTIFY_BOTTOM_BUFFER_PX
+    );
+  }
+  return SPOTIFY_MIN_HEIGHT_PX;
 }
 
 function soundCloudEmbedUrl(albumUrl: string) {
@@ -236,9 +252,9 @@ export default function MusicSection() {
               const embedSrc =
                 link.platform === "spotify" ? spotifyEmbedUrl(link.url) : soundCloudEmbedUrl(link.url);
               const embedHeight =
-                link.platform === "spotify" ? SPOTIFY_EMBED_HEIGHT : albumEmbedHeight(album);
+                link.platform === "spotify" ? spotifyEmbedHeight(album) : albumEmbedHeight(album);
               return (
-                <div key={album.id} className="border-2 border-black bg-white">
+                <div key={album.id} className="min-w-0 border-2 border-black bg-white">
                   <div className="flex items-center gap-2 p-2">
                     <button
                       type="button"
@@ -293,7 +309,7 @@ export default function MusicSection() {
                           title={`${album.title} player`}
                           allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                           loading="lazy"
-                          scrolling="no"
+                          scrolling={link.platform === "soundcloud" ? "no" : undefined}
                           className="block w-full border-t-2 border-black"
                           style={{ height: `${embedHeight}px` }}
                           src={embedSrc}

@@ -63,10 +63,11 @@ export function toAlbums(soundcloud: SoundCloudAlbum[]): Album[] {
   });
 
   const titles = new Set(albums.map((album) => normalizeTitle(album.title)));
-  for (const extra of STANDALONE_ALBUMS) {
-    if (!titles.has(normalizeTitle(extra.title))) albums.push(extra);
-  }
-  return albums;
+  const extras = STANDALONE_ALBUMS.filter(
+    (extra) => !titles.has(normalizeTitle(extra.title))
+  );
+  // Standalone releases (newest first) lead the list, then the SoundCloud ones.
+  return [...extras, ...albums];
 }
 
 // The platform that will actually be used for an album, falling back to the
