@@ -1,24 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { computeWaveform, player, type WaveformPeaks } from "../services/player";
 import { usePlayer } from "../hooks/usePlayer";
 
-// Matches the `laptop` breakpoint in global.css: the bar is only rendered
-// from this width up, so decoding the waveform on phones is wasted work.
-const LAPTOP_QUERY = "(min-width: 64rem)";
-
-// Live spectrum: logarithmic frequency mapping so sub-bass content is visible.
-const SPECTRUM_BARS = 800;
+// Logarithmic frequency mapping so sub-bass content is visible.
 const MIN_HZ = 30;
 const MAX_HZ = 16000;
 const MIN_LOG = Math.log10(MIN_HZ);
 const MAX_LOG = Math.log10(MAX_HZ);
 
-// Static waveform: painted at a fixed backing resolution and scaled down by
-// CSS, so the bars stay crisp on retina screens. One bar every 3 backing pixels
-// gives a dense, SoundCloud-like waveform without hurting paint cost.
-const WAVE_WIDTH = 1600;
-const WAVE_HEIGHT = 96;
-const BAR_PITCH = 3;
+// One bar every N device pixels. Because the backing store tracks the real
+// rendered width (see useCanvasSize), phones get fewer, thicker bars instead
+// of hundreds of sub-pixel ones.
+const SPECTRUM_BAR_PITCH = 3;
+const WAVE_BAR_PITCH = 3;
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -26,6 +20,31 @@ function formatTime(seconds: number) {
   const m = Math.floor(total / 60);
   const s = total % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+// Keeps a canvas backing store in sync with its rendered size and pixel ratio.
+function useCanvasSize(ref: RefObject<HTMLCanvasElement | null>) {
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const measure = () => {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const width = Math.max(1, Math.round(rect.width * dpr));
+      const height = Math.max(1, Math.round(rect.height * dpr));
+      setSize((prev) => (prev.width === width && prev.height === height ? prev : { width, height }));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(canvas);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [ref]);
+  return size;
 }
 
 // Deterministic envelope used when a track cannot be decoded (e.g. a signed
@@ -51,23 +70,17 @@ function syntheticPeaks(seed: number): WaveformPeaks {
 export default function PlayerBar() {
   const { song, isPlaying, currentTime, duration, error } = usePlayer();
   const [decoded, setDecoded] = useState<WaveformPeaks | null>(null);
-  const [visible, setVisible] = useState(false);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const waveformRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
   const seekBarRef = useRef<HTMLDivElement>(null);
   const scrubbingRef = useRef(false);
 
-  useEffect(() => {
-    const mq = window.matchMedia(LAPTOP_QUERY);
-    const update = () => setVisible(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
+  const spectrumSize = useCanvasSize(spectrumRef);
+  const waveSize = useCanvasSize(waveformRef);
 
   useEffect(() => {
-    if (!visible || !song?.audioUrl) {
+    if (!song?.audioUrl) {
       setDecoded(null);
       return;
     }
@@ -78,13 +91,13 @@ export default function PlayerBar() {
     return () => {
       cancelled = true;
     };
-  }, [visible, song?.id, song?.audioUrl]);
+  }, [song?.id, song?.audioUrl]);
 
   const fallback = useMemo(() => (song ? syntheticPeaks(song.id) : null), [song?.id]);
   const peaks = decoded ?? fallback;
 
-  // Live frequency spectrum. Real-time analyser output, so it needs its own
-  // animation frame loop to stay fluid.
+  // Live frequency spectrum. Real-time analyser output, so it animates while
+  // playing and paints a single idle frame otherwise.
   const drawSpectrum = useCallback(() => {
     const canvas = spectrumRef.current;
     if (!canvas) return;
@@ -92,6 +105,7 @@ export default function PlayerBar() {
     if (!cctx) return;
     const width = canvas.width;
     const height = canvas.height;
+    if (width < 2 || height < 2) return;
     cctx.clearRect(0, 0, width, height);
 
     const analyser = player.getAnalyser();
@@ -104,13 +118,14 @@ export default function PlayerBar() {
     const fftSize = analyser ? analyser.fftSize : 4096;
     const binHz = sampleRate / fftSize;
     const maxBin = bands ? bands.length - 1 : Math.floor(fftSize / 2) - 1;
-    const bw = width / SPECTRUM_BARS;
+    const bars = Math.max(1, Math.floor(width / SPECTRUM_BAR_PITCH));
+    const bw = width / bars;
 
-    for (let i = 0; i < SPECTRUM_BARS; i++) {
-      const freq = Math.pow(10, MIN_LOG + (i / SPECTRUM_BARS) * (MAX_LOG - MIN_LOG));
+    for (let i = 0; i < bars; i++) {
+      const freq = Math.pow(10, MIN_LOG + (i / bars) * (MAX_LOG - MIN_LOG));
       const bin = Math.min(maxBin, Math.max(0, Math.round(freq / binHz)));
       const value = bands ? bands[bin] / 255 : 0.12;
-      const bh = Math.max(3, value * height);
+      const bh = Math.max(2, value * height);
       const x = i * bw + bw * 0.12;
       cctx.fillStyle = "#ffffff";
       cctx.fillRect(x, height - bh, bw * 0.76, bh);
@@ -118,7 +133,16 @@ export default function PlayerBar() {
   }, [isPlaying]);
 
   useEffect(() => {
-    if (!visible) return;
+    const canvas = spectrumRef.current;
+    if (!canvas || spectrumSize.width < 2) return;
+    if (canvas.width !== spectrumSize.width) canvas.width = spectrumSize.width;
+    if (canvas.height !== spectrumSize.height) canvas.height = spectrumSize.height;
+    drawSpectrum();
+  }, [spectrumSize.width, spectrumSize.height, drawSpectrum]);
+
+  useEffect(() => {
+    drawSpectrum();
+    if (!isPlaying) return;
     const animate = () => {
       drawSpectrum();
       rafRef.current = requestAnimationFrame(animate);
@@ -128,7 +152,7 @@ export default function PlayerBar() {
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-  }, [visible, drawSpectrum]);
+  }, [isPlaying, drawSpectrum]);
 
   // Static song waveform: doubles as the seek slider and the progress fill.
   // The played portion is painted red, the rest white, like SoundCloud.
@@ -139,9 +163,10 @@ export default function PlayerBar() {
     if (!cctx) return;
     const width = canvas.width;
     const height = canvas.height;
+    if (width < 2 || height < 2) return;
     cctx.clearRect(0, 0, width, height);
 
-    const bars = Math.max(1, Math.floor(width / BAR_PITCH));
+    const bars = Math.max(1, Math.floor(width / WAVE_BAR_PITCH));
     const barW = width / bars;
     const mid = height / 2;
     const progress = duration > 0 ? Math.min(1, currentTime / duration) : 0;
@@ -153,7 +178,7 @@ export default function PlayerBar() {
         const idx = Math.min(peaks.length - 1, Math.floor((i / bars) * peaks.length));
         value = peaks[idx];
       }
-      const bh = Math.max(3, value * height * 0.92);
+      const bh = Math.max(2, value * height * 0.92);
       const x = i * barW + barW * 0.18;
       const w = Math.max(1, barW * 0.64);
       cctx.fillStyle = i < played ? "#ff3300" : "#ffffff";
@@ -162,8 +187,12 @@ export default function PlayerBar() {
   }, [peaks, currentTime, duration]);
 
   useEffect(() => {
-    if (visible) drawWaveform();
-  }, [visible, drawWaveform]);
+    const canvas = waveformRef.current;
+    if (!canvas || waveSize.width < 2) return;
+    if (canvas.width !== waveSize.width) canvas.width = waveSize.width;
+    if (canvas.height !== waveSize.height) canvas.height = waveSize.height;
+    drawWaveform();
+  }, [waveSize.width, waveSize.height, drawWaveform]);
 
   const seekFromPointer = useCallback((clientX: number) => {
     const bar = seekBarRef.current;
@@ -182,20 +211,22 @@ export default function PlayerBar() {
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
     return () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
     };
   }, [seekFromPointer]);
 
   return (
     <div className="flex w-full flex-col gap-2">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 laptop:gap-3">
         <button
           type="button"
           onClick={() => player.toggle()}
           disabled={!song}
-          className={`flex h-12 w-12 shrink-0 items-center justify-center border-2 border-black text-xl font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+          className={`flex h-11 w-11 shrink-0 items-center justify-center border-2 border-black text-lg font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40 laptop:h-12 laptop:w-12 laptop:text-xl ${
             isPlaying
               ? "bg-brut-red text-white hover:bg-black hover:text-white"
               : "bg-brut-yellow text-black hover:bg-black hover:text-white"
@@ -207,11 +238,11 @@ export default function PlayerBar() {
           </span>
         </button>
 
-        <div className="flex-1 border-2 border-black bg-black p-1" aria-hidden="true">
-          <canvas ref={spectrumRef} width={1600} height={88} className="block h-12 w-full" />
+        <div className="min-w-0 flex-1 border-2 border-black bg-black p-1" aria-hidden="true">
+          <canvas ref={spectrumRef} className="block h-10 w-full laptop:h-12" />
         </div>
 
-        <div className="shrink-0 border-2 border-black bg-white px-2 py-1 font-mono text-xs font-bold text-black">
+        <div className="shrink-0 border-2 border-black bg-white px-2 py-1 font-mono text-[10px] font-bold text-black laptop:text-xs">
           {formatTime(currentTime)}
         </div>
       </div>
@@ -230,12 +261,7 @@ export default function PlayerBar() {
         }}
         className="relative h-10 cursor-pointer touch-none border-2 border-black bg-black p-1"
       >
-        <canvas
-          ref={waveformRef}
-          width={WAVE_WIDTH}
-          height={WAVE_HEIGHT}
-          className="block h-full w-full"
-        />
+        <canvas ref={waveformRef} className="block h-full w-full" />
       </div>
 
       {error && (

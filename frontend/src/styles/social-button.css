@@ -68,6 +68,18 @@
   opacity: 1;
 }
 
+/*
+ * Touch devices have no hover, so the name would never appear. Show it at all
+ * times there instead.
+ */
+@media (hover: none) {
+  .soc__name {
+    max-width: 10rem;
+    padding-left: 0.5rem;
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .soc,
   .soc__name {
