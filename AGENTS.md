@@ -1,21 +1,33 @@
 # Project Guidelines
 
-## Language — English Only for Code & Commits
-- **All commits MUST be written in English** — title and body. This is required for homogeneity across the codebase and team.
-- Use **Conventional Commits**: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`, `perf:`, `build:`, `ci:`
-- Example: `feat: add admin song upload endpoint` — NOT `feat: agregar endpoint de subida`
-- All code, comments, PR descriptions, branch names, and documentation must also be in English.
-- Agent responses to the user may be in Spanish when the user writes in Spanish, but any artifact that touches git (commit messages, PR titles) must be in English.
+## Language: English only for code and commits
+- Every commit must be in English, title and body. The codebase and the team are
+  mixed, so this is not optional.
+- Use Conventional Commits: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`, `perf:`, `build:`, `ci:`, `revert:`
+- Example: `feat: add admin song upload endpoint`, never `feat: agregar endpoint de subida`
+- Code, comments, PR descriptions, branch names and docs follow the same rule.
+- Replies to the user may be in Spanish when the user writes in Spanish. Anything
+  that reaches git stays in English.
 
-## Skills for Agents
-- Agents MUST load and follow project skills under `.opencode/skills/*/SKILL.md` when relevant.
-- Before coding, check available skills via `skills` scope in opencode and load the matching one.
-- Key skill: `english-commits` — enforces English conventional commits (see `.opencode/skills/english-commits/SKILL.md`).
+## Skills for agents
+- Load the matching skill from `.opencode/skills/*/SKILL.md` before coding.
+  Check the `skills` scope in opencode first.
+- Use `english-commits`
+  (`.opencode/skills/english-commits/SKILL.md`) for anything reaching git.
 
 ## General
-- Prefer editing existing files over creating new ones.
-- Verify changes by running relevant tests/builds when applicable.
-- Keep commits atomic and messages concise (max 72 chars for subject line).
+- Edit existing files instead of creating new ones.
+- Run the relevant tests or build to verify a change.
+- Keep commits atomic, with a subject line of at most 72 characters.
+
+## Frontend
+- Read `docs/frontend-architecture.md` before adding a component or changing how
+  data is fetched. It records the rules that decide `.astro` vs `.tsx`, what may
+  render on the server, and where shared helpers live.
+- Run `bun run check` from `frontend/` before committing. `astro build`
+  transpiles without type checking, so a build alone proves nothing about types.
+- After changing a Java DTO or a controller signature, run `bun run gen:api`
+  from `frontend/` with the API up. See `frontend/src/lib/api/README.md`.
 
 <!-- codebase-memory-mcp:start -->
 # Codebase Memory

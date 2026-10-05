@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   backend:
@@ -12,6 +12,29 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    services:
+      # `@SpringBootTest` boots Flyway and Hibernate against a real database, so
+      # `./mvnw verify` cannot pass without one.
+      db:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: cosmiclatte
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cosmiclatte"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_NAME: cosmiclatte
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_SSLMODE: disable
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -30,4 +53,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
+      # `astro build` transpiles without type checking, so this is the only
+      # thing standing between a bad type and production.
+      - run: bun run check
       - run: bun run build

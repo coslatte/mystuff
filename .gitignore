@@ -21,3 +21,5 @@ frontend/bun.lockb
 opencode.json
 hs_err_pid*
 *.log
+
+frontend/openapi.json
