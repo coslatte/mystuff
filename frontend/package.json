@@ -7,19 +7,22 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "check": "astro check",
+    "gen:api": "openapi-typescript openapi.json -o src/lib/api/schema.ts",
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/react": "^4.0.0",
     "@astrojs/vercel": "^8",
-    "astro": "^5.0.0"
+    "astro": "^5.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "@astrojs/react": "^4.0.0",
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^22.20.2",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.0"
   }

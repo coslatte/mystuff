@@ -46,7 +46,6 @@
   fill: #fff;
 }
 
-/* Name hidden at rest; on hover/focus it slides out to the right of the icon. */
 .soc__name {
   display: inline-block;
   max-width: 0;

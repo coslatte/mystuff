@@ -1,45 +1,11 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-
-export interface PinnedRepo {
-  id: string;
-  name: string;
-  description: string | null;
-  url: string;
-  stargazerCount: number;
-  primaryLanguage: { name: string } | null;
-  repositoryTopics: { nodes: Array<{ topic: { name: string } }> };
-}
+import { GITHUB_TOKEN } from "astro:env/server";
+import type { PinnedRepo } from "../types/github";
 
 const GITHUB_GRAPHQL_ENDPOINT = "https://api.github.com/graphql";
 
-let cachedLocalToken: string | undefined | null = null;
-
-function readLocalEnvToken(): string | undefined {
-  if (cachedLocalToken !== null) return cachedLocalToken;
-
-  try {
-    const envPath = resolve(process.cwd(), ".env");
-    const content = readFileSync(envPath, "utf-8");
-    for (const line of content.split("\n")) {
-      const match = line.match(/^\s*GITHUB_TOKEN\s*=\s*(.+?)\s*$/);
-      if (match) {
-        cachedLocalToken = match[1].trim().replace(/^["']|["']$/g, "");
-        return cachedLocalToken;
-      }
-    }
-  } catch {
-    /* .env not available (e.g. production): ignored */
-  }
-
-  cachedLocalToken = undefined;
-  return undefined;
-}
-
-function getGithubToken(): string | undefined {
-  return process.env.GITHUB_TOKEN ?? readLocalEnvToken();
-}
-
+// Typed by `env.schema` in astro.config.mjs. Astro loads .env into it for
+// server code, so the token needs no manual parsing. Without a token every call
+// degrades to an empty repo list rather than failing the build.
 
 const PINNED_REPOS_QUERY = `
   query getPinnedRepos($username: String!) {
@@ -73,14 +39,15 @@ const MEDIA_FOLDERS = ["assets", "screenshots"];
 const IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|webp|avif|svg)$/i;
 
 function repoFromUrl(url: string): { owner: string; repo: string } | null {
+  let parsed: URL;
   try {
-    const parsed = new URL(url);
-    if (parsed.hostname !== "github.com") return null;
-    const parts = parsed.pathname.split("/").filter(Boolean);
-    if (parts.length >= 2) return { owner: parts[0], repo: parts[1].replace(/\.git$/, "") };
+    parsed = new URL(url);
   } catch {
-    /* fallthrough */
+    return null;
   }
+  if (parsed.hostname !== "github.com") return null;
+  const parts = parsed.pathname.split("/").filter(Boolean);
+  if (parts.length >= 2) return { owner: parts[0], repo: parts[1].replace(/\.git$/, "") };
   return null;
 }
 
@@ -88,8 +55,9 @@ export async function fetchRepoMediaImage(githubUrl: string): Promise<string | n
   const repo = repoFromUrl(githubUrl);
   if (!repo) return null;
 
-  const token = getGithubToken();
-  const headers: Record<string, string> = token ? { Authorization: `bearer ${token}` } : {};
+  const headers: Record<string, string> = GITHUB_TOKEN
+    ? { Authorization: `bearer ${GITHUB_TOKEN}` }
+    : {};
 
   for (const folder of MEDIA_FOLDERS) {
     try {
@@ -105,7 +73,7 @@ export async function fetchRepoMediaImage(githubUrl: string): Promise<string | n
       const image = items.find((item) => item.type === "file" && IMAGE_EXTENSIONS.test(item.name));
       if (image?.download_url) return image.download_url;
     } catch {
-      /* fallthrough to next folder */
+      continue;
     }
   }
 
@@ -117,9 +85,7 @@ const PINNED_CACHE_TTL_MS = 10 * 60 * 1000;
 let pinnedCache: { ts: number; data: PinnedRepo[] } | null = null;
 
 export async function fetchPinnedRepos(username: string = "coslatte"): Promise<PinnedRepo[]> {
-  const token = getGithubToken();
-
-  if (!token) return [];
+  if (!GITHUB_TOKEN) return [];
 
   if (pinnedCache && Date.now() - pinnedCache.ts < PINNED_CACHE_TTL_MS) {
     return pinnedCache.data;
@@ -129,7 +95,7 @@ export async function fetchPinnedRepos(username: string = "coslatte"): Promise<P
     const response = await fetch(GITHUB_GRAPHQL_ENDPOINT, {
       method: "POST",
       headers: {
-        Authorization: `bearer ${token}`,
+        Authorization: `bearer ${GITHUB_TOKEN}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

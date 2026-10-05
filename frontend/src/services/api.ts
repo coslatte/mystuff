@@ -1,20 +1,16 @@
-import type { Comment, Rating, Song, SoundCloudAlbum } from "../types";
+import { PUBLIC_API_URL } from "astro:env/client";
+import type {
+  ApiEnvelope,
+  Comment,
+  CreatedComment,
+  Health,
+  Rating,
+  Song,
+  SoundCloudAlbum,
+} from "../types";
 
-const API_URL = import.meta.env.PUBLIC_API_URL ?? "http://localhost:8080";
-
-export type ApiMeta = {
-  errorId?: string;
-  status?: number;
-  timestamp?: string;
-};
-
-type ApiResponse<T> = {
-  success: boolean;
-  message?: string | null;
-  data?: T;
-  meta?: ApiMeta | null;
-  errors?: unknown;
-};
+// Typed and defaulted by `env.schema` in astro.config.mjs.
+const API_URL = PUBLIC_API_URL;
 
 export class ApiError extends Error {
   readonly status: number;
@@ -37,6 +33,9 @@ async function request<T>(
   const { adminKey, editToken, headers, body, ...rest } = init ?? {};
   const finalHeaders: Record<string, string> = { ...(headers as Record<string, string> | undefined) };
   if (adminKey) finalHeaders["X-Admin-Key"] = adminKey;
+  // The edit token is a bearer secret, so it travels in a header instead of the
+  // query string where it would land in access logs and Referer headers.
+  if (editToken) finalHeaders["X-Edit-Token"] = editToken;
   if (body && !(body instanceof FormData)) {
     finalHeaders["Content-Type"] = "application/json";
   }
@@ -46,12 +45,9 @@ async function request<T>(
     body,
   };
 
-  let url = `${API_URL}${path}`;
-  if (editToken) url += `${url.includes("?") ? "&" : "?"}editToken=${encodeURIComponent(editToken)}`;
-
   let res: Response;
   try {
-    res = await fetch(url, finalInit);
+    res = await fetch(`${API_URL}${path}`, finalInit);
   } catch (cause) {
     throw new ApiError("Network request failed.", 0, undefined, cause);
   }
@@ -59,9 +55,9 @@ async function request<T>(
   if (res.status === 204) return undefined as T;
 
   const text = await res.text();
-  let payload: ApiResponse<T> | undefined;
+  let payload: ApiEnvelope<T> | undefined;
   try {
-    payload = text ? (JSON.parse(text) as ApiResponse<T>) : undefined;
+    payload = text ? (JSON.parse(text) as ApiEnvelope<T>) : undefined;
   } catch {
     payload = undefined;
   }
@@ -79,13 +75,13 @@ async function request<T>(
 }
 
 export const api = {
-  health: () => request<{ status: string; service: string }>("/health"),
+  health: () => request<Health>("/health"),
   getSongs: (visitorId?: string) =>
     request<Song[]>(`/api/songs${visitorId ? `?visitorId=${encodeURIComponent(visitorId)}` : ""}`),
   getSong: (songId: number) => request<Song>(`/api/songs/${songId}`),
   getComments: (songId: number) => request<Comment[]>(`/api/songs/${songId}/comments`),
   postComment: (songId: number, body: { author: string; content: string }) =>
-    request<Comment>(`/api/songs/${songId}/comments`, {
+    request<CreatedComment>(`/api/songs/${songId}/comments`, {
       method: "POST",
       body: JSON.stringify(body),
     }),
@@ -95,12 +91,8 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
-  getMyRating: (songId: number, visitorId: string) =>
-    request<number | null>(`/api/songs/${songId}/ratings/mine?visitorId=${encodeURIComponent(visitorId)}`),
-
   getSoundCloudAlbums: () => request<SoundCloudAlbum[]>("/api/albums/soundcloud"),
 
-  // --- Admin / admin client ---
   uploadSong: (form: FormData, adminKey: string) =>
     request<Song>("/api/songs", { method: "POST", body: form, adminKey }),
   replaceSongAudio: (songId: number, form: FormData, adminKey: string) =>
@@ -108,6 +100,8 @@ export const api = {
   deleteSong: (songId: number, adminKey: string) =>
     request<void>(`/api/songs/${songId}`, { method: "DELETE", adminKey }),
 
+  // Answers with CommentResponse (no token): the caller keeps the one it
+  // already holds locally.
   updateComment: (commentId: number, content: string, opts?: { adminKey?: string; editToken?: string }) =>
     request<Comment>(`/api/comments/${commentId}`, {
       method: "PUT",
@@ -115,6 +109,4 @@ export const api = {
       adminKey: opts?.adminKey,
       editToken: opts?.editToken,
     }),
-  deleteComment: (commentId: number, adminKey: string) =>
-    request<void>(`/api/comments/${commentId}`, { method: "DELETE", adminKey }),
 };

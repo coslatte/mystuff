@@ -1,4 +1,4 @@
-import { defineConfig } from "astro/config";
+import { defineConfig, envField } from "astro/config";
 import react from "@astrojs/react";
 import tailwindcss from "@tailwindcss/vite";
 import vercel from "@astrojs/vercel";
@@ -9,7 +9,24 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
   server: {
-    port: 4321,
+    // 4321 falls inside the Windows excluded port range (4301-4400, reserved by
+    // Hyper-V/WSL), which makes bind fail with EACCES. Override with PORT.
+    port: Number(process.env.PORT ?? 5173),
+  },
+  // Typing the env here is what makes `import.meta.env.PUBLIC_API_URL` a
+  // string instead of the `any` Vite falls back to, so a typo in .env is a
+  // compile error rather than a runtime undefined. Defaults live here too, so
+  // no module needs its own `?? fallback`.
+  env: {
+    schema: {
+      PUBLIC_API_URL: envField.string({
+        context: "client",
+        access: "public",
+        optional: true,
+        default: "http://localhost:8080",
+      }),
+      GITHUB_TOKEN: envField.string({ context: "server", access: "secret", optional: true }),
+    },
   },
   output: "static",
   adapter: vercel(),

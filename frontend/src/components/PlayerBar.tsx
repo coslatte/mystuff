@@ -1,18 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { computeWaveform, player, type WaveformPeaks } from "../services/player";
 import { usePlayer } from "../hooks/usePlayer";
+import { drawSpectrum, drawWaveform, sizeCanvas } from "../lib/playback-canvas";
+import { playPauseClass, playPauseGlyph } from "../lib/playback-ui";
 
-// Logarithmic frequency mapping so sub-bass content is visible.
-const MIN_HZ = 30;
-const MAX_HZ = 16000;
-const MIN_LOG = Math.log10(MIN_HZ);
-const MAX_LOG = Math.log10(MAX_HZ);
-
-// One bar every N device pixels. Because the backing store tracks the real
-// rendered width (see useCanvasSize), phones get fewer, thicker bars instead
-// of hundreds of sub-pixel ones.
-const SPECTRUM_BAR_PITCH = 3;
-const WAVE_BAR_PITCH = 3;
+const SEEK_STEP_SECONDS = 5;
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -38,18 +30,16 @@ function useCanvasSize(ref: RefObject<HTMLCanvasElement | null>) {
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(canvas);
-    window.addEventListener("resize", measure);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", measure);
-    };
+    return () => observer.disconnect();
   }, [ref]);
   return size;
 }
 
-// Deterministic envelope used when a track cannot be decoded (e.g. a signed
-// URL without CORS). It still reads as a waveform instead of the flat line the
-// player would otherwise draw, and it never changes between renders.
+/**
+ * Stand-in envelope drawn while the decode is in flight and when it fails
+ * outright (a signed URL served without CORS). Deterministic, so the bars do not
+ * reshuffle on every render.
+ */
 function syntheticPeaks(seed: number): WaveformPeaks {
   const count = 256;
   const peaks = new Float32Array(count);
@@ -96,55 +86,19 @@ export default function PlayerBar() {
   const fallback = useMemo(() => (song ? syntheticPeaks(song.id) : null), [song?.id]);
   const peaks = decoded ?? fallback;
 
-  // Live frequency spectrum. Real-time analyser output, so it animates while
-  // playing and paints a single idle frame otherwise.
-  const drawSpectrum = useCallback(() => {
+  const paintSpectrum = useCallback(() => {
     const canvas = spectrumRef.current;
-    if (!canvas) return;
-    const cctx = canvas.getContext("2d");
-    if (!cctx) return;
-    const width = canvas.width;
-    const height = canvas.height;
-    if (width < 2 || height < 2) return;
-    cctx.clearRect(0, 0, width, height);
-
-    const analyser = player.getAnalyser();
-    let bands: Uint8Array<ArrayBuffer> | null = null;
-    if (analyser && isPlaying) {
-      bands = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
-      analyser.getByteFrequencyData(bands);
-    }
-    const sampleRate = analyser ? analyser.context.sampleRate : 44100;
-    const fftSize = analyser ? analyser.fftSize : 4096;
-    const binHz = sampleRate / fftSize;
-    const maxBin = bands ? bands.length - 1 : Math.floor(fftSize / 2) - 1;
-    const bars = Math.max(1, Math.floor(width / SPECTRUM_BAR_PITCH));
-    const bw = width / bars;
-
-    for (let i = 0; i < bars; i++) {
-      const freq = Math.pow(10, MIN_LOG + (i / bars) * (MAX_LOG - MIN_LOG));
-      const bin = Math.min(maxBin, Math.max(0, Math.round(freq / binHz)));
-      const value = bands ? bands[bin] / 255 : 0.12;
-      const bh = Math.max(2, value * height);
-      const x = i * bw + bw * 0.12;
-      cctx.fillStyle = "#ffffff";
-      cctx.fillRect(x, height - bh, bw * 0.76, bh);
-    }
-  }, [isPlaying]);
+    if (!canvas || !sizeCanvas(canvas, spectrumSize.width, spectrumSize.height)) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    drawSpectrum(ctx, canvas.width, canvas.height, player.getAnalyser(), isPlaying);
+  }, [isPlaying, spectrumSize.width, spectrumSize.height]);
 
   useEffect(() => {
-    const canvas = spectrumRef.current;
-    if (!canvas || spectrumSize.width < 2) return;
-    if (canvas.width !== spectrumSize.width) canvas.width = spectrumSize.width;
-    if (canvas.height !== spectrumSize.height) canvas.height = spectrumSize.height;
-    drawSpectrum();
-  }, [spectrumSize.width, spectrumSize.height, drawSpectrum]);
-
-  useEffect(() => {
-    drawSpectrum();
+    paintSpectrum();
     if (!isPlaying) return;
     const animate = () => {
-      drawSpectrum();
+      paintSpectrum();
       rafRef.current = requestAnimationFrame(animate);
     };
     rafRef.current = requestAnimationFrame(animate);
@@ -152,47 +106,21 @@ export default function PlayerBar() {
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-  }, [isPlaying, drawSpectrum]);
+  }, [isPlaying, paintSpectrum]);
 
-  // Static song waveform: doubles as the seek slider and the progress fill.
-  // The played portion is painted red, the rest white, like SoundCloud.
-  const drawWaveform = useCallback(() => {
+  const progress = duration > 0 ? Math.min(1, currentTime / duration) : 0;
+
+  const paintWaveform = useCallback(() => {
     const canvas = waveformRef.current;
-    if (!canvas) return;
-    const cctx = canvas.getContext("2d");
-    if (!cctx) return;
-    const width = canvas.width;
-    const height = canvas.height;
-    if (width < 2 || height < 2) return;
-    cctx.clearRect(0, 0, width, height);
-
-    const bars = Math.max(1, Math.floor(width / WAVE_BAR_PITCH));
-    const barW = width / bars;
-    const mid = height / 2;
-    const progress = duration > 0 ? Math.min(1, currentTime / duration) : 0;
-    const played = progress * bars;
-
-    for (let i = 0; i < bars; i++) {
-      let value = 0.2;
-      if (peaks && peaks.length) {
-        const idx = Math.min(peaks.length - 1, Math.floor((i / bars) * peaks.length));
-        value = peaks[idx];
-      }
-      const bh = Math.max(2, value * height * 0.92);
-      const x = i * barW + barW * 0.18;
-      const w = Math.max(1, barW * 0.64);
-      cctx.fillStyle = i < played ? "#ff3300" : "#ffffff";
-      cctx.fillRect(x, mid - bh / 2, w, bh);
-    }
-  }, [peaks, currentTime, duration]);
+    if (!canvas || !sizeCanvas(canvas, waveSize.width, waveSize.height)) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    drawWaveform(ctx, canvas.width, canvas.height, peaks, progress);
+  }, [peaks, progress, waveSize.width, waveSize.height]);
 
   useEffect(() => {
-    const canvas = waveformRef.current;
-    if (!canvas || waveSize.width < 2) return;
-    if (canvas.width !== waveSize.width) canvas.width = waveSize.width;
-    if (canvas.height !== waveSize.height) canvas.height = waveSize.height;
-    drawWaveform();
-  }, [waveSize.width, waveSize.height, drawWaveform]);
+    paintWaveform();
+  }, [paintWaveform]);
 
   const seekFromPointer = useCallback((clientX: number) => {
     const bar = seekBarRef.current;
@@ -201,6 +129,37 @@ export default function PlayerBar() {
     const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     player.seek(ratio);
   }, []);
+
+  const seekToSeconds = useCallback(
+    (seconds: number) => {
+      if (duration <= 0) return;
+      player.seek(Math.max(0, Math.min(1, seconds / duration)));
+    },
+    [duration]
+  );
+
+  const onSeekKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      switch (e.key) {
+        case "ArrowLeft":
+          seekToSeconds(currentTime - SEEK_STEP_SECONDS);
+          break;
+        case "ArrowRight":
+          seekToSeconds(currentTime + SEEK_STEP_SECONDS);
+          break;
+        case "Home":
+          seekToSeconds(0);
+          break;
+        case "End":
+          seekToSeconds(duration);
+          break;
+        default:
+          return;
+      }
+      e.preventDefault();
+    },
+    [currentTime, duration, seekToSeconds]
+  );
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
@@ -226,15 +185,14 @@ export default function PlayerBar() {
           type="button"
           onClick={() => player.toggle()}
           disabled={!song}
-          className={`flex h-11 w-11 shrink-0 items-center justify-center border-2 border-black text-lg font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40 laptop:h-12 laptop:w-12 laptop:text-xl ${
-            isPlaying
-              ? "bg-brut-red text-white hover:bg-black hover:text-white"
-              : "bg-brut-yellow text-black hover:bg-black hover:text-white"
-          }`}
+          className={playPauseClass(
+            isPlaying,
+            "flex h-11 w-11 shrink-0 items-center justify-center border-2 border-black text-lg font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40 laptop:h-12 laptop:w-12 laptop:text-xl"
+          )}
           aria-label={isPlaying ? "pause" : "play"}
         >
           <span key={isPlaying ? "pause" : "play"} className="icon-morph">
-            {isPlaying ? "𐋃" : "▶"}
+            {playPauseGlyph(isPlaying)}
           </span>
         </button>
 
@@ -255,6 +213,7 @@ export default function PlayerBar() {
         aria-valuemax={Math.round(duration) || 0}
         aria-valuenow={Math.round(currentTime)}
         tabIndex={0}
+        onKeyDown={onSeekKeyDown}
         onPointerDown={(e) => {
           scrubbingRef.current = true;
           seekFromPointer(e.clientX);

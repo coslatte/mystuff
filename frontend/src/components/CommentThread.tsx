@@ -1,5 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../services/api";
+import { runOptimistic } from "../lib/optimistic";
+import { readJson, readText, writeJson, writeText } from "../lib/storage";
+import { useResource } from "../hooks/useResource";
 import type { Comment } from "../types";
 import ErrorNotice from "./ErrorNotice";
 
@@ -19,32 +22,15 @@ function canEdit(comment: Comment) {
 
 // Edit tokens are bearer secrets: they live only in the creator's browser,
 // never in the public listing. This keeps edit rights across reloads.
-function readEditTokens(): Record<string, string> {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = window.localStorage.getItem(EDIT_TOKENS_STORAGE);
-    const parsed: unknown = raw ? JSON.parse(raw) : {};
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed as Record<string, string>;
-    }
-  } catch {
-    // corrupted storage: ignore and start fresh
-  }
-  return {};
-}
+type EditTokens = Record<string, string>;
 
-function writeEditTokens(tokens: Record<string, string>) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(EDIT_TOKENS_STORAGE, JSON.stringify(tokens));
-  } catch {
-    // storage full or unavailable: editing still works for this session
-  }
+function readEditTokens(): EditTokens {
+  return readJson<EditTokens>(EDIT_TOKENS_STORAGE, {});
 }
 
 function rememberEditToken(commentId: number, editToken?: string) {
   if (!editToken) return;
-  writeEditTokens({ ...readEditTokens(), [commentId]: editToken });
+  writeJson(EDIT_TOKENS_STORAGE, { ...readEditTokens(), [commentId]: editToken });
 }
 
 function withLocalEditTokens(comments: Comment[]): Comment[] {
@@ -53,41 +39,38 @@ function withLocalEditTokens(comments: Comment[]): Comment[] {
     tokens[c.id] != null ? { ...c, editToken: tokens[c.id] } : c
   );
   // prune tokens for comments that are gone so the map stays small
-  const alive: Record<string, string> = {};
+  const alive: EditTokens = {};
   for (const c of merged) {
     if (c.editToken) alive[c.id] = c.editToken;
   }
-  writeEditTokens(alive);
+  writeJson(EDIT_TOKENS_STORAGE, alive);
   return merged;
 }
 
 export default function CommentThread({ songId }: Props) {
-  const [comments, setComments] = useState<Comment[]>([]);
   const [author, setAuthor] = useState("");
   const [content, setContent] = useState("");
-  const [error, setError] = useState<unknown>(null);
+  const [mutationError, setMutationError] = useState<unknown>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editContent, setEditContent] = useState("");
 
+  const {
+    data,
+    error: loadError,
+    setData: setComments,
+    reload,
+  } = useResource<Comment[]>(
+    async () => withLocalEditTokens(await api.getComments(songId)),
+    [songId]
+  );
+  const comments = data ?? [];
+
   useEffect(() => {
-    const saved = typeof window !== "undefined" ? window.localStorage.getItem(AUTHOR_STORAGE) : null;
+    const saved = readText(AUTHOR_STORAGE);
     if (saved) setAuthor(saved);
   }, []);
 
-  const load = useCallback(async () => {
-    setError(null);
-    try {
-      setComments(withLocalEditTokens(await api.getComments(songId)));
-    } catch (e) {
-      setError(e);
-    }
-  }, [songId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  async function submit(e: React.FormEvent) {
+  async function submit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     const trimmedAuthor = author.trim();
     const trimmedContent = content.trim();
@@ -103,19 +86,18 @@ export default function CommentThread({ songId }: Props) {
     // optimistic insert
     setComments((prev) => [...prev, optimistic]);
     setContent("");
-    setError(null);
+    setMutationError(null);
 
     try {
-      if (typeof window !== "undefined") window.localStorage.setItem(AUTHOR_STORAGE, trimmedAuthor);
+      writeText(AUTHOR_STORAGE, trimmedAuthor);
       const created = await api.postComment(songId, { author: trimmedAuthor, content: trimmedContent });
-      // the server only hands the edit token to the creator: persist it locally
+      // Only the creator receives the edit token, so persist it locally.
       rememberEditToken(created.id, created.editToken);
-      // reconcile with the server response
       setComments((prev) => prev.map((c) => (c.id === optimistic.id ? created : c)));
     } catch (err) {
       setComments((prev) => prev.filter((c) => c.id !== optimistic.id));
       setContent(trimmedContent);
-      setError(err);
+      setMutationError(err);
     }
   }
 
@@ -131,21 +113,22 @@ export default function CommentThread({ songId }: Props) {
       return;
     }
     const previous = comment.content;
-    // optimistic update
-    setComments((prev) => prev.map((c) => (c.id === comment.id ? { ...c, content: nextContent } : c)));
     setEditingId(null);
-    setError(null);
 
-    try {
-      const updated = await api.updateComment(comment.id, nextContent, { editToken: comment.editToken });
-      // the update response carries no token: keep the locally held one
-      setComments((prev) =>
-        prev.map((c) => (c.id === comment.id ? { ...updated, editToken: comment.editToken } : c))
-      );
-    } catch (err) {
-      setComments((prev) => prev.map((c) => (c.id === comment.id ? { ...c, content: previous } : c)));
-      setError(err);
-    }
+    await runOptimistic({
+      apply: () =>
+        setComments((prev) => prev.map((c) => (c.id === comment.id ? { ...c, content: nextContent } : c))),
+      async commit() {
+        const updated = await api.updateComment(comment.id, nextContent, { editToken: comment.editToken });
+        // The update response carries no token, so keep the one held locally.
+        setComments((prev) =>
+          prev.map((c) => (c.id === comment.id ? { ...updated, editToken: comment.editToken } : c))
+        );
+      },
+      rollback: () =>
+        setComments((prev) => prev.map((c) => (c.id === comment.id ? { ...c, content: previous } : c))),
+      onError: setMutationError,
+    });
   }
 
   return (
@@ -207,7 +190,7 @@ export default function CommentThread({ songId }: Props) {
           onChange={(e) => setAuthor(e.target.value)}
           placeholder="your name"
           required
-          className="border-2 border-black bg-white px-2 py-1 font-mono text-xs outline-none focus:bg-brut-yellow"
+          className="brut-field px-2 py-1 text-xs"
         />
         <textarea
           value={content}
@@ -215,7 +198,7 @@ export default function CommentThread({ songId }: Props) {
           placeholder="leave comment"
           required
           rows={2}
-          className="border-2 border-black bg-white px-2 py-1 font-mono text-xs outline-none focus:bg-brut-yellow"
+          className="brut-field px-2 py-1 text-xs"
         />
         <button
           type="submit"
@@ -225,7 +208,10 @@ export default function CommentThread({ songId }: Props) {
         </button>
       </form>
 
-      {error != null && <ErrorNotice error={error} className="mt-2" />}
+      {loadError != null && (
+        <ErrorNotice error={loadError} onRetry={reload} className="mt-2" />
+      )}
+      {mutationError != null && <ErrorNotice error={mutationError} className="mt-2" />}
     </div>
   );
 }

@@ -1,43 +1,48 @@
-export type Song = {
-  id: number;
-  title: string;
-  artist: string;
-  duration?: string;
-  audioUrl?: string;
-  avgRating?: number;
-  totalVotes?: number;
-  myRating?: number;
-};
+import type { components } from "../lib/api/schema";
 
-export type Comment = {
-  id: number;
-  songId: number;
-  author: string;
-  content: string;
-  createdAt: string;
-  updatedAt?: string;
+/*
+ * The API contract.
+ *
+ * `Song`, `Comment`, `Rating`, `SoundCloudAlbum` and `Health` are not written by
+ * hand: they alias the OpenAPI schema that springdoc generates from the Spring
+ * DTOs, so renaming a Java record field breaks the type check here instead of
+ * silently becoming `undefined` at runtime. Regenerate with `bun run gen:api`
+ * after changing any DTO or controller signature.
+ */
+export type Song = components["schemas"]["SongResponse"];
+export type Comment = components["schemas"]["CommentResponse"] & {
+  /**
+   * Only ever present on a comment the visitor created, and only from
+   * `CreatedCommentResponse`: the public listing omits it on purpose.
+   */
   editToken?: string;
 };
+export type CreatedComment = components["schemas"]["CreatedCommentResponse"];
+export type Rating = components["schemas"]["RatingResponse"];
+export type SoundCloudAlbum = components["schemas"]["SoundCloudAlbumDto"];
+export type Health = components["schemas"]["HealthResponse"];
 
-export type Rating = {
-  id: number;
-  songId: number;
-  stars: number;
-  createdAt: string;
+/** The envelope every endpoint answers with. */
+export type ApiMeta = {
+  errorId?: string;
+  status?: number;
+  timestamp?: string;
 };
 
-export type SoundCloudAlbum = {
-  id: string;
-  title: string;
-  artworkUrl?: string;
-  trackCount?: number;
-  releaseDate?: string;
-  setType?: string;
-  url: string;
-  artist?: string;
-  embedHeight?: number;
+export type ApiEnvelope<T> = {
+  success: boolean;
+  message?: string | null;
+  data?: T | null;
+  meta?: ApiMeta | null;
+  errors?: unknown;
 };
 
+/*
+ * Everything below is client-side domain, not an API shape.
+ *
+ * The API sends one album record carrying both platform URLs; `toAlbums` splits
+ * them into links, and the rest models the UI's own view of a release.
+ */
 export type StreamingPlatform = "soundcloud" | "spotify";
 
 export type AlbumLink = {
@@ -45,14 +50,6 @@ export type AlbumLink = {
   url: string;
 };
 
-export type Album = {
-  id: string;
-  title: string;
-  artworkUrl?: string;
-  trackCount?: number;
-  releaseDate?: string;
-  setType?: string;
-  artist?: string;
+export type Album = Omit<SoundCloudAlbum, "url" | "spotifyUrl"> & {
   links: AlbumLink[];
-  embedHeight?: number;
 };

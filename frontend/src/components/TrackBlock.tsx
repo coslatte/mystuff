@@ -2,25 +2,25 @@ import { useState } from "react";
 import type { Song } from "../types";
 import { player } from "../services/player";
 import { usePlayer } from "../hooks/usePlayer";
+import { playPauseClass, playPauseGlyph } from "../lib/playback-ui";
 import StarRating from "./StarRating";
 import CommentThread from "./CommentThread";
 
 type Props = {
   song: Song;
-  userRating?: number;
   onRate: (song: Song, stars: number) => void;
 };
 
-export default function TrackBlock({ song, userRating, onRate }: Props) {
+export default function TrackBlock({ song, onRate }: Props) {
   const { song: currentSong, isPlaying } = usePlayer();
-  // Collapsed by default: comments are fetched lazily only when expanded, so
-  // a large library never fires hundreds of comment requests up front.
+  // Comments are fetched when the row is expanded, so a long track list does not
+  // fire one request per row on load.
   const [showComments, setShowComments] = useState(false);
 
   const active = currentSong?.id === song.id;
   const showPause = active && isPlaying;
   const ratingLabel =
-    song.avgRating != null ? `${song.avgRating.toFixed(1)} (${song.totalVotes ?? 0})` : "—";
+    song.avgRating != null ? `${song.avgRating.toFixed(1)} (${song.totalVotes ?? 0})` : "unrated";
 
   function handlePlay() {
     if (active) player.toggle();
@@ -34,11 +34,12 @@ export default function TrackBlock({ song, userRating, onRate }: Props) {
           type="button"
           onClick={handlePlay}
           aria-label={showPause ? "pause" : "play"}
-          className={`flex h-10 w-10 shrink-0 items-center justify-center border-2 border-black font-bold ${
-            showPause ? "bg-brut-red text-white" : "bg-white text-black hover:bg-brut-yellow"
-          }`}
+          className={playPauseClass(
+            showPause,
+            "flex h-10 w-10 shrink-0 items-center justify-center border-2 border-black text-sm font-bold"
+          )}
         >
-          {showPause ? "‖" : "▶"}
+          {playPauseGlyph(showPause)}
         </button>
 
         <div className="min-w-0 flex-1">
@@ -66,7 +67,7 @@ export default function TrackBlock({ song, userRating, onRate }: Props) {
 
       <div className="px-3 pb-3">
         <StarRating
-          value={userRating ?? 0}
+          value={song.myRating ?? 0}
           onRate={(stars) => onRate(song, stars)}
         />
         {showComments && <CommentThread songId={song.id} />}

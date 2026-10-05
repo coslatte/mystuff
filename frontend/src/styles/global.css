@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./brutal-button.css";
+@import "./server-pulse.css";
 
 @theme {
   --color-brut-bg: #f2f2f2;
@@ -50,11 +51,42 @@
 }
 
 @layer utilities {
-  .brut-box {
-    @apply border-2 border-black bg-white;
-  }
   .brut-btn {
     @apply border-2 border-black bg-white px-4 py-2 font-bold transition-none
       hover:bg-brut-yellow active:bg-brut-red active:text-white;
   }
+}
+
+/*
+ * Shared surface recipes.
+ *
+ * The brutalist look is the same handful of shapes repeated across every form,
+ * card and row. Spelling them as Tailwind utilities in each component let them
+ * drift, so they live here as `@utility` and stay themeable through `@theme`.
+ *
+ * These are structural only: size, colour overrides and layout stay in the
+ * call site, so a utility never fights a breakpoint variant.
+ */
+@utility brut-field {
+  @apply border-2 border-black bg-white font-mono outline-none focus:bg-brut-yellow;
+}
+
+@utility brut-field-quiet {
+  @apply border-2 border-black bg-neutral-100 font-mono outline-none focus:bg-brut-yellow;
+}
+
+@utility brut-panel {
+  @apply border-2 border-black bg-white;
+}
+
+@utility brut-chip {
+  @apply border border-black bg-neutral-100 px-1.5 py-0.5 font-mono text-xs leading-none;
+}
+
+@utility brut-label {
+  @apply font-mono text-xs font-bold uppercase;
+}
+
+@utility brut-meta {
+  @apply font-mono text-[10px] font-bold;
 }

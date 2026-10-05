@@ -1,4 +1,5 @@
 ---
+import BrutWords from "./BrutWords.astro";
 ---
 
 <section class="grid grid-cols-1 border-b-2 border-black md:grid-cols-[3fr_1fr]">
@@ -7,10 +8,10 @@
       <span class="mb-8 inline-block border-2 border-black bg-white px-3 py-1 font-mono text-xs font-bold">
         software developer &amp; music producer
       </span>
-      <div class="font-display text-5xl font-black leading-[0.95] tracking-tighter sm:text-7xl">
-        <h1>i code stuff</h1>
-        <h1>and make music.</h1>
-      </div>
+      <BrutWords
+        lines={[["i code", "stuff"], ["and make", "music."]]}
+        class="font-display text-5xl font-black leading-[0.95] tracking-tighter sm:text-7xl"
+      />
 
     </div>
   </div>

@@ -1,77 +1,83 @@
 import type { Album, AlbumLink, SoundCloudAlbum, StreamingPlatform } from "../types";
 
-// Platform order shown in the "listen on" selector.
-export const STREAMING_PLATFORMS: { id: StreamingPlatform; label: string }[] = [
-  { id: "soundcloud", label: "soundcloud" },
-  { id: "spotify", label: "spotify" },
-];
+// Order shown in the "listen on" selector.
+export const STREAMING_PLATFORMS: StreamingPlatform[] = ["soundcloud", "spotify"];
 
-// Spotify albums resolved through the public oEmbed endpoint (no auth):
-//   https://open.spotify.com/oembed?url=<album url>
-// Keyed by the normalized album title so they attach to the SoundCloud albums.
-const SPOTIFY_BY_TITLE: Record<string, string> = {
-  amb: "https://open.spotify.com/album/2oWurnyAaaX5rbyF6BtfEf",
-  encrescendo: "https://open.spotify.com/album/6axLvvECijJ2FMCw4FwFmA",
-};
-
-// Albums that are not published on the SoundCloud account but should still be
-// listed (metadata from Spotify's oEmbed response).
-const STANDALONE_ALBUMS: Album[] = [
-  {
-    id: "spotify-encrescendo",
-    title: "enCrescendo",
-    artworkUrl: "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e0262ccfd906647f3725a013e62",
-    trackCount: 8,
-    releaseDate: "2026",
-    setType: "album",
-    links: [{ platform: "spotify", url: "https://open.spotify.com/album/6axLvvECijJ2FMCw4FwFmA" }],
-  },
-];
-
-export function normalizeTitle(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
-function spotifyAlbumId(url: string): string | null {
-  const match = url.match(/album\/([A-Za-z0-9]+)/);
-  return match ? match[1] : null;
-}
-
-export function spotifyEmbedUrl(url: string): string | null {
-  const id = spotifyAlbumId(url);
-  return id ? `https://open.spotify.com/embed/album/${id}?theme=0` : null;
-}
-
-// Merges the SoundCloud albums returned by the API with the extra streaming
-// links, producing a single list where every album carries all its platforms.
-export function toAlbums(soundcloud: SoundCloudAlbum[]): Album[] {
-  const albums: Album[] = soundcloud.map((album) => {
-    const links: AlbumLink[] = [{ platform: "soundcloud", url: album.url }];
-    const spotify = SPOTIFY_BY_TITLE[normalizeTitle(album.title)];
-    if (spotify) links.push({ platform: "spotify", url: spotify });
-    return {
-      id: album.id,
-      title: album.title,
-      artworkUrl: album.artworkUrl,
-      trackCount: album.trackCount,
-      releaseDate: album.releaseDate,
-      setType: album.setType,
-      artist: album.artist,
-      links,
-      embedHeight: album.embedHeight,
-    };
+// The API sends one record per release carrying both platform URLs, so this only
+// splits them into links.
+export function toAlbums(releases: SoundCloudAlbum[]): Album[] {
+  return releases.map(({ url, spotifyUrl, ...album }) => {
+    const links: AlbumLink[] = [];
+    if (url) links.push({ platform: "soundcloud", url });
+    if (spotifyUrl) links.push({ platform: "spotify", url: spotifyUrl });
+    return { ...album, links };
   });
+}
 
-  const titles = new Set(albums.map((album) => normalizeTitle(album.title)));
-  const extras = STANDALONE_ALBUMS.filter(
-    (extra) => !titles.has(normalizeTitle(extra.title))
-  );
-  // Standalone releases (newest first) lead the list, then the SoundCloud ones.
-  return [...extras, ...albums];
+// At least one link, so callers can index links[0] without a null check.
+export type PlayableAlbum = Album & { links: [AlbumLink, ...AlbumLink[]] };
+
+export function hasLinks(album: Album): album is PlayableAlbum {
+  return album.links.length > 0;
 }
 
 // The platform that will actually be used for an album, falling back to the
 // first one it has when the globally selected platform is not available.
-export function activeLink(album: Album, platform: StreamingPlatform): AlbumLink {
+export function activeLink(album: PlayableAlbum, platform: StreamingPlatform): AlbumLink {
   return album.links.find((link) => link.platform === platform) ?? album.links[0];
+}
+
+export function soundCloudEmbedUrl(url: string): string {
+  const params = new URLSearchParams({
+    url,
+    color: "#ff5500",
+    auto_play: "false",
+    hide_related: "true",
+    show_comments: "false",
+    show_user: "true",
+    show_reposts: "false",
+    show_teaser: "false",
+    visual: "false",
+  });
+  return `https://w.soundcloud.com/player/?${params.toString()}`;
+}
+
+export function spotifyEmbedUrl(url: string): string {
+  // https://open.spotify.com/album/<id> -> https://open.spotify.com/embed/album/<id>
+  // theme=0 keeps the light embed, otherwise Spotify serves its own dark one.
+  const embed = new URL(url.replace("/album/", "/embed/album/"));
+  embed.searchParams.set("theme", "0");
+  return embed.toString();
+}
+
+export function embedSrcFor(link: AlbumLink): string {
+  return link.platform === "spotify" ? spotifyEmbedUrl(link.url) : soundCloudEmbedUrl(link.url);
+}
+
+// SoundCloud's oEmbed reports 450px for every set, which leaves empty space
+// under short albums and clips long ones. The widget draws a fixed header
+// (artwork + title + controls) then one ~32px row per track, so size the iframe
+// from the track count. The header the API reports is the fallback for releases
+// with no track count.
+const SC_HEADER_PX = 100;
+const SC_ROW_PX = 32;
+const SC_MIN_PX = 180;
+const SC_FALLBACK_PX = 450;
+
+// Spotify stacks a ~232px cover/metadata header over a track list that grows
+// with the iframe height, so it needs the same treatment.
+const SP_HEADER_PX = 232;
+const SP_ROW_PX = 32;
+const SP_MIN_PX = 352;
+
+const BOTTOM_BUFFER_PX = 8;
+
+export function embedHeightFor(album: Album, platform: StreamingPlatform): number {
+  const trackCount = album.trackCount ?? 0;
+  if (platform === "spotify") {
+    if (trackCount <= 0) return SP_MIN_PX;
+    return Math.max(SP_MIN_PX, SP_HEADER_PX + trackCount * SP_ROW_PX + BOTTOM_BUFFER_PX);
+  }
+  if (trackCount <= 0) return album.embedHeight ?? SC_FALLBACK_PX;
+  return Math.max(SC_MIN_PX, SC_HEADER_PX + trackCount * SC_ROW_PX + BOTTOM_BUFFER_PX);
 }

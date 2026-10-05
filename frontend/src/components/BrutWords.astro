@@ -1,0 +1,31 @@
+---
+import "../styles/brut-word.css";
+
+interface Props {
+  /**
+   * One entry per line, each a list of highlight units. A unit is the text that
+   * shares one plate, so `["i code", "stuff"]` lifts "i code" as a single
+   * rectangle and leaves "stuff" on its own.
+   */
+  lines: string[][];
+  class?: string;
+  style?: string;
+}
+
+const { lines, class: className, style } = Astro.props;
+---
+
+<h1 class:list={[className, "brut-words"]} style={style}>
+  {
+    lines.map((units) => (
+      <span class="block">
+        {units.map((unit, index) => (
+          <Fragment>
+            {index > 0 && " "}
+            <span class="brut-word">{unit}</span>
+          </Fragment>
+        ))}
+      </span>
+    ))
+  }
+</h1>

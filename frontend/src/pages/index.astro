@@ -4,56 +4,23 @@ export const prerender = false;
 import Layout from "../layouts/Layout.astro";
 import Hero from "../components/Hero.astro";
 import RepoRow from "../components/RepoRow.astro";
-import projects from "../data/projects";
 import { fetchPinnedRepos, fetchRepoMediaImage } from "../services/github";
+import type { RepoView } from "../types/github";
 
-const remote = await fetchPinnedRepos("coslatte");
+// The pinned repos are the single source of truth for this section. When the
+// GitHub API is unavailable (no token, rate limit, outage) we show an empty
+// state instead of a hardcoded list that would drift from the real profile.
+const pinned = await fetchPinnedRepos("coslatte");
 
-type RepoSource = {
-  name: string;
-  category: string;
-  description: string;
-  tags: string[];
-  githubUrl: string;
-};
-
-const EXCLUDED_REPOS = new Set(["cosmiclatteweb", "mystuff"]);
-const isExcluded = (name: string, url: string) => {
-  const n = name.toLowerCase();
-  const u = url.toLowerCase();
-  return EXCLUDED_REPOS.has(n) || u.includes("cosmiclatteweb") || u.includes("mystuff");
-};
-
-const filteredRemote = remote.filter((repo) => !isExcluded(repo.name, repo.url));
-
-const sources: RepoSource[] =
-  filteredRemote.length > 0
-    ? filteredRemote.map((repo) => ({
-        name: repo.name,
-        category: repo.primaryLanguage?.name?.toLowerCase() || "project",
-        description: repo.description?.toLowerCase() || "no description provided.",
-        tags: repo.repositoryTopics.nodes.map((node) => node.topic.name),
-        githubUrl: repo.url,
-      }))
-    : projects
-        .filter((project) => !isExcluded(project.title, project.githubUrl ?? ""))
-        .map((project) => ({
-          name: project.title,
-          category: project.category,
-          description: project.description,
-          tags: project.tags,
-          githubUrl: project.githubUrl ?? "",
-        }));
-
-const repos = await Promise.all(
-  sources.map(async (source, index) => ({
+const repos: RepoView[] = await Promise.all(
+  pinned.map(async (repo, index): Promise<RepoView> => ({
     index: String(index + 1).padStart(2, "0"),
-    title: source.name.toLowerCase(),
-    category: source.category,
-    description: source.description,
-    tags: source.tags,
-    imageSrc: source.githubUrl ? await fetchRepoMediaImage(source.githubUrl) : null,
-    githubUrl: source.githubUrl || undefined,
+    title: repo.name.toLowerCase(),
+    category: repo.primaryLanguage?.name?.toLowerCase() || "project",
+    description: repo.description?.toLowerCase() || "no description provided.",
+    tags: repo.repositoryTopics.nodes.map((node) => node.topic.name),
+    imageSrc: await fetchRepoMediaImage(repo.url),
+    githubUrl: repo.url,
   }))
 );
 
@@ -78,7 +45,18 @@ Astro.response.headers.set(
       </a>
     </div>
 
-    {repos.map((repo) => <RepoRow {...repo} />)}
+    {repos.length > 0
+      ? repos.map((repo) => <RepoRow {...repo} />)
+      : (
+        <p class="border-b-2 border-black bg-white p-8 text-center font-mono text-sm">
+          could not load the repos right now.{" "}
+          <a
+            href="https://github.com/coslatte?tab=repositories"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-brut-red underline">see them on github ↗</a>
+        </p>
+      )}
 
     <div class="border-black bg-white p-8 text-center font-mono">
       want to contact me?{" "}

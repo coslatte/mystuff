@@ -6,37 +6,33 @@ interface Props {
   description: string;
   tags: string[];
   imageSrc?: string | null;
-  demoUrl?: string;
   githubUrl?: string;
 }
 
-const { index, title, category, description, tags, imageSrc, demoUrl, githubUrl } = Astro.props;
+const { index, title, category, description, tags, imageSrc, githubUrl } = Astro.props;
 ---
 
 <div class="grid grid-cols-1 border-b-2 border-black bg-white hover:bg-neutral-50 md:grid-cols-[15%_60%_25%]">
-  <!-- index -->
   <div class="flex min-w-0 items-center justify-center overflow-hidden border-b-2 border-black bg-neutral-100 px-1 py-1.5 md:border-b-0 md:border-r-2">
     <span class="truncate font-display text-5xl font-black leading-none tracking-tighter">{index}</span>
   </div>
 
-  <!-- metadata -->
   <div class="flex min-w-0 flex-col justify-between overflow-hidden border-b-2 border-black px-2.5 py-1.5 md:border-b-0 md:border-r-2">
     <div class="min-w-0 overflow-hidden">
-      <span class="mb-1 inline-block max-w-full truncate bg-black px-1.5 py-0.5 font-mono text-xs font-bold leading-none tracking-tight text-white">
-        {category}
-      </span>
+<span class="brut-chip mb-1 inline-block max-w-full truncate bg-black px-1.5 py-0.5 font-bold tracking-tight text-white">
+          {category}
+        </span>
       <h3 class="mb-1 truncate font-display text-2xl font-black leading-none tracking-tighter">{title}</h3>
       <p class="mb-1 line-clamp-2 font-mono text-sm leading-tight tracking-tight text-gray-700">{description}</p>
     </div>
 
     <div class="flex flex-wrap gap-1 overflow-hidden">
-      {tags.map((tag) => (
-        <span class="max-w-full truncate border border-black bg-neutral-100 px-1.5 py-0.5 font-mono text-xs leading-none tracking-tight">#{tag}</span>
-      ))}
+{tags.map((tag) => (
+          <span class="brut-chip max-w-full truncate">#{tag}</span>
+        ))}
     </div>
   </div>
 
-  <!-- preview -->
   <div class="flex min-w-0 flex-col justify-between overflow-hidden bg-neutral-200 p-1.5">
     <div class="relative mb-1 aspect-[2/1] overflow-hidden border-2 border-black bg-black">
       {imageSrc ? (
@@ -63,11 +59,6 @@ const { index, title, category, description, tags, imageSrc, demoUrl, githubUrl 
     </div>
 
     <div class="grid grid-cols-1 gap-1">
-      {demoUrl && (
-        <a href={demoUrl} target="_blank" rel="noopener noreferrer" class="brut-btn !py-1 text-center text-xs leading-none">
-          demo ↗
-        </a>
-      )}
       {githubUrl && (
         <a
           href={githubUrl}
