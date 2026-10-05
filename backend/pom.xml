@@ -19,9 +19,21 @@
     <properties>
         <java.version>21</java.version>
         <org.mapstruct.version>1.6.3</org.mapstruct.version>
+        <!-- Major versions track Spring Boot majors; 3.x is the Spring Boot 4 line. -->
+        <springdoc.version>3.1.1</springdoc.version>
     </properties>
 
     <dependencies>
+        <!--
+          Serves /v3/api-docs, which `frontend`'s `gen:api` script turns into
+          TypeScript types. The `-api` artifact is deliberate: it omits the
+          Swagger UI assets, which nothing here needs.
+        -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

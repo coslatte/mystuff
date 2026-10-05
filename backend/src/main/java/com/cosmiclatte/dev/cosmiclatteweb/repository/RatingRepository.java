@@ -12,8 +12,6 @@ import java.util.List;
 @Repository
 public interface RatingRepository extends JpaRepository<Rating, Long> {
 
-    List<Rating> findBySongIdOrderByCreatedAtAsc(Long songId);
-
     Rating findBySongIdAndVisitorId(Long songId, String visitorId);
 
     Rating findBySongIdAndIpHash(Long songId, String ipHash);

@@ -9,6 +9,10 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class SoundCloudService {
@@ -17,6 +21,32 @@ public class SoundCloudService {
     private static final long ALBUMS_CACHE_TTL_MS = 10 * 60 * 1000L;
     /** SoundCloud's default embed height for a playlist/set. */
     private static final int DEFAULT_EMBED_HEIGHT = 450;
+
+    /**
+     * Spotify counterpart of the releases that are also published as a SoundCloud
+     * set, keyed by {@link #normalized(String) normalized} title so that casing and
+     * punctuation differences between platforms do not break the match.
+     */
+    private static final Map<String, String> SPOTIFY_URL_BY_TITLE = Map.of(
+            "amb", "https://open.spotify.com/album/2oWurnyAaaX5rbyF6BtfEf"
+    );
+
+    /**
+     * Releases that only live on Spotify. They are listed before the SoundCloud
+     * ones and carry no SoundCloud URL, so the UI can only play them from Spotify.
+     */
+    private static final List<SoundCloudAlbumDto> SPOTIFY_ONLY_ALBUMS = List.of(
+            new SoundCloudAlbumDto(
+                    "encrescendo",
+                    "enCrescendo",
+                    "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e0262ccfd906647f3725a013e62",
+                    8,
+                    "2026",
+                    "album",
+                    null,
+                    null,
+                    "https://open.spotify.com/album/6axLvvECijJ2FMCw4FwFmA")
+    );
 
     private final RestClient restClient;
     private final String clientId;
@@ -37,10 +67,35 @@ public class SoundCloudService {
         if (cached != null && System.currentTimeMillis() - cachedAlbumsAt < ALBUMS_CACHE_TTL_MS) {
             return cached;
         }
-        List<SoundCloudAlbumDto> albums = loadAlbums();
+        List<SoundCloudAlbumDto> albums = withCatalog(loadAlbums());
         cachedAlbums = albums;
         cachedAlbumsAt = System.currentTimeMillis();
         return albums;
+    }
+
+    /**
+     * Merges the SoundCloud albums (live or static) with the rest of the catalog:
+     * each SoundCloud album gets its Spotify counterpart attached, and the
+     * Spotify-only releases are prepended. A release listed in both sources is
+     * kept only once, on whichever side it shows up first.
+     */
+    private List<SoundCloudAlbumDto> withCatalog(List<SoundCloudAlbumDto> soundcloudAlbums) {
+        Set<String> soundcloudTitles = soundcloudAlbums.stream()
+                .map(SoundCloudAlbumDto::title)
+                .map(SoundCloudService::normalized)
+                .collect(Collectors.toSet());
+
+        List<SoundCloudAlbumDto> catalog = new ArrayList<>();
+        SPOTIFY_ONLY_ALBUMS.stream()
+                .filter(release -> !soundcloudTitles.contains(normalized(release.title())))
+                .forEach(catalog::add);
+        soundcloudAlbums.forEach(album -> catalog.add(
+                album.withSpotifyUrl(SPOTIFY_URL_BY_TITLE.get(normalized(album.title())))));
+        return List.copyOf(catalog);
+    }
+
+    private static String normalized(String title) {
+        return title.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
     }
 
     private List<SoundCloudAlbumDto> loadAlbums() {
@@ -65,9 +120,10 @@ public class SoundCloudService {
     }
 
     /**
-     * Albums published on SoundCloud, used while the SoundCloud API is not configured.
-     * Artwork URLs are resolved via SoundCloud oEmbed (public, no clientId needed) and
-     * hard-coded as fallback so the card always shows the cover you set on SoundCloud.
+     * Albums published on SoundCloud, used while the SoundCloud API is not
+     * configured. Artwork is resolved through SoundCloud oEmbed, which is public
+     * and needs no client id; these URLs are the fallback for when oEmbed is
+     * unreachable.
      */
     private List<SoundCloudAlbumDto> staticAlbums() {
         return List.of(
@@ -79,7 +135,8 @@ public class SoundCloudService {
                         null,
                         "album",
                         "https://soundcloud.com/cosmiclattemusic/sets/amb-album",
-                        DEFAULT_EMBED_HEIGHT),
+                        DEFAULT_EMBED_HEIGHT,
+                        null),
                 new SoundCloudAlbumDto(
                         "en-futuro-ep",
                         "en futuro",
@@ -88,7 +145,8 @@ public class SoundCloudService {
                         null,
                         "ep",
                         "https://soundcloud.com/cosmiclattemusic/sets/en-futuro-ep",
-                        DEFAULT_EMBED_HEIGHT),
+                        DEFAULT_EMBED_HEIGHT,
+                        null),
                 new SoundCloudAlbumDto(
                         "discography",
                         "discography",
@@ -97,7 +155,8 @@ public class SoundCloudService {
                         null,
                         "compilation",
                         "https://soundcloud.com/cosmiclattemusic/sets/discography",
-                        DEFAULT_EMBED_HEIGHT)
+                        DEFAULT_EMBED_HEIGHT,
+                        null)
         );
     }
 
@@ -164,7 +223,8 @@ public class SoundCloudService {
                     releaseDate,
                     item.set_type() == null ? "album" : item.set_type(),
                     item.permalink_url(),
-                    embedHeight
+                    embedHeight,
+                    null
             ));
         }
         return albums;

@@ -4,7 +4,9 @@ import com.cosmiclatte.dev.cosmiclatteweb.common.dto.ResponseFormat;
 import com.cosmiclatte.dev.cosmiclatteweb.common.exception.BadRequestException;
 import com.cosmiclatte.dev.cosmiclatteweb.common.exception.ForbiddenException;
 import com.cosmiclatte.dev.cosmiclatteweb.common.exception.NotFoundException;
+import com.cosmiclatte.dev.cosmiclatteweb.common.exception.StorageException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -26,6 +28,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
+/*
+ * Every handler returns {@code ResponseFormat<Object>}: an error body always
+ * carries {@code data = null} and puts the detail in {@code errors} and
+ * {@code meta}. Spelling the generic out (rather than {@code ResponseEntity<?>})
+ * is what lets springdoc publish a concrete schema, which the frontend then
+ * turns into TypeScript types.
+ */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -33,7 +42,7 @@ public class GlobalExceptionHandler {
     public static final String ERROR_ID_HEADER = "X-Error-Id";
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidation(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ResponseFormat<Object>> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, Object> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors()
                 .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
@@ -42,17 +51,17 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<?> handleNotFound(NotFoundException ex) {
+    public ResponseEntity<ResponseFormat<Object>> handleNotFound(NotFoundException ex) {
         return buildError(HttpStatus.NOT_FOUND, ex.getMessage(), null, ex);
     }
 
     @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<?> handleForbidden(ForbiddenException ex) {
+    public ResponseEntity<ResponseFormat<Object>> handleForbidden(ForbiddenException ex) {
         return buildError(HttpStatus.FORBIDDEN, ex.getMessage(), null, ex);
     }
 
     @ExceptionHandler({BadRequestException.class, IllegalArgumentException.class})
-    public ResponseEntity<?> handleBadRequest(RuntimeException ex) {
+    public ResponseEntity<ResponseFormat<Object>> handleBadRequest(RuntimeException ex) {
         return buildError(HttpStatus.BAD_REQUEST, ex.getMessage(), null, ex);
     }
 
@@ -62,37 +71,52 @@ public class GlobalExceptionHandler {
             MissingServletRequestParameterException.class,
             MissingServletRequestPartException.class
     })
-    public ResponseEntity<?> handleMalformedRequest(Exception ex) {
+    public ResponseEntity<ResponseFormat<Object>> handleMalformedRequest(Exception ex) {
         return buildError(HttpStatus.BAD_REQUEST, "Malformed request.", null, ex);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<?> handleNoResource(NoResourceFoundException ex) {
+    public ResponseEntity<ResponseFormat<Object>> handleNoResource(NoResourceFoundException ex) {
         return buildError(HttpStatus.NOT_FOUND, "Resource not found.", null, ex);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<?> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+    public ResponseEntity<ResponseFormat<Object>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
         return buildError(HttpStatus.METHOD_NOT_ALLOWED, "Method not allowed.", null, ex);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<?> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+    public ResponseEntity<ResponseFormat<Object>> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
         return buildError(HttpStatus.BAD_REQUEST, "File exceeds the maximum allowed size.", null, ex);
     }
 
     @ExceptionHandler(MultipartException.class)
-    public ResponseEntity<?> handleMultipart(MultipartException ex) {
+    public ResponseEntity<ResponseFormat<Object>> handleMultipart(MultipartException ex) {
         return buildError(HttpStatus.BAD_REQUEST, "Invalid file request.", null, ex);
     }
 
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ResponseFormat<Object>> handleConflict(DataIntegrityViolationException ex) {
+        // V6's unique indexes on rating mean a repeat vote from the same browser
+        // or network loses the race when two requests land together. That is a
+        // conflict the caller can retry, not a server fault.
+        return buildError(HttpStatus.CONFLICT,
+                "That vote was already recorded. Reload to see the current score.", null, ex);
+    }
+
+@ExceptionHandler(StorageException.class)
+    public ResponseEntity<ResponseFormat<Object>> handleStorage(StorageException ex) {
+        // Never echo the Supabase body: it can carry bucket policy details.
+        return buildError(HttpStatus.BAD_GATEWAY, "Audio storage is unavailable.", null, ex);
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> handleGeneric(Exception ex) {
+    public ResponseEntity<ResponseFormat<Object>> handleGeneric(Exception ex) {
         return buildError(HttpStatus.INTERNAL_SERVER_ERROR,
                 "An unexpected error occurred. Please try again later.", null, ex);
     }
 
-    private ResponseEntity<?> buildError(
+    private ResponseEntity<ResponseFormat<Object>> buildError(
             HttpStatus status, String message, Object errors, Exception ex) {
         String errorId = generateErrorId();
 

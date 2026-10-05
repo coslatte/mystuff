@@ -12,6 +12,8 @@ import com.cosmiclatte.dev.cosmiclatteweb.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
@@ -77,22 +79,40 @@ public class SongService {
         String oldPath = song.getAudioUrl();
         String duration = audioMetadata.readDuration(file);
         String newPath = fileStorage.store(file);
-        if (oldPath != null && !oldPath.isBlank()) {
-            fileStorage.delete(oldPath);
-        }
         song.setAudioUrl(newPath);
         song.setDuration(duration);
-        return toResponse(songRepository.save(song), null, null);
+        SongResponse response = toResponse(songRepository.save(song), null, null);
+        deleteAfterCommit(oldPath);
+        return response;
     }
 
     @Transactional
     public void deleteSong(Long id) {
         Song song = findById(id);
         String path = song.getAudioUrl();
-        if (path != null && !path.isBlank()) {
-            fileStorage.delete(path);
-        }
         songRepository.delete(song);
+        deleteAfterCommit(path);
+    }
+
+    /**
+     * Removes the object once the transaction has committed. Deleting inside the
+     * transaction would leave the row pointing at a file that is already gone if
+     * the commit later rolled back.
+     */
+    private void deleteAfterCommit(String objectPath) {
+        if (objectPath == null || objectPath.isBlank()) {
+            return;
+        }
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            fileStorage.delete(objectPath);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                fileStorage.delete(objectPath);
+            }
+        });
     }
 
     private Song findById(Long id) {

@@ -5,6 +5,7 @@ import com.cosmiclatte.dev.cosmiclatteweb.common.ClientIp;
 import com.cosmiclatte.dev.cosmiclatteweb.common.dto.ResponseFormat;
 import com.cosmiclatte.dev.cosmiclatteweb.common.exception.ForbiddenException;
 import com.cosmiclatte.dev.cosmiclatteweb.config.AdminAuth;
+import com.cosmiclatte.dev.cosmiclatteweb.dto.SongResponse;
 import com.cosmiclatte.dev.cosmiclatteweb.service.SongService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,13 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
+/*
+ * Return types are spelled out instead of `ResponseEntity<?>` because the
+ * OpenAPI document springdoc publishes is what the frontend generates its
+ * TypeScript types from. A wildcard here degrades every schema to `object`.
+ */
 @RestController
 @RequestMapping(ApiPaths.SONGS)
 @RequiredArgsConstructor
@@ -31,7 +39,7 @@ public class SongController {
     private final AdminAuth adminAuth;
 
     @GetMapping
-    public ResponseEntity<?> list(
+    public ResponseEntity<ResponseFormat<List<SongResponse>>> list(
             @RequestParam(value = "visitorId", required = false) String visitorId,
             @RequestHeader(value = "X-Forwarded-For", required = false) String forwardedFor,
             HttpServletRequest httpRequest) {
@@ -40,12 +48,12 @@ public class SongController {
     }
 
     @GetMapping(ApiPaths.SONG_ID)
-    public ResponseEntity<?> get(@PathVariable Long id) {
+    public ResponseEntity<ResponseFormat<SongResponse>> get(@PathVariable Long id) {
         return ResponseEntity.ok(ResponseFormat.success(songService.getSong(id)));
     }
 
     @PostMapping(consumes = "multipart/form-data")
-    public ResponseEntity<?> create(
+    public ResponseEntity<ResponseFormat<SongResponse>> create(
             @RequestPart("title") String title,
             @RequestPart("artist") String artist,
             @RequestPart("file") MultipartFile file,
@@ -56,7 +64,7 @@ public class SongController {
     }
 
     @PutMapping(value = ApiPaths.SONG_AUDIO, consumes = "multipart/form-data")
-    public ResponseEntity<?> replaceAudio(
+    public ResponseEntity<ResponseFormat<SongResponse>> replaceAudio(
             @PathVariable Long id,
             @RequestPart("file") MultipartFile file,
             @RequestHeader(value = "X-Admin-Key", required = false) String adminKey) {

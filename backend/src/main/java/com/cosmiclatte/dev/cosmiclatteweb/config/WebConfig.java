@@ -23,7 +23,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedHeaders("*")
                 .exposedHeaders("X-Error-Id")
                 .allowCredentials(true);
-        // Public health probe: lets the UI report real cold-start progress.
+        // The UI polls this to tell a cold start apart from a slow request.
         registry.addMapping("/health")
                 .allowedOrigins(origins)
                 .allowedMethods("GET", "OPTIONS")

@@ -1,5 +1,5 @@
-# Carga .env de la raiz y arranca Spring Boot
-# Uso: powershell -ExecutionPolicy Bypass -File backend/run.ps1
+# Loads .env from the repo root and starts Spring Boot
+# Usage: powershell -ExecutionPolicy Bypass -File backend/run.ps1
 
 $root = Split-Path $PSScriptRoot -Parent
 $envFile = Join-Path $root ".env"
@@ -15,10 +15,11 @@ if (Test-Path $envFile) {
             Write-Host "  $k=$v"
         }
     }
-    Write-Host "Variables cargadas desde $envFile" -ForegroundColor Green
+    Write-Host "Loaded env vars from $envFile" -ForegroundColor Green
 } else {
-    Write-Host ".env no encontrado en $root - usando defaults (postgres/postgres)" -ForegroundColor Yellow
+    Write-Host "No .env at $root, falling back to the application.yml defaults" -ForegroundColor Yellow
 }
 
-Write-Host "Arrancando backend..." -ForegroundColor Cyan
-& "$PSScriptRoot/mvnw.cmd" spring-boot:run
+Write-Host "Starting backend..." -ForegroundColor Cyan
+# -f keeps this working no matter which directory the script is invoked from.
+& "$PSScriptRoot/mvnw.cmd" -f "$PSScriptRoot/pom.xml" spring-boot:run

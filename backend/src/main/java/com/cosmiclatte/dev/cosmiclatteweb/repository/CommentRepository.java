@@ -10,6 +10,4 @@ import java.util.List;
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     List<Comment> findBySongIdOrderByCreatedAtAsc(Long songId);
-
-    void deleteBySongId(Long songId);
 }

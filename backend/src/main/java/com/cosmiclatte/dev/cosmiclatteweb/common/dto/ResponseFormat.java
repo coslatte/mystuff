@@ -14,10 +14,6 @@ public record ResponseFormat<T>(
         return new ResponseFormat<>(true, null, data, null, null);
     }
 
-    public static <T> ResponseFormat<T> success(T data, String message) {
-        return new ResponseFormat<>(true, message, data, null, null);
-    }
-
     public static <T> ResponseFormat<T> error(String message, Object errors) {
         return new ResponseFormat<>(false, message, null, null, errors);
     }

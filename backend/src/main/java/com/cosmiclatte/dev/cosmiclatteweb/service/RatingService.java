@@ -29,14 +29,9 @@ public class RatingService {
         String effectiveVisitorId = (visitorId == null || visitorId.isBlank())
                 ? UUID.randomUUID().toString()
                 : visitorId.trim();
+        String effectiveIpHash = (ipHash == null || ipHash.isBlank()) ? null : ipHash;
 
-        // One vote per song per (visitor_id OR ip_hash): whichever matches first wins,
-        // so voting again from the same browser (even via VPN) or the same network
-        // (after clearing localStorage) updates the existing vote instead of adding one.
-        Rating existing = ratingRepository.findBySongIdAndVisitorId(songId, effectiveVisitorId);
-        if (existing == null && ipHash != null && !ipHash.isBlank()) {
-            existing = ratingRepository.findBySongIdAndIpHash(songId, ipHash);
-        }
+        Rating existing = findExisting(songId, effectiveVisitorId, effectiveIpHash);
         if (existing != null) {
             existing.setStars(stars);
             return ratingMapper.toResponse(ratingRepository.save(existing));
@@ -46,20 +41,24 @@ public class RatingService {
                 .song(song)
                 .stars(stars)
                 .visitorId(effectiveVisitorId)
-                .ipHash(ipHash)
+                .ipHash(effectiveIpHash)
                 .build();
-        return ratingMapper.toResponse(ratingRepository.save(rating));
+        // saveAndFlush, not save: V6's unique indexes have to raise here rather
+        // than at commit, where nothing could catch it and turn it into a 409.
+        return ratingMapper.toResponse(ratingRepository.saveAndFlush(rating));
     }
 
-    public Integer getVisitorStars(Long songId, String visitorId, String ipHash) {
-        if (visitorId != null && !visitorId.isBlank()) {
-            Rating byVisitor = ratingRepository.findBySongIdAndVisitorId(songId, visitorId.trim());
-            if (byVisitor != null) return byVisitor.getStars();
+    /**
+     * V6 adds a unique index on (song_id, ip_hash) next to the existing one on
+     * (song_id, visitor_id), so a repeat vote from the same browser or the same
+     * network updates the stored stars instead of inserting a second row.
+     * Visitors behind one NAT address share a single vote per song.
+     */
+    private Rating findExisting(Long songId, String visitorId, String ipHash) {
+        Rating byVisitor = ratingRepository.findBySongIdAndVisitorId(songId, visitorId);
+        if (byVisitor != null) {
+            return byVisitor;
         }
-        if (ipHash != null && !ipHash.isBlank()) {
-            Rating byIp = ratingRepository.findBySongIdAndIpHash(songId, ipHash);
-            if (byIp != null) return byIp.getStars();
-        }
-        return null;
+        return ipHash == null ? null : ratingRepository.findBySongIdAndIpHash(songId, ipHash);
     }
 }
