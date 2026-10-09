@@ -163,13 +163,13 @@ export interface components {
         };
         SongResponse: {
             /** Format: int64 */
-            id?: number;
-            title?: string;
-            artist?: string;
-            duration?: string;
+            id: number;
+            title: string;
+            artist: string;
+            duration: string;
             audioUrl?: string;
             /** Format: date-time */
-            createdAt?: string;
+            createdAt: string;
             /** Format: double */
             avgRating?: number;
             /** Format: int64 */
@@ -182,13 +182,13 @@ export interface components {
         };
         CommentResponse: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: int64 */
-            songId?: number;
-            author?: string;
-            content?: string;
+            songId: number;
+            author: string;
+            content: string;
             /** Format: date-time */
-            createdAt?: string;
+            createdAt: string;
             /** Format: date-time */
             updatedAt?: string;
         };
@@ -208,13 +208,13 @@ export interface components {
         };
         RatingResponse: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: int64 */
-            songId?: number;
+            songId: number;
             /** Format: int32 */
-            stars?: number;
+            stars: number;
             /** Format: date-time */
-            createdAt?: string;
+            createdAt: string;
         };
         ResponseFormatRatingResponse: {
             success?: boolean;
@@ -231,13 +231,13 @@ export interface components {
         };
         CreatedCommentResponse: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: int64 */
-            songId?: number;
-            author?: string;
-            content?: string;
+            songId: number;
+            author: string;
+            content: string;
             /** Format: date-time */
-            createdAt?: string;
+            createdAt: string;
             /** Format: date-time */
             updatedAt?: string;
             editToken?: string;
@@ -252,8 +252,8 @@ export interface components {
             errors?: unknown;
         };
         HealthResponse: {
-            status?: string;
-            service?: string;
+            status: string;
+            service: string;
         };
         ResponseFormatHealthResponse: {
             success?: boolean;
@@ -292,8 +292,8 @@ export interface components {
             errors?: unknown;
         };
         SoundCloudAlbumDto: {
-            id?: string;
-            title?: string;
+            id: string;
+            title: string;
             artworkUrl?: string;
             /** Format: int32 */
             trackCount?: number;

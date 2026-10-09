@@ -26,6 +26,33 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Turns a response into its payload or throws the matching `ApiError`.
+ *
+ * Shared by `request` and `upload` so both transports report failures
+ * identically. `fetch` cannot observe upload progress, which is the only reason
+ * the multipart path exists.
+ */
+function unwrap<T>(status: number, text: string, errorIdHeader: string | null): T {
+  let payload: ApiEnvelope<T> | undefined;
+  try {
+    payload = text ? (JSON.parse(text) as ApiEnvelope<T>) : undefined;
+  } catch {
+    payload = undefined;
+  }
+
+  if (status < 200 || status >= 300) {
+    const errorId = payload?.meta?.errorId ?? errorIdHeader ?? undefined;
+    throw new ApiError(
+      payload?.message || `Request failed: ${status}`,
+      status,
+      errorId,
+      payload?.errors
+    );
+  }
+  return payload?.data as T;
+}
+
 async function request<T>(
   path: string,
   init?: RequestInit & { adminKey?: string; editToken?: string }
@@ -53,25 +80,76 @@ async function request<T>(
   }
 
   if (res.status === 204) return undefined as T;
+  return unwrap<T>(res.status, await res.text(), res.headers.get("X-Error-Id"));
+}
 
-  const text = await res.text();
-  let payload: ApiEnvelope<T> | undefined;
-  try {
-    payload = text ? (JSON.parse(text) as ApiEnvelope<T>) : undefined;
-  } catch {
-    payload = undefined;
-  }
+export type UploadProgress = {
+  loaded: number;
+  total: number;
+  /** 0-100, or null while the browser cannot measure the body length. */
+  percent: number | null;
+};
 
-  if (!res.ok) {
-    const errorId = payload?.meta?.errorId ?? res.headers.get("X-Error-Id") ?? undefined;
-    throw new ApiError(
-      payload?.message || `Request failed: ${res.status}`,
-      res.status,
-      errorId,
-      payload?.errors
-    );
-  }
-  return payload?.data as T;
+/**
+ * Multipart upload over XMLHttpRequest.
+ *
+ * `fetch` exposes no request-progress events, so an upload of up to 20 MB had no
+ * progress at all and looked frozen on a slow connection. XHR is the only way to
+ * report bytes sent, which is what the queue renders.
+ */
+function upload<T>(
+  path: string,
+  method: "POST" | "PUT",
+  form: FormData,
+  adminKey: string,
+  onProgress?: (progress: UploadProgress) => void,
+  signal?: AbortSignal
+): Promise<T> {
+  return new Promise<T>((resolve, rejectPromise) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(method, `${API_URL}${path}`);
+    xhr.setRequestHeader("X-Admin-Key", adminKey);
+
+    const abort = () => xhr.abort();
+    signal?.addEventListener("abort", abort, { once: true });
+
+    const finish = (settle: () => void) => {
+      signal?.removeEventListener("abort", abort);
+      settle();
+    };
+
+    xhr.upload.onprogress = (event) => {
+      // lengthComputable is false when the body is a stream of unknown size;
+      // reporting a fake percentage there would be worse than showing a spinner.
+      const percent = event.lengthComputable && event.total > 0
+        ? Math.round((event.loaded / event.total) * 100)
+        : null;
+      onProgress?.({ loaded: event.loaded, total: event.total, percent });
+    };
+
+    xhr.onload = () => {
+      finish(() => {
+        if (xhr.status === 204) {
+          resolve(undefined as T);
+          return;
+        }
+        try {
+          resolve(unwrap<T>(xhr.status, xhr.responseText, xhr.getResponseHeader("X-Error-Id")));
+        } catch (err) {
+          rejectPromise(err);
+        }
+      });
+    };
+
+    xhr.onerror = () =>
+      finish(() => rejectPromise(new ApiError("Network request failed.", 0)));
+    xhr.onabort = () =>
+      finish(() => rejectPromise(new ApiError("Upload cancelled.", 0)));
+    xhr.ontimeout = () =>
+      finish(() => rejectPromise(new ApiError("The upload timed out.", 0)));
+
+    xhr.send(form);
+  });
 }
 
 export const api = {
@@ -93,10 +171,22 @@ export const api = {
 
   getSoundCloudAlbums: () => request<SoundCloudAlbum[]>("/api/albums/soundcloud"),
 
-  uploadSong: (form: FormData, adminKey: string) =>
-    request<Song>("/api/songs", { method: "POST", body: form, adminKey }),
-  replaceSongAudio: (songId: number, form: FormData, adminKey: string) =>
-    request<Song>(`/api/songs/${songId}/audio`, { method: "PUT", body: form, adminKey }),
+  uploadSong: (
+    form: FormData,
+    adminKey: string,
+    onProgress?: (progress: UploadProgress) => void,
+    signal?: AbortSignal
+  ) => upload<Song>("/api/songs", "POST", form, adminKey, onProgress, signal),
+
+  replaceSongAudio: (
+    songId: number,
+    form: FormData,
+    adminKey: string,
+    onProgress?: (progress: UploadProgress) => void,
+    signal?: AbortSignal
+  ) =>
+    upload<Song>(`/api/songs/${songId}/audio`, "PUT", form, adminKey, onProgress, signal),
+
   deleteSong: (songId: number, adminKey: string) =>
     request<void>(`/api/songs/${songId}`, { method: "DELETE", adminKey }),
 

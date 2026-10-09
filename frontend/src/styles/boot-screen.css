@@ -1,0 +1,159 @@
+/*
+ * Boot splash.
+ *
+ * The overlay is hidden until the controller marks it `data-state="active"`, which
+ * is what makes it safe: the script that hides it again is the same script that
+ * reveals it, so a bundle that never loads leaves no overlay over the page.
+ *
+ * The static frame below is the composition three.js draws: the same partition from
+ * `lib/boot/frame`, the same grey ground, the same black-on-white and white-on-black
+ * rectangles with inverted borders. It holds the space while the three chunk
+ * downloads, so the layout never jumps, and it is also the permanent answer under
+ * `prefers-reduced-motion` or without WebGL.
+ */
+
+/* Scrolling is frozen while the overlay is up, and released by the controller when
+   it tears the splash down. `scrollbar-gutter: stable` on html keeps the page from
+   shifting sideways the moment the lock comes off. */
+html.boot-locked {
+  overflow: hidden;
+}
+
+.boot-screen {
+  display: none;
+}
+
+.boot-screen[data-state="active"] {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  background-color: var(--color-brut-bg);
+  color: var(--color-brut-black);
+}
+
+/* The overlay covers the viewport and sits above the z-40 footer, so it needs no
+   helper to block interaction with the page behind it. */
+
+.boot-screen__mark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
+}
+
+/* Square stage: the three scene letterboxes into the same box it measures. */
+.boot-stage {
+  position: relative;
+  width: min(70vmin, 420px);
+  height: min(70vmin, 420px);
+}
+
+.boot-stage__canvas,
+.boot-stage__fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.boot-stage__canvas {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.boot-stage[data-state="swapped"] .boot-stage__canvas {
+  opacity: 1;
+}
+
+/* The static frame fades out rather than vanishing, so the swap to the canvas
+   reads as the drawing taking over instead of a flicker. */
+.boot-stage__fallback {
+  transition: opacity 0.3s ease;
+}
+
+.boot-stage[data-state="swapped"] .boot-stage__fallback {
+  opacity: 0;
+}
+
+/*
+ * One cell of the partition.
+ *
+ * The border is the inverse of the fill, which is what keeps both kinds of cell
+ * legible on the grey ground. Every cell inks its own edge inward and the cells tile
+ * exactly, so a shared edge is drawn from both sides at the same coordinate and the
+ * lines come out one css pixel wide and perfectly registered — the same weight
+ * `splash-scene.ts` insets its fills by.
+ */
+.boot-rect {
+  position: absolute;
+  border: 1px solid;
+}
+
+.boot-rect--ink {
+  background-color: var(--color-brut-black);
+  border-color: var(--color-brut-bg);
+}
+
+.boot-rect--paper {
+  background-color: var(--color-brut-bg);
+  border-color: var(--color-brut-black);
+}
+
+.boot-readout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  width: min(70vmin, 420px);
+}
+
+.boot-percent {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.5rem, 12vmin, 4.5rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+  /* Digits must not reflow the number sideways while it counts. */
+  font-variant-numeric: tabular-nums;
+}
+
+.boot-stage-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #6b6b6b;
+}
+
+.boot-bar {
+  width: min(70vmin, 420px);
+  height: 14px;
+  border: 2px solid var(--color-brut-black);
+  background-color: var(--color-brut-bg);
+  padding: 2px;
+}
+
+.boot-bar__fill {
+  height: 100%;
+  width: var(--boot-progress, 0%);
+  background-color: var(--color-brut-black);
+  /* Short and linear: long enough to read as movement, short enough that the bar
+     still tracks the honest value rather than trailing behind it. */
+  transition: width 180ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-stage__canvas,
+  .boot-stage__fallback {
+    transition: none;
+  }
+
+  .boot-bar__fill {
+    transition: none;
+  }
+}

@@ -12,18 +12,18 @@ type Props = {
 };
 
 export default function TrackBlock({ song, onRate }: Props) {
-  const { song: currentSong, isPlaying } = usePlayer();
+  const { track } = usePlayer();
   // Comments are fetched when the row is expanded, so a long track list does not
   // fire one request per row on load.
   const [showComments, setShowComments] = useState(false);
 
-  const active = currentSong?.id === song.id;
-  const showPause = active && isPlaying;
+  const active = track.song?.id === song.id;
+  const showPause = active && track.isPlaying;
   const ratingLabel =
     song.avgRating != null ? `${song.avgRating.toFixed(1)} (${song.totalVotes ?? 0})` : "unrated";
 
   function handlePlay() {
-    if (active) player.toggle();
+    if (active) player.toggle(song);
     else player.playSong(song);
   }
 

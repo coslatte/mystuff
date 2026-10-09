@@ -12,7 +12,7 @@ if (Test-Path $envFile) {
             $k = $kv[0].Trim()
             $v = $kv[1].Trim()
             Set-Item -Path "env:$k" -Value $v
-            Write-Host "  $k=$v"
+            Write-Host "  Loaded $k"
         }
     }
     Write-Host "Loaded env vars from $envFile" -ForegroundColor Green

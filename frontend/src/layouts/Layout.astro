@@ -2,17 +2,20 @@
 import { ClientRouter } from "astro:transitions";
 import Navbar from "../components/Navbar.astro";
 import Footer from "../components/Footer.astro";
+import BootScreen from "../components/BootScreen.astro";
 import "../styles/global.css";
 
 interface Props {
   title?: string;
+  /** `/loading` replays the splash itself, so the layout's copy stands down. */
+  bootReplay?: boolean;
 }
 
-const { title = "CosmicLatte" } = Astro.props;
+const { title = "CosmicLatte", bootReplay = false } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-boot-replay={bootReplay ? "" : undefined}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -26,6 +29,8 @@ const { title = "CosmicLatte" } = Astro.props;
     <ClientRouter />
   </head>
   <body class="flex min-h-screen flex-col">
+    <!-- First child so it paints over everything below it. -->
+    <BootScreen />
     <Navbar />
     <main class="mx-auto w-full max-w-7xl flex-1 border-x-2 border-black tv:max-w-[100rem]">
       <slot />

@@ -21,9 +21,17 @@
 - Keep commits atomic, with a subject line of at most 72 characters.
 
 ## Frontend
-- Read `docs/frontend-architecture.md` before adding a component or changing how
-  data is fetched. It records the rules that decide `.astro` vs `.tsx`, what may
-  render on the server, and where shared helpers live.
+- Read `docs/frontend-architecture.md` **before changing anything under
+  `frontend/src/`**. It is the decision record: the rules a change must obey, the
+  dependency direction between layers, the file index that says where a change
+  belongs, and the reasoning behind decisions that look arbitrary.
+- That document is living. Update it in the same commit as the code whenever you
+  move/rename/add/delete a file, change or deliberately break a rule, or learn
+  why something is the way it is. A stale architecture document is worse than
+  none, because it gets trusted.
+- Rule 6 in that document governs comments: explain *why*, never *what*. The
+  test is whether the comment would still be true after renaming the function to
+  something accurate.
 - Run `bun run check` from `frontend/` before committing. `astro build`
   transpiles without type checking, so a build alone proves nothing about types.
 - After changing a Java DTO or a controller signature, run `bun run gen:api`

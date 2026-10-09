@@ -6,10 +6,17 @@
  * than returning false, and a corrupted value must never take the page down.
  */
 
-function storage(): Storage | null {
+/**
+ * Resolves a storage area, or null when it cannot be used.
+ *
+ * Takes the area as an argument so a caller needing session lifetime can pass
+ * `sessionStorage` and inherit the identical guards rather than open-coding a
+ * second, less careful wrapper.
+ */
+function storage(area: () => Storage): Storage | null {
   if (typeof window === "undefined") return null;
   try {
-    return window.localStorage;
+    return area();
   } catch {
     // Blocked by browser settings: treat storage as unavailable, not as an error.
     return null;
@@ -18,7 +25,7 @@ function storage(): Storage | null {
 
 export function readText(key: string): string | null {
   try {
-    return storage()?.getItem(key) ?? null;
+    return storage(() => window.localStorage)?.getItem(key) ?? null;
   } catch {
     return null;
   }
@@ -26,7 +33,7 @@ export function readText(key: string): string | null {
 
 export function writeText(key: string, value: string): void {
   try {
-    storage()?.setItem(key, value);
+    storage(() => window.localStorage)?.setItem(key, value);
   } catch {
     // Quota exceeded or storage disabled: the value stays in memory only.
   }
@@ -34,9 +41,29 @@ export function writeText(key: string, value: string): void {
 
 export function removeKey(key: string): void {
   try {
-    storage()?.removeItem(key);
+    storage(() => window.localStorage)?.removeItem(key);
   } catch {
     /* nothing to undo */
+  }
+}
+
+/**
+ * Session-scoped text. Survives client-side navigation within the tab and dies
+ * with it, which is what "already seen the splash once" needs.
+ */
+export function readSessionText(key: string): string | null {
+  try {
+    return storage(() => window.sessionStorage)?.getItem(key) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeSessionText(key: string, value: string): void {
+  try {
+    storage(() => window.sessionStorage)?.setItem(key, value);
+  } catch {
+    // Same degradation as writeText: in-memory only for this page.
   }
 }
 

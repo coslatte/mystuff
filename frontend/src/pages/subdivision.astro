@@ -1,0 +1,31 @@
+---
+import Layout from "../layouts/Layout.astro";
+import RecursiveSubdivision from "../components/RecursiveSubdivision";
+---
+
+<Layout title="subdivision | cosmiclatte">
+  <section class="border-b-2 border-black">
+    <div class="flex flex-col justify-between gap-3 p-6 tablet:p-8">
+      <h1 class="font-display text-4xl font-black tracking-tighter tablet:text-6xl tv:text-7xl">subdivision.</h1>
+      <aside class="max-w-2xl border-l-4 border-black bg-yellow-100 px-4 py-3 font-mono text-sm">
+        <strong class="block">experimental page</strong>
+        a space to test ideas and play with code, outside the main portfolio. things may change or break.
+      </aside>
+      <p class="max-w-2xl font-mono text-sm text-gray-700">
+        recursive subdivision. a rectangle, split in two, each part split again to a fixed depth.
+        start with an exact grid, or lower the cut ratio to explore irregular partitions.
+      </p>
+      <p class="brut-meta normal-case text-gray-600">
+        no canvas and no webgl here. the cells are elements, and because the leaf count is fixed the
+        browser keeps them across a recut. boundaries update together while
+        <span class="bg-yellow-100 px-1">colours fade</span>, keeping every cell aligned with its outline.
+      </p>
+    </div>
+  </section>
+
+  <section class="border-b-2 border-black">
+    <div class="p-4 tablet:p-6">
+      <RecursiveSubdivision client:load />
+    </div>
+  </section>
+</Layout>

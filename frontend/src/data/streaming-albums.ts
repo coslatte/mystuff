@@ -64,20 +64,19 @@ const SC_ROW_PX = 32;
 const SC_MIN_PX = 180;
 const SC_FALLBACK_PX = 450;
 
-// Spotify stacks a ~232px cover/metadata header over a track list that grows
-// with the iframe height, so it needs the same treatment.
-const SP_HEADER_PX = 232;
-const SP_ROW_PX = 32;
-const SP_MIN_PX = 352;
+// Spotify does not size to the track count the way SoundCloud does. Its widget
+// is a fixed 200px header plus a track list that scrolls internally
+// (TrackList_wrapper is overflow-y:auto inside a grid row of 1fr), so the iframe
+// only sets the viewport and the height never depends on how many tracks there
+// are. Its own oEmbed reports 352px for every album regardless, which is the
+// value to use. Anything taller just leaves empty space under the widget.
+const SP_EMBED_PX = 352;
 
 const BOTTOM_BUFFER_PX = 8;
 
 export function embedHeightFor(album: Album, platform: StreamingPlatform): number {
+  if (platform === "spotify") return SP_EMBED_PX;
   const trackCount = album.trackCount ?? 0;
-  if (platform === "spotify") {
-    if (trackCount <= 0) return SP_MIN_PX;
-    return Math.max(SP_MIN_PX, SP_HEADER_PX + trackCount * SP_ROW_PX + BOTTOM_BUFFER_PX);
-  }
   if (trackCount <= 0) return album.embedHeight ?? SC_FALLBACK_PX;
   return Math.max(SC_MIN_PX, SC_HEADER_PX + trackCount * SC_ROW_PX + BOTTOM_BUFFER_PX);
 }

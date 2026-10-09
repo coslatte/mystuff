@@ -42,6 +42,16 @@ app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:4321,http://localhost:3000}
   upload-max-bytes: ${APP_UPLOAD_MAX_BYTES:20971520}
+  # Which AudioStorage implementation is active. `supabase` is the default so
+  # production is unchanged by the existence of the local one. Set `local` to
+  # develop without a Supabase account: files go to STORAGE_LOCAL_DIR and are
+  # served from /api/local-audio by the backend itself.
+  storage:
+    backend: ${STORAGE_BACKEND:supabase}
+    local:
+      directory: ${STORAGE_LOCAL_DIR:./data/audio}
+      # Left empty on purpose: the backend then uses http://localhost:<port>.
+      public-base-url: ${STORAGE_LOCAL_BASE_URL:}
   admin-api-key: ${ADMIN_API_KEY:changeme}
   supabase:
     url: ${SUPABASE_URL:}

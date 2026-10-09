@@ -8,8 +8,10 @@ backend/.idea/
 Thumbs.db
 
 # dirs
-backend/target/
 backend/.mvn/wrapper/maven-wrapper.jar
+# Local audio store (STORAGE_BACKEND=local). Writable, reproducible, never committed.
+backend/data/
+
 frontend/node_modules/
 frontend/dist/
 frontend/.astro/

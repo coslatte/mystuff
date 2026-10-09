@@ -1,12 +1,62 @@
 import type { Song } from "../types";
 
-export type PlayerState = {
+export type PlaybackSource = "tracks" | "soundcloud" | "spotify";
+
+/**
+ * Whatever the site is playing, whichever way it arrived. `title` is the one
+ * name the now-playing widget renders, so a source that cannot report a real
+ * track name has to fall back to something honest rather than invent one.
+ */
+export type NowPlaying = {
+  /** Render-diff key: `track:<id>`, `sc:<soundId>`, `sp:<albumId>`. */
+  key: string;
+  source: PlaybackSource;
+  title: string;
+  artist?: string;
+  /** Pre-formatted by the source that knows it, so the widget never formats. */
+  durationLabel?: string;
+  /** Only for `tracks`: the row the audio element was pointed at. */
+  song?: Song;
+  /** False when the source has no transport the widget can drive. */
+  controllable: boolean;
+};
+
+/** The audio element this engine owns, independent of which source is active. */
+export type TrackPlayback = {
   song: Song | null;
   isPlaying: boolean;
   currentTime: number;
   duration: number;
   error: boolean;
 };
+
+export type PlayerState = {
+  nowPlaying: NowPlaying | null;
+  isPlaying: boolean;
+  track: TrackPlayback;
+};
+
+/** What an embed reports about itself; see services/embed-players.ts. */
+export type ExternalReport = {
+  source: "soundcloud" | "spotify";
+  key: string;
+  title: string;
+  artist?: string;
+  durationLabel?: string;
+  isPlaying: boolean;
+  /** False when the platform script never loaded and the embed stays inert. */
+  controllable: boolean;
+};
+
+/** The transport of the mounted embed, so `toggle` can drive it. */
+export type ExternalHandle = {
+  toggle: () => void;
+  pause: () => void;
+};
+
+export function trackKey(song: Song): string {
+  return `track:${song.id}`;
+}
 
 type Listener = () => void;
 
@@ -25,13 +75,24 @@ class PlayerEngine {
   private ctx: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
   private listeners = new Set<Listener>();
-  private snapshot: PlayerState = {
+  private trackState: TrackPlayback = {
     song: null,
     isPlaying: false,
     currentTime: 0,
     duration: 0,
     error: false,
   };
+  private external: ExternalReport | null = null;
+  private externalFrom: number | null = null;
+  private externalHandle: ExternalHandle | null = null;
+  private externalHandleToken: number | null = null;
+  private externalTokens = new Set<number>();
+  private externalTokenCounter = 0;
+  private snapshot: PlayerState;
+
+  constructor() {
+    this.snapshot = { nowPlaying: null, isPlaying: false, track: this.trackState };
+  }
 
   subscribe = (listener: Listener) => {
     this.listeners.add(listener);
@@ -44,9 +105,52 @@ class PlayerEngine {
 
   getAnalyser = (): AnalyserNode | null => this.analyser;
 
-  private patch(partial: Partial<PlayerState>) {
-    this.snapshot = { ...this.snapshot, ...partial };
+  /**
+   * One place turns the two independent sources into the single `nowPlaying`
+   * every surface reads, so the title cannot drift between them.
+   */
+  private sync() {
+    const external = this.external;
+    const song = this.trackState.song;
+    const nowPlaying: NowPlaying | null = external
+      ? {
+          key: external.key,
+          source: external.source,
+          title: external.title,
+          artist: external.artist,
+          durationLabel: external.durationLabel,
+          controllable: external.controllable,
+        }
+      : song
+        ? {
+            key: trackKey(song),
+            source: "tracks",
+            title: song.title,
+            artist: song.artist,
+            durationLabel: song.duration,
+            song,
+            controllable: true,
+          }
+        : null;
+
+    this.snapshot = {
+      nowPlaying,
+      isPlaying: external ? external.isPlaying : this.trackState.isPlaying && song != null,
+      track: this.trackState,
+    };
     this.listeners.forEach((listener) => listener());
+  }
+
+  private patchTrack(partial: Partial<TrackPlayback>) {
+    this.trackState = { ...this.trackState, ...partial };
+    this.sync();
+  }
+
+  /** An embed takes the widget over, so the site's own audio has to stop. */
+  private yieldToEmbed() {
+    this.externalHandle?.pause();
+    if (this.external) this.external = { ...this.external, isPlaying: false };
+    if (this.trackState.isPlaying) this.audio?.pause();
   }
 
   private startPlayback() {
@@ -54,8 +158,8 @@ class PlayerEngine {
     if (!audio) return;
     audio
       .play()
-      .then(() => this.patch({ isPlaying: true }))
-      .catch(() => this.patch({ isPlaying: false, error: true }));
+      .then(() => this.patchTrack({ isPlaying: true }))
+      .catch(() => this.patchTrack({ isPlaying: false, error: true }));
   }
 
   private ensureAudio(): HTMLAudioElement | null {
@@ -67,17 +171,17 @@ class PlayerEngine {
       audio.crossOrigin = "anonymous";
       audio.preload = "metadata";
       audio.addEventListener("timeupdate", () => {
-        this.patch({ currentTime: audio.currentTime || 0 });
+        this.patchTrack({ currentTime: audio.currentTime || 0 });
       });
       const syncDuration = () => {
-        this.patch({ duration: Number.isFinite(audio.duration) ? audio.duration : 0 });
+        this.patchTrack({ duration: Number.isFinite(audio.duration) ? audio.duration : 0 });
       };
       audio.addEventListener("durationchange", syncDuration);
       audio.addEventListener("loadedmetadata", syncDuration);
-      audio.addEventListener("play", () => this.patch({ isPlaying: true, error: false }));
-      audio.addEventListener("pause", () => this.patch({ isPlaying: false }));
-      audio.addEventListener("ended", () => this.patch({ isPlaying: false, currentTime: 0 }));
-      audio.addEventListener("error", () => this.patch({ isPlaying: false, error: true }));
+      audio.addEventListener("play", () => this.patchTrack({ isPlaying: true, error: false }));
+      audio.addEventListener("pause", () => this.patchTrack({ isPlaying: false }));
+      audio.addEventListener("ended", () => this.patchTrack({ isPlaying: false, currentTime: 0 }));
+      audio.addEventListener("error", () => this.patchTrack({ isPlaying: false, error: true }));
       this.audio = audio;
     }
     return this.audio;
@@ -109,18 +213,58 @@ class PlayerEngine {
     }
   }
 
+  /**
+   * Reports an embed's own state. The token identifies one mounted embed, so a
+   * report that arrives after its iframe was torn down is dropped instead of
+   * resurrecting a widget nobody can see. Two embeds can be open at once; the
+   * last one to report owns the title.
+   *
+   * A pause report only counts for the embed that is already on screen: it is
+   * how an embed keeps its title visible while paused, and rejecting the rest
+   * stops a stale pause from stealing the widget back from a track.
+   */
+  reportExternal = (token: number, report: ExternalReport) => {
+    if (!this.externalTokens.has(token)) return;
+    if (!report.isPlaying && this.external?.key !== report.key) return;
+    this.external = report;
+    this.externalFrom = token;
+    this.sync();
+  };
+
+  attachExternal = (handle: ExternalHandle): number => {
+    const token = ++this.externalTokenCounter;
+    this.externalTokens.add(token);
+    this.externalHandle = handle;
+    this.externalHandleToken = token;
+    return token;
+  };
+
+  releaseExternal = (token: number) => {
+    this.externalTokens.delete(token);
+    if (this.externalHandleToken === token) {
+      this.externalHandle = null;
+      this.externalHandleToken = null;
+    }
+    if (this.externalFrom !== token) return;
+    this.external = null;
+    this.externalFrom = null;
+    this.sync();
+  };
+
   playSong = (song: Song) => {
     const audio = this.ensureAudio();
     if (!audio || !song.audioUrl) {
-      this.patch({ song, isPlaying: false, error: true });
+      this.patchTrack({ song, isPlaying: false, error: true });
       return;
     }
+    this.yieldToEmbed();
+    this.external = null;
     if (audio.src !== song.audioUrl) {
       audio.src = song.audioUrl;
       audio.load();
-      this.patch({ song, currentTime: 0, duration: 0, error: false });
+      this.patchTrack({ song, currentTime: 0, duration: 0, error: false });
     } else {
-      this.patch({ song, error: false });
+      this.patchTrack({ song, error: false });
     }
     this.ensureCtx();
     this.startPlayback();
@@ -129,16 +273,27 @@ class PlayerEngine {
   toggle = (song?: Song) => {
     const audio = this.ensureAudio();
     if (!audio) return;
-    const target = song ?? this.snapshot.song;
-    if (!this.snapshot.song && target) {
+    // Only the footer widget calls this bare, and only it may act on whichever
+    // source is active. Every track row passes its song, because its button
+    // belongs to the site's own audio and not to an embed that happens to be
+    // audible.
+    if (!song && this.external?.isPlaying) {
+      this.externalHandle?.toggle();
+      return;
+    }
+    const target = song ?? this.trackState.song;
+    if (!target && !this.trackState.song) return;
+    if (!this.trackState.song && target) {
       this.playSong(target);
       return;
     }
     if (audio.paused) {
-      if (target && this.snapshot.song?.id !== target.id) {
+      if (target && this.trackState.song?.id !== target.id) {
         this.playSong(target);
         return;
       }
+      this.yieldToEmbed();
+      this.external = null;
       this.ensureCtx();
       this.startPlayback();
     } else {

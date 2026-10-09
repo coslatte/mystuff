@@ -20,9 +20,28 @@ const MAX_LOG = Math.log10(MAX_HZ);
 const PLAYED = "#ff3300";
 const UNPLAYED = "#ffffff";
 
+/**
+ * Shared across every canvas that reads the analyser, since the player bar and
+ * the footer square both paint from it on the same frame. Reallocated only when
+ * the fftSize changes, which happens once per page.
+ */
+let bands: Uint8Array<ArrayBuffer> | null = null;
+
+function readBands(analyser: AnalyserNode): Uint8Array<ArrayBuffer> {
+  if (!bands || bands.length !== analyser.frequencyBinCount) {
+    bands = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
+  }
+  analyser.getByteFrequencyData(bands);
+  return bands;
+}
+
 /** A canvas smaller than this cannot hold a meaningful bar. */
 function isDrawable(width: number, height: number): boolean {
   return width >= 2 && height >= 2;
+}
+
+function binFor(freq: number, binHz: number, maxBin: number): number {
+  return Math.min(maxBin, Math.max(0, Math.round(freq / binHz)));
 }
 
 /**
@@ -38,28 +57,71 @@ export function drawSpectrum(
 ): void {
   ctx.clearRect(0, 0, width, height);
 
-  let bands: Uint8Array<ArrayBuffer> | null = null;
-  if (analyser && isPlaying) {
-    bands = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
-    analyser.getByteFrequencyData(bands);
-  }
+  const data = analyser && isPlaying ? readBands(analyser) : null;
 
   const sampleRate = analyser ? analyser.context.sampleRate : 44100;
   const fftSize = analyser ? analyser.fftSize : 4096;
   const binHz = sampleRate / fftSize;
-  const maxBin = bands ? bands.length - 1 : Math.floor(fftSize / 2) - 1;
+  const maxBin = data ? data.length - 1 : Math.floor(fftSize / 2) - 1;
   const bars = Math.max(1, Math.floor(width / SPECTRUM_BAR_PITCH));
   const barWidth = width / bars;
 
   ctx.fillStyle = UNPLAYED;
   for (let i = 0; i < bars; i++) {
     const freq = Math.pow(10, MIN_LOG + (i / bars) * (MAX_LOG - MIN_LOG));
-    const bin = Math.min(maxBin, Math.max(0, Math.round(freq / binHz)));
-    const value = bands ? bands[bin] / 255 : 0.12;
+    const value = data ? data[binFor(freq, binHz, maxBin)] / 255 : 0.12;
     const barHeight = Math.max(2, value * height);
     const x = i * barWidth + barWidth * 0.12;
     ctx.fillRect(x, height - barHeight, barWidth * 0.76, barHeight);
   }
+}
+
+/**
+ * Decoration, not measurement.
+ *
+ * A SoundCloud or Spotify embed lives in a cross-origin iframe whose samples no
+ * page script can read, so there is nothing to analyse. This paints the same
+ * log-frequency bar layout from a value derived from the source key, which
+ * keeps the widget alive without pretending the pixels are audio. It is a
+ * separate export so no call site can hand it a real AnalyserNode by mistake.
+ */
+export function drawPseudoSpectrum(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  seed: string,
+  phase: number
+): void {
+  ctx.clearRect(0, 0, width, height);
+
+  const bars = Math.max(1, Math.floor(width / SPECTRUM_BAR_PITCH));
+  const barWidth = width / bars;
+  // Low bars get the bass sway and the top ones the shimmer, so the square
+  // keeps the silhouette of the real thing.
+  const tilt = seed.length % 7;
+
+  ctx.fillStyle = seed.startsWith("sp:") ? PLAYED : UNPLAYED;
+  for (let i = 0; i < bars; i++) {
+    const position = i / bars;
+    const base = 0.18 + 0.5 * pseudoRandom(seed, i + tilt);
+    const sway = Math.sin(phase * 0.0022 + i * 0.42 + tilt) * 0.5 + 0.5;
+    const rollOff = 1 - position * 0.55;
+    const value = Math.max(0.06, Math.min(1, base * (0.35 + 0.65 * sway) * rollOff));
+    const barHeight = Math.max(2, value * height);
+    const x = i * barWidth + barWidth * 0.12;
+    ctx.fillRect(x, height - barHeight, barWidth * 0.76, barHeight);
+  }
+}
+
+/** Stable per-bar value from the seed, so the animation does not reshuffle. */
+function pseudoRandom(seed: string, index: number): number {
+  let hash = 2166136261;
+  const text = `${seed}:${index}`;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return ((hash >>> 0) % 1000) / 1000;
 }
 
 /**

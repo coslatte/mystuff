@@ -9,12 +9,21 @@ const STATUS_MESSAGES: Record<number, string> = {
   504: "The server took too long to respond. Try again.",
 };
 
+/**
+ * Client-side failures are raised as plain `Error`s (validation, storage, abort)
+ * and only reach the server through `ApiError`. Falling through to the network
+ * message for them made "select an audio file" read as "we couldn't reach the
+ * server", which is both wrong and unactionable.
+ */
 export function userMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status > 0 && error.status < 500 && error.message) {
       return error.message;
     }
     return STATUS_MESSAGES[error.status] ?? "Something went wrong. Try again.";
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
   }
   return "We couldn't reach the server. Check your connection and try again.";
 }
@@ -30,5 +39,7 @@ export function isRetryable(error: unknown): boolean {
   if (error instanceof ApiError) {
     return error.status === 0 || error.status === 408 || error.status === 429 || error.status >= 500;
   }
-  return true;
+  // A plain Error was raised locally (validation, storage). Repeating the
+  // request cannot change the outcome, so offering retry would be a dead end.
+  return false;
 }

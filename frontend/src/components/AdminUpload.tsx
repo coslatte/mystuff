@@ -3,27 +3,30 @@ import { api } from "../services/api";
 import { runOptimistic } from "../lib/optimistic";
 import { readText, removeKey, writeText } from "../lib/storage";
 import { useResource } from "../hooks/useResource";
+import { useUploadQueue } from "../hooks/useUploadQueue";
+import { FILE_ACCEPT, formatBytes } from "../lib/audio-file";
 import type { Song } from "../types";
 import ErrorNotice from "./ErrorNotice";
+import UploadQueue from "./UploadQueue";
 
 const ADMIN_KEY_STORAGE = "clm_admin_key";
-const ACCEPT = ".mp3,.wav,.flac,audio/mpeg,audio/wav,audio/flac";
 
 export default function AdminUpload() {
   const [adminKey, setAdminKey] = useState("");
-  const [title, setTitle] = useState("");
-  const [artist, setArtist] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [message, setMessage] = useState("");
+  const [defaultArtist, setDefaultArtist] = useState("");
   const [actionError, setActionError] = useState<unknown>(null);
-  const [busy, setBusy] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [notice, setNotice] = useState("");
+  // Which song id has work in flight. A single boolean used to disable every
+  // button on the page, so there was no way to tell rows apart.
+  const [busySongId, setBusySongId] = useState<number | null>(null);
 
   const { data, error: loadError, setData: setSongs, reload } = useResource<Song[]>(
     async () => api.getSongs(),
     []
   );
   const songs = data ?? [];
+
+  const queue = useUploadQueue(adminKey, reload);
 
   useEffect(() => {
     const saved = readText(ADMIN_KEY_STORAGE);
@@ -36,134 +39,86 @@ export default function AdminUpload() {
     else removeKey(ADMIN_KEY_STORAGE);
   };
 
-  // Every admin action ends the same way: clear the previous outcome, run, then
-  // refresh the list. The action returns the success message.
-  const runAction = async (action: () => Promise<string>) => {
-    setBusy(true);
-    setMessage("");
+  const handleReplace = async (song: Song, replacement: File | null) => {
+    if (!adminKey) return setActionError(new Error("Admin key is required."));
+    if (!replacement) return setActionError(new Error("Pick a replacement file first."));
+
+    setNotice("");
     setActionError(null);
+    setBusySongId(song.id);
     try {
-      setMessage(await action());
+      const form = new FormData();
+      form.append("file", replacement);
+      await api.replaceSongAudio(song.id, form, adminKey, ({ percent }) => {
+        if (percent === 100) setNotice(`✓ Audio for "${song.title}" replaced.`);
+      });
       await reload();
-      return true;
+      setNotice(`✓ Audio for "${song.title}" replaced (${formatBytes(replacement.size)}).`);
     } catch (err) {
       setActionError(err);
-      return false;
     } finally {
-      setBusy(false);
+      setBusySongId(null);
     }
   };
 
-  // Validation outcomes belong in the error channel, not the success box:
-  // "admin key is required" used to render identically to "✓ song uploaded".
-  const reject = (message: string) => {
-    setMessage("");
-    setActionError(new Error(message));
-  };
-
-  const requireKey = (): boolean => {
-    if (adminKey) return true;
-    reject("Admin key is required.");
-    return false;
-  };
-
-  async function handleUpload(e: React.SyntheticEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!requireKey()) return;
-    if (!file) return reject("Select an audio file.");
-    if (!title || !artist) return reject("Title and artist are required.");
-
-    await runAction(async () => {
-      const form = new FormData();
-      form.append("title", title);
-      form.append("artist", artist);
-      form.append("file", file);
-      await api.uploadSong(form, adminKey);
-      setTitle("");
-      setArtist("");
-      setFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return "✓ Song uploaded.";
-    });
-  }
-
-  async function handleReplace(song: Song, replacement: File | null) {
-    if (!requireKey()) return;
-    if (!replacement) return reject("Pick a replacement file first.");
-    await runAction(async () => {
-      const form = new FormData();
-      form.append("file", replacement);
-      await api.replaceSongAudio(song.id, form, adminKey);
-      return `✓ Audio for "${song.title}" replaced.`;
-    });
-  }
-
-  async function handleDelete(song: Song) {
-    if (!requireKey()) return;
+  const handleDelete = async (song: Song) => {
+    if (!adminKey) return setActionError(new Error("Admin key is required."));
     if (!confirm(`Delete "${song.title}"?`)) return;
+
     await runOptimistic({
       apply: () => setSongs((prev) => prev.filter((s) => s.id !== song.id)),
       async commit() {
         await api.deleteSong(song.id, adminKey);
       },
-      // The row is gone for good either way, so there is nothing to restore.
       rollback: () => void reload(),
       onError: setActionError,
     });
-    setMessage(`✓ "${song.title}" deleted.`);
-  }
+    setNotice(`✓ "${song.title}" deleted.`);
+  };
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="border-2 border-black bg-white p-6">
-        <h2 className="mb-4 font-display text-2xl font-bold">upload song</h2>
+      <div className="brut-panel p-6">
+        <h2 className="mb-4 font-display text-2xl font-bold">upload songs</h2>
 
-<label className="brut-label mb-3 block">
-            admin key
-            <input
-              type="password"
-              value={adminKey}
-              onChange={(e) => persistKey(e.target.value)}
-              placeholder="X-Admin-Key"
-              className="brut-field-quiet mt-1 w-full px-3 py-2 text-sm"
-            />
-          </label>
+        <label className="brut-label mb-4 block">
+          admin key
+          <input
+            type="password"
+            value={adminKey}
+            onChange={(e) => persistKey(e.target.value)}
+            placeholder="X-Admin-Key"
+            className="brut-field-quiet mt-1 w-full px-3 py-2 text-sm"
+          />
+        </label>
 
-        <form onSubmit={handleUpload} className="flex flex-col gap-3">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="title"
-            className="brut-field-quiet px-3 py-2 text-sm"
-          />
-          <input
-            value={artist}
-            onChange={(e) => setArtist(e.target.value)}
-            placeholder="artist"
-            className="brut-field-quiet px-3 py-2 text-sm"
-          />
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={ACCEPT}
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            className="border-2 border-black bg-neutral-100 px-3 py-2 font-mono text-sm"
-          />
-          <p className="brut-meta text-gray-500">
-            accepted formats: .mp3, .wav, .flac. duration is read automatically.
-          </p>
-          <button
-            type="submit"
-            disabled={busy}
-            className="brut-btn mt-2 bg-brut-yellow text-sm disabled:opacity-50"
-          >
-            {busy ? "uploading..." : "upload"}
-          </button>
-        </form>
+        <UploadQueue
+          items={queue.items}
+          rejected={queue.rejected}
+          defaultArtist={defaultArtist}
+          queued={queue.queued}
+          uploading={queue.uploading}
+          done={queue.done}
+          failed={queue.failed}
+          busy={queue.busy}
+          disabled={!adminKey}
+          onAddFiles={(files) => queue.addFiles(files, defaultArtist)}
+          onArtistChange={setDefaultArtist}
+          onMetaChange={queue.setMeta}
+          onRemove={queue.remove}
+          onStart={queue.start}
+          onRetry={queue.retry}
+          onRetryAll={queue.retryAll}
+          onClear={queue.clearFinished}
+        />
 
-        {message && (
+        {!adminKey && (
+          <p className="brut-meta mt-3 text-gray-500">enter the admin key to enable uploading.</p>
+        )}
+
+        {notice && (
           <p className="mt-4 border-2 border-black bg-black px-3 py-2 font-mono text-sm text-white">
-            {message}
+            {notice}
           </p>
         )}
 
@@ -176,7 +131,13 @@ export default function AdminUpload() {
         {songs.length === 0 && <p className="font-mono text-sm text-gray-500">no songs yet.</p>}
         <ul className="flex flex-col gap-2">
           {songs.map((song) => (
-            <SongRow key={song.id} song={song} busy={busy} onReplace={handleReplace} onDelete={handleDelete} />
+            <SongRow
+              key={song.id}
+              song={song}
+              busy={busySongId === song.id}
+              onReplace={handleReplace}
+              onDelete={handleDelete}
+            />
           ))}
         </ul>
       </div>
@@ -202,12 +163,13 @@ function SongRow({ song, busy, onReplace, onDelete }: RowProps) {
       <span className="font-mono text-sm">
         <span className="font-bold">{song.title}</span> ·{" "}
         <span className="normal-case">{song.artist}</span>
+        {song.duration && <span className="text-gray-500"> · {song.duration}</span>}
       </span>
       <span className="flex items-center gap-2">
         <input
           ref={inputRef}
           type="file"
-          accept={ACCEPT}
+          accept={FILE_ACCEPT}
           aria-label={`replacement audio for ${song.title}`}
           onChange={(e) => setReplacement(e.target.files?.[0] ?? null)}
           className="max-w-40 font-mono text-[10px]"
@@ -218,7 +180,7 @@ function SongRow({ song, busy, onReplace, onDelete }: RowProps) {
           onClick={() => onReplace(song, replacement)}
           className="border-2 border-black bg-white px-2 py-1 font-mono text-xs hover:bg-brut-yellow disabled:opacity-50"
         >
-          replace
+          {busy ? "subiendo..." : "replace"}
         </button>
         <button
           type="button"
@@ -229,6 +191,11 @@ function SongRow({ song, busy, onReplace, onDelete }: RowProps) {
           delete
         </button>
       </span>
+      {replacement && (
+        <p className="brut-meta w-full text-gray-500">
+          {replacement.name} · {formatBytes(replacement.size)}
+        </p>
+      )}
     </li>
   );
 }

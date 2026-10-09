@@ -2,17 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } fro
 import { computeWaveform, player, type WaveformPeaks } from "../services/player";
 import { usePlayer } from "../hooks/usePlayer";
 import { drawSpectrum, drawWaveform, sizeCanvas } from "../lib/playback-canvas";
-import { playPauseClass, playPauseGlyph } from "../lib/playback-ui";
+import { formatClock, playPauseClass, playPauseGlyph } from "../lib/playback-ui";
 
 const SEEK_STEP_SECONDS = 5;
-
-function formatTime(seconds: number) {
-  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
-  const total = Math.floor(seconds);
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
 
 // Keeps a canvas backing store in sync with its rendered size and pixel ratio.
 function useCanvasSize(ref: RefObject<HTMLCanvasElement | null>) {
@@ -58,7 +50,10 @@ function syntheticPeaks(seed: number): WaveformPeaks {
 }
 
 export default function PlayerBar() {
-  const { song, isPlaying, currentTime, duration, error } = usePlayer();
+  // The bar owns the audio element, so it reads the track view and leaves the
+  // global now-playing to the footer widget.
+  const { track } = usePlayer();
+  const { song, isPlaying, currentTime, duration, error } = track;
   const [decoded, setDecoded] = useState<WaveformPeaks | null>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const waveformRef = useRef<HTMLCanvasElement>(null);
@@ -183,7 +178,7 @@ export default function PlayerBar() {
       <div className="flex items-center gap-2 laptop:gap-3">
         <button
           type="button"
-          onClick={() => player.toggle()}
+          onClick={() => player.toggle(song ?? undefined)}
           disabled={!song}
           className={playPauseClass(
             isPlaying,
@@ -201,7 +196,7 @@ export default function PlayerBar() {
         </div>
 
         <div className="shrink-0 border-2 border-black bg-white px-2 py-1 font-mono text-[10px] font-bold text-black laptop:text-xs">
-          {formatTime(currentTime)}
+          {formatClock(currentTime)}
         </div>
       </div>
 
