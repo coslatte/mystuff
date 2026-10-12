@@ -17,13 +17,6 @@ export default function MusicSection() {
   const [openAlbumId, setOpenAlbumId] = useState<string | null>(null);
   const [platform, setPlatform] = useState<StreamingPlatform>("soundcloud");
 
-  if (loading) {
-    return <LoadingTracks serverReady={serverReady} elapsed={elapsed} />;
-  }
-  if (error) {
-    return <ErrorNotice error={error} onRetry={reload} className="border-b-2" />;
-  }
-
   const playable = albums.filter(hasLinks);
 
   return (
@@ -81,7 +74,11 @@ export default function MusicSection() {
             {songs.map((song) => (
               <TrackBlock key={song.id} song={song} onRate={rate} />
             ))}
-            {!songs.length && <p className="p-3 font-mono text-xs text-gray-500">no tracks yet.</p>}
+            {loading && <LoadingTracks serverReady={serverReady} elapsed={elapsed} />}
+            {!loading && error != null && <ErrorNotice error={error} onRetry={reload} />}
+            {!loading && error == null && !songs.length && (
+              <p className="p-3 font-mono text-xs text-gray-500">No tracks available.</p>
+            )}
           </div>
         </section>
       </div>

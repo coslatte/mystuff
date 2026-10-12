@@ -117,9 +117,9 @@ export default function AlbumCard({ album, platform, open, onToggle }: Props) {
       {open && (
         <>
           <div className="flex items-center justify-between gap-2 border-t-2 border-black bg-neutral-100 px-2 py-1">
-            <span className="font-mono text-[10px] text-gray-600">playing from {link.platform}</span>
+            <span className="font-mono text-[10px] text-gray-600">Player: {link.platform}</span>
             {fallback && (
-              <span className="font-mono text-[10px] font-bold text-brut-red">not on {platform}</span>
+              <span className="font-mono text-[10px] font-bold text-brut-red">Unavailable on {platform}</span>
             )}
           </div>
           {link.platform === "spotify" ? (

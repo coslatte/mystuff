@@ -762,7 +762,8 @@ changes in the same commit.
 
 ### Preserved presentation requirements
 
-The home heading centers `code & sounds` and applies the hover plate separately
+The home heading centers `code & sounds` across the full page width, above the
+portrait and introduction. It applies the hover plate separately
 only to `code` and `sounds`. The ampersand stays plain. The effect lives in
 `brut-word.css`; the removed `BrutWords` wrapper is no longer needed for one heading.
 
@@ -774,3 +775,22 @@ Missing data shows a link to GitHub instead of fabricated contribution cells.
 Music and experiment copy uses descriptive titles, short instructions, and factual
 status messages. Remove rhetorical questions, slogans, and repeated explanations
 of implementation details from these pages.
+
+### Presentation and loading verification
+
+Music loads albums and tracks independently. Track loading and errors stay in the
+track column; they must not remove the album catalog or its platform controls.
+The catalog precedes external platform links. An expanded album identifies the
+embedded player source without claiming that playback has started.
+
+Spectral keeps board, presets, color, and flow controls visible. Pointer, tracers,
+surface diagnostics, view settings, and keyboard reference live in native
+`details` under Advanced controls. Closing it does not reset any settings.
+Numeric field labels separate camel-case words for display.
+
+Subdivision starts automatic recuts only after checking reduced-motion preferences
+in the browser. Enabling reduced motion pauses recuts; the visitor can explicitly
+resume animation with the existing control.
+
+Verify the home heading center against the main page bounds, not only its text
+column. Hover checks must cover both words separately and leave the ampersand plain.

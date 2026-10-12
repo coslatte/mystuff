@@ -65,7 +65,17 @@ export default function RecursiveSubdivision() {
   /** Chance a cell is left as bare paper, which is what gives the grid its relief. */
   const [bare, setBare] = useState(0.18);
 
-  const [auto, setAuto] = useState(true);
+  const [auto, setAuto] = useState(false);
+
+  useEffect(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setAuto(!preference.matches);
+    const pause = () => {
+      if (preference.matches) setAuto(false);
+    };
+    preference.addEventListener("change", pause);
+    return () => preference.removeEventListener("change", pause);
+  }, []);
 
   const boardRef = useRef<HTMLDivElement | null>(null);
   const [board, setBoard] = useState<Board | null>(null);
@@ -311,7 +321,7 @@ export default function RecursiveSubdivision() {
             max={1}
             step={0.02}
             accent="text-brut-violet"
-            hint="0 is one coherent field, 1 is confetti"
+            hint="0 uses a position-based gradient; 1 increases random color variation"
             onChange={setColourVariance}
           />
           <Slider
@@ -336,9 +346,7 @@ export default function RecursiveSubdivision() {
             recut
           </button>
           <p className="brut-meta normal-case text-gray-600">
-            depth {depth} is {cellCount(depth)} cells, every time. cuts and their outlines update
-            together, with no gaps or overlaps. only colours fade between cuts. at 0.50, cuts
-            bisect the longer side to form a regular grid.
+            Depth {depth} produces {cellCount(depth)} cells. A cut ratio of 0.50 forms a regular grid.
           </p>
         </Panel>
       </div>

@@ -114,84 +114,91 @@ export default function PigmentControls({
         <SettingSlider field="iterations" settings={settings} onChange={set} format={(v) => v.toFixed(0)} />
       </Panel>
 
-      <Panel title="pointer">
-        <Toggle label="stir with pointer" checked={settings.pointer} onChange={(value) => set("pointer", value)} />
-        <SettingSlider field="pointerForce" settings={settings} onChange={set} format={(v) => `${v.toFixed(0)} c/s`} />
-        <SettingSlider field="pointerRadius" settings={settings} onChange={set} />
-        <SettingSlider
-          field="pointerDeposit"
-          settings={settings}
-          onChange={set}
-          hint="pigment dropped under the pointer, per second. 0 stirs without colouring."
-        />
-        <Chips
-          label="dropped pigment"
-          value={String(settings.pointerChannel)}
-          options={palette.map((_, index) => String(index))}
-          onChange={(channel) => set("pointerChannel", Number(channel))}
-        />
-      </Panel>
+      <details className="col-span-full border-2 border-black bg-white">
+        <summary className="cursor-pointer px-3 py-3 font-mono text-xs font-bold focus-visible:outline-2 focus-visible:outline-brut-blue">
+          Advanced controls
+        </summary>
+        <div className="grid gap-3 border-t-2 border-black p-3 tablet:grid-cols-2">
+          <Panel title="pointer">
+            <Toggle label="stir with pointer" checked={settings.pointer} onChange={(value) => set("pointer", value)} />
+            <SettingSlider field="pointerForce" settings={settings} onChange={set} format={(v) => `${v.toFixed(0)} c/s`} />
+            <SettingSlider field="pointerRadius" settings={settings} onChange={set} />
+            <SettingSlider
+              field="pointerDeposit"
+              settings={settings}
+              onChange={set}
+              hint="pigment dropped under the pointer, per second. 0 stirs without colouring."
+            />
+            <Chips
+              label="dropped pigment"
+              value={String(settings.pointerChannel)}
+              options={palette.map((_, index) => String(index))}
+              onChange={(channel) => set("pointerChannel", Number(channel))}
+            />
+          </Panel>
 
-      <Panel title="tracers">
-        <Toggle label="tracers" checked={settings.tracers} onChange={(value) => set("tracers", value)} />
-        <SettingSlider field="tracerCount" settings={settings} onChange={set} format={(v) => v.toFixed(0)} />
-        <SettingSlider field="tracerTail" settings={settings} onChange={set} />
-        <SettingSlider field="tracerLife" settings={settings} onChange={set} />
-      </Panel>
+          <Panel title="tracers">
+            <Toggle label="tracers" checked={settings.tracers} onChange={(value) => set("tracers", value)} />
+            <SettingSlider field="tracerCount" settings={settings} onChange={set} format={(v) => v.toFixed(0)} />
+            <SettingSlider field="tracerTail" settings={settings} onChange={set} />
+            <SettingSlider field="tracerLife" settings={settings} onChange={set} />
+          </Panel>
 
-      <Panel title="surface">
-        <SettingSlider
-          field="relief"
-          settings={settings}
-          onChange={set}
-          hint="lights the pigment by its own thickness."
-        />
-        <Chips
-          label="field view"
-          value={settings.fieldView}
-          options={FIELD_VIEW_MODES as readonly FieldViewMode[]}
-          onChange={(mode) => set("fieldView", mode)}
-        />
-        <SettingSlider field="fieldGain" settings={settings} onChange={set} />
-      </Panel>
+          <Panel title="surface">
+            <SettingSlider
+              field="relief"
+              settings={settings}
+              onChange={set}
+              hint="lights the pigment by its own thickness."
+            />
+            <Chips
+              label="field view"
+              value={settings.fieldView}
+              options={FIELD_VIEW_MODES as readonly FieldViewMode[]}
+              onChange={(mode) => set("fieldView", mode)}
+            />
+            <SettingSlider field="fieldGain" settings={settings} onChange={set} />
+          </Panel>
 
-      <Panel title="view">
-        <Chips
-          label="board"
-          value={settings.board}
-          options={BOARD_SIZE_NAMES as readonly BoardSize[]}
-          onChange={(board) => set("board", board)}
-        />
-        <Chips
-          label="detail"
-          value={settings.detail}
-          options={DETAIL_NAMES as readonly Detail[]}
-          onChange={(detail) => set("detail", detail)}
-        />
-        <Slider
-          label="zoom"
-          value={camera.zoom}
-          min={MIN_ZOOM}
-          max={MAX_ZOOM}
-          step={0.05}
-          format={(v) => `${v.toFixed(2)}x`}
-          onChange={(v) => onZoom(v / Math.max(camera.zoom, 0.0001))}
-        />
-        <button type="button" onClick={onResetView} className="brut-btn text-xs">
-          reset view
-        </button>
-      </Panel>
+          <Panel title="view">
+            <Chips
+              label="board"
+              value={settings.board}
+              options={BOARD_SIZE_NAMES as readonly BoardSize[]}
+              onChange={(board) => set("board", board)}
+            />
+            <Chips
+              label="detail"
+              value={settings.detail}
+              options={DETAIL_NAMES as readonly Detail[]}
+              onChange={(detail) => set("detail", detail)}
+            />
+            <Slider
+              label="zoom"
+              value={camera.zoom}
+              min={MIN_ZOOM}
+              max={MAX_ZOOM}
+              step={0.05}
+              format={(v) => `${v.toFixed(2)}x`}
+              onChange={(v) => onZoom(v / Math.max(camera.zoom, 0.0001))}
+            />
+            <button type="button" onClick={onResetView} className="brut-btn text-xs">
+              reset view
+            </button>
+          </Panel>
 
-      <Panel title="keys">
-        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 font-mono text-xs">
-          {shortcuts.map((shortcut) => (
-            <div key={shortcut.keys} className="col-span-2 grid grid-cols-subgrid">
-              <dt className="font-bold">{shortcut.keys}</dt>
-              <dd className="font-normal normal-case text-gray-600">{shortcut.label}</dd>
-            </div>
-          ))}
-        </dl>
-      </Panel>
+          <Panel title="keys">
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 font-mono text-xs">
+              {shortcuts.map((shortcut) => (
+                <div key={shortcut.keys} className="col-span-2 grid grid-cols-subgrid">
+                  <dt className="font-bold">{shortcut.keys}</dt>
+                  <dd className="font-normal normal-case text-gray-600">{shortcut.label}</dd>
+                </div>
+              ))}
+            </dl>
+          </Panel>
+        </div>
+      </details>
     </div>
   );
 }
@@ -210,7 +217,7 @@ function SettingSlider({ field, settings, onChange, format, accent, hint }: Slid
   const span = max - min;
   return (
     <Slider
-      label={field}
+      label={field.replace(/[A-Z]/g, (letter) => ` ${letter.toLowerCase()}`)}
       value={settings[field]}
       min={min}
       max={max}
