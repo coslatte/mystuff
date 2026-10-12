@@ -42,28 +42,16 @@ public class LocalDiskAudioStorage implements AudioStorage {
     public LocalDiskAudioStorage(
             @Value("${app.storage.local.directory:./data/audio}") String directory,
             @Value("${app.upload-max-bytes:20971520}") long maxBytes,
-            @Value("${app.storage.local.public-base-url:}") String publicBaseUrl) {
+            @Value("${app.storage.local.public-base-url:}") String publicBaseUrl,
+            @Value("${server.port:8080}") int serverPort) {
         this.root = Path.of(directory).toAbsolutePath().normalize();
         this.maxBytes = maxBytes;
-        this.publicBaseUrl = trimTrailingSlash(publicBaseUrl.isBlank() ? guessBaseUrl() : publicBaseUrl);
+        this.publicBaseUrl = trimTrailingSlash(publicBaseUrl.isBlank() ? "http://localhost:" + serverPort : publicBaseUrl);
     }
 
     /** The directory this backend writes to, exposed for the controller that serves it. */
     public Path root() {
         return root;
-    }
-
-    /**
-     * Best-effort base URL.
-     *
-     * <p>Only used when {@code app.storage.local.public-base-url} is unset, so a
-     * developer who only sets the backend never has to also work out the port.
-     * Configured explicitly in {@code .env} because a guessed host breaks the
-     * moment the app runs behind anything.
-     */
-    private static String guessBaseUrl() {
-        String port = System.getProperty("server.port", "8080");
-        return "http://localhost:" + port;
     }
 
     @Override

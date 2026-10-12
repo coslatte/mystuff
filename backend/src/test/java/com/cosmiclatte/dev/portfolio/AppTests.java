@@ -1,15 +1,19 @@
 package com.cosmiclatte.dev.portfolio;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import com.sun.net.httpserver.HttpServer;
 import com.cosmiclatte.dev.portfolio.config.AdminAuth;
+import com.cosmiclatte.dev.portfolio.service.storage.LocalDiskAudioStorage;
 import com.cosmiclatte.dev.portfolio.service.storage.SupabaseAudioStorage;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,6 +31,21 @@ class AppTests {
         assertThat(new AdminAuth("").isAdmin("")).isFalse();
         assertThat(new AdminAuth("test-admin-key").isAdmin("test-admin-key")).isTrue();
         assertThat(new AdminAuth("test-admin-key").isAdmin(null)).isFalse();
+    }
+
+    @Test
+    void localAudioUsesSpringPortAndAllowsAnExplicitBaseUrl(@TempDir Path directory) {
+        ApplicationContextRunner runner = new ApplicationContextRunner()
+                .withUserConfiguration(LocalDiskAudioStorage.class)
+                .withPropertyValues(
+                        "app.storage.backend=local",
+                        "app.storage.local.directory=" + directory,
+                        "server.port=8091");
+        runner.run(context -> assertThat(context.getBean(LocalDiskAudioStorage.class).signedUrl("test.wav"))
+                .isEqualTo("http://localhost:8091/api/local-audio/test.wav"));
+        runner.withPropertyValues("app.storage.local.public-base-url=https://audio.example.com/")
+                .run(context -> assertThat(context.getBean(LocalDiskAudioStorage.class).signedUrl("test.wav"))
+                        .isEqualTo("https://audio.example.com/api/local-audio/test.wav"));
     }
 
     @ParameterizedTest
