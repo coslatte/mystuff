@@ -20,7 +20,7 @@ The one exception is two classes with the same simple name, such as
 comment.
 
 Group imports with a blank line between third-party and JDK imports, keeping
-`java.*` last. `backend/src/main/java/com/cosmiclatte/dev/cosmiclatteweb/common/config/GlobalExceptionHandler.java`
+`java.*` last. `src/backend/src/main/java/com/cosmiclatte/dev/cosmiclatteweb/common/config/GlobalExceptionHandler.java`
 shows the convention:
 
 ```
@@ -41,7 +41,7 @@ Delete imports left behind by a refactor.
 ## Workflow for agents
 
 Before committing, search for inline FQNs:
-`rg "\b(java|javax|jakarta|org|com)\.[a-z]" backend/src --glob '*.java'` and turn
+`rg "\b(java|javax|jakarta|org|com)\.[a-z]" src/backend/src --glob '*.java'` and turn
 every hit that is not an import line into one.
 
 Verify with `./mvnw compile`.

@@ -8,10 +8,10 @@ type Morph =
 const TARGETS = "a, button, input, textarea, select, [role='button'], [data-cursor-target]";
 const CURSOR_RADIUS = 30;
 const TARGET_PADDING = 7;
-const MAX_TARGET_WIDTH = 450;
-const MAX_TARGET_HEIGHT = 300;
+const MAX_TARGET_WIDTH = 800;
+const MAX_TARGET_HEIGHT = 600;
 const SAMPLES = 72;
-const ROTATION_CYCLE_MS = 30_000;
+const ROTATION_CYCLE_MS = 25_000;
 
 function clamp(value: number, low: number, high: number): number {
   return Math.min(Math.max(value, low), high);
@@ -126,8 +126,8 @@ export function translatePath(path: readonly Point[], pointer: Point): Point[] {
   return path.map((point) => ({ x: point.x + pointer.x, y: point.y + pointer.y }));
 }
 
-export function startFractalCursor(): void {
-  const canvas = document.querySelector<HTMLCanvasElement>("[data-fractal-cursor]");
+export function startMorphlingCursor(): void {
+  const canvas = document.querySelector<HTMLCanvasElement>("[data-morphling-cursor]");
   if (!canvas || canvas.dataset.ready === "true") return;
   if (window.matchMedia("(prefers-reduced-motion: reduce), (pointer: coarse)").matches) return;
   const context = canvas.getContext("2d");

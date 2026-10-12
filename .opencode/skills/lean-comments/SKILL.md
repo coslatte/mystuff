@@ -75,7 +75,7 @@ is not.
 Find the candidates:
 
 ```
-rg -n '^\s*(//|/\*|\*|<!--)' frontend/src backend/src
+rg -n '^\s*(//|/\*|\*|<!--)' src/frontend/src src/backend/src
 ```
 
 Read each one and ask what question it answers. If the answer is already in the

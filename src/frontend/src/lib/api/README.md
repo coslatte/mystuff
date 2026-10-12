@@ -10,9 +10,9 @@ The backend must be running first (it serves `/v3/api-docs`):
 ```bash
 # from the repo root: database + API
 docker compose up -d
-powershell -ExecutionPolicy Bypass -File backend/run.ps1
+powershell -ExecutionPolicy Bypass -File src/backend/run.ps1
 
-# then, from frontend/
+# then, from src/frontend/
 bun run gen:api
 ```
 

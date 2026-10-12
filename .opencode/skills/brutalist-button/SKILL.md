@@ -11,8 +11,8 @@ name slides out on hover.
 
 ## Source of truth
 
-CSS: `frontend/src/styles/brutal-button.css`, imported from
-`frontend/src/styles/global.css`. Read the values there rather than repeating
+CSS: `src/frontend/src/styles/brutal-button.css`, imported from
+`src/frontend/src/styles/global.css`. Read the values there rather than repeating
 them here; they change.
 
 ## Usage
@@ -41,4 +41,4 @@ shared styles already do both, so do not re-declare them.
 
 ## Reference implementation
 
-The repos action in `frontend/src/pages/index.astro`.
+The repos action in `src/frontend/src/pages/index.astro`.

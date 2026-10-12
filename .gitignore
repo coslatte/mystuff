@@ -1,6 +1,6 @@
 # structs
 .idea/
-backend/.idea/
+src/backend/.idea/
 .vscode/
 *.iml
 *.iws
@@ -8,14 +8,14 @@ backend/.idea/
 Thumbs.db
 
 # dirs
-backend/.mvn/wrapper/maven-wrapper.jar
+src/backend/.mvn/wrapper/maven-wrapper.jar
 # Local audio store (STORAGE_BACKEND=local). Writable, reproducible, never committed.
-backend/data/
+src/backend/data/
 
-frontend/node_modules/
-frontend/dist/
-frontend/.astro/
-frontend/bun.lockb
+src/frontend/node_modules/
+src/frontend/dist/
+src/frontend/.astro/
+src/frontend/bun.lockb
 .env
 .env.local
 
@@ -24,4 +24,4 @@ opencode.json
 hs_err_pid*
 *.log
 
-frontend/openapi.json
+src/frontend/openapi.json

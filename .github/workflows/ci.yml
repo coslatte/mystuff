@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend
+        working-directory: src/backend
     services:
       # `@SpringBootTest` boots Flyway and Hibernate against a real database, so
       # `./mvnw verify` cannot pass without one.
@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontend
+        working-directory: src/frontend
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2

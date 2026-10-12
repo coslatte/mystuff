@@ -42,9 +42,9 @@ Read it in this order, and stop as soon as you have your answer.
 
 | Piece | Where | Config |
 | --- | --- | --- |
-| Frontend | Vercel | `frontend/vercel.json` (`bun install`, `astro build`) |
+| Frontend | Vercel | `src/frontend/vercel.json` (`bun install`, `astro build`) |
 | API | Render | Spring Boot, `com.cosmiclatte.dev.portfolio`, no `render.yaml` in the repo |
-| Database + audio | Supabase | `backend/src/main/resources/application.yml` |
+| Database + audio | Supabase | `src/backend/src/main/resources/application.yml` |
 | CI | GitHub Actions | `.github/workflows/ci.yml`, on `master` |
 
 The API parks between requests on free hosting, so its cold start can reach
@@ -101,7 +101,7 @@ reach a server module.
 | --- | --- | --- |
 | `services/github.ts` | **server only** | reads `GITHUB_TOKEN`, runs during the render of `/coding` |
 | `lib/now-playing-element.ts` | **browser only** | `customElements.define`; no computed style on the server |
-| `lib/fractal-cursor.ts` | **browser only** | canvas, `requestAnimationFrame`, pointer events; a prerender has nothing to drive |
+| `lib/morphling-cursor.ts` | **browser only** | canvas, `requestAnimationFrame`, pointer events; a prerender has nothing to drive |
 | `lib/three/*`, `lib/sim/*` | **browser only** | canvas, WebGL, `requestAnimationFrame` |
 
 An island's module body also runs while the page is being rendered on the
@@ -248,6 +248,7 @@ The two questions that come up constantly.
 | a visual surface | `styles/global.css` `@utility` block | the call site for size and colour |
 | a colour choice | `lib/color-theory.ts` | never a raw hex in a scene |
 | the splash | `lib/boot/` | `lib/boot/frame.ts` for the frame both renderers open on |
+| navigation loading feedback | `lib/route-curtain.ts` | `styles/route-curtain.css` for the surfaces |
 | the fluid / pigment page | `lib/sim/` | `lib/pigment-settings.ts` for the knobs |
 | its zoom, pan or pointer | `lib/sim/camera.ts` | `PigmentFlow.tsx` for the drawImage |
 | the subdivision page | `lib/recursion/subdivide.ts` | `components/RecursiveSubdivision.tsx` |
@@ -293,6 +294,7 @@ The four sections are `/`, `/coding`, `/music` and `/experimentation`. See
 | File | Role |
 | --- | --- |
 | `BootScreen.astro` | First-visit splash. In the layout, so one copy covers all routes. |
+| `RouteCurtain.astro` | Navigation loading overlay. In the layout, persisted across swaps. |
 | `Navbar.astro` | Site navigation. |
 | `Footer.astro` | Footer shell; mounts `NowPlaying` once. |
 | `Hero.astro` | `/` introduction, centered heading with separate brutalist hover plates on `code` and `sounds`, portrait, and route into the biography. |
@@ -300,7 +302,7 @@ The four sections are `/`, `/coding`, `/music` and `/experimentation`. See
 | `RepoRow.astro` | One row in the `/coding` repos list. |
 | `SocialButton.astro` | One outbound social link. |
 | `NowPlaying.astro` | Defines `<now-playing-el>`; the bridge to `lib/now-playing-element.ts`. |
-| `FractalCursor.astro` | Persistent canvas overlay for the fine-pointer cursor treatment. |
+| `MorphlingCursor.astro` | Persistent canvas overlay for the fine-pointer cursor treatment. |
 
 ### `src/components/` — `.tsx`, inside an island
 
@@ -362,7 +364,8 @@ Framework-free unless the name says otherwise.
 | `playback-canvas.ts` | 2D spectrum and waveform painters. |
 | `playback-ui.ts` | Glyphs and clock formatting shared by three toggles. |
 | `now-playing-element.ts` | **Browser only.** The `<now-playing-el>` custom element. |
-| `fractal-cursor.ts` | **Browser only.** Morphs local shape points so the outline follows the pointer during transitions; caps control outlines at 450 × 300 pixels. |
+| `morphling-cursor.ts` | **Browser only.** Morphs local shape points so the outline follows the pointer during transitions; caps control outlines at 450 × 300 pixels. |
+| `route-curtain.ts` | **Browser only.** Adaptive-delay loading curtain for `ClientRouter` navigations. Also exports `curtainCells`. |
 | `api/schema.ts` | Generated from `openapi.json`. Never hand-edited. |
 | `api/README.md` | How and when to regenerate. |
 | `boot/boot-controller.ts` | Splash lifecycle and the three.js dynamic import. |
@@ -411,15 +414,16 @@ Framework-free unless the name says otherwise.
 | `brut-word.css` | Hover plates and extruded shadows on the two highlighted hero words. |
 | `server-pulse.css` | `ServerPulse` animation. |
 | `social-button.css` | `SocialButton` surfaces. |
-| `fractal-cursor.css` | Canvas overlay stacking and motion/accessibility fallbacks. |
+| `morphling-cursor.css` | Canvas overlay stacking and motion/accessibility fallbacks. |
+| `route-curtain.css` | Curtain cells, the destination plate, and the pending-link wash. |
 
 ### Verification tooling — not shipped
 
 | File | Role |
 | --- | --- |
-| `frontend/scripts/sim-preview.mts` | Renders the shipped simulation to a PNG contact sheet. |
-| `frontend/scripts/recursion-preview.mts` | Renders partitions to a PNG contact sheet; `--check` verifies tiling, grid boundaries and exact regular grids. |
-| `frontend/scripts/png.ts` | Minimal PNG encoder, so the above has no dependency. |
+| `src/frontend/scripts/sim-preview.mts` | Renders the shipped simulation to a PNG contact sheet. |
+| `src/frontend/scripts/recursion-preview.mts` | Renders partitions to a PNG contact sheet; `--check` verifies tiling, grid boundaries and exact regular grids. |
+| `src/frontend/scripts/png.ts` | Minimal PNG encoder, so the above has no dependency. |
 
 Both exist because every attempt to tune the simulation by statistics produced a
 number that improved while the picture stayed broken. Judged by eye, not by
@@ -642,6 +646,41 @@ channels sit beside the paragraph that explains the interests they relate to.
 **Consequences.** The link filter, timer, and wrapper component are gone. The
 music platform links still use `SocialButton.astro`, where a compact row of
 platform destinations helps people choose where to listen.
+
+<a id="adr-014"></a>
+### ADR-014 — Navigation feedback is two signals, not one overlay
+
+**Context.** `ClientRouter` fetches the next document with nothing on screen to
+say so. On a prerendered route off the cache that gap is short enough to read as
+instant; on `/coding` (an SSR function with GitHub behind it) or `/music` (client
+fetch against a cold Spring Boot) it runs to seconds and the site reads as hung.
+The obvious fix — show a loading overlay on every click — makes the common case
+worse, because most navigations finish in well under 100ms and a full-screen
+overlay flashing for that long is more alarming than the silence it replaced.
+
+**Decision.** Two signals at two different latencies.
+
+| At | Signal | Why that latency |
+| --- | --- | --- |
+| 0ms | the clicked link washes `brut-yellow` | instant, and it points at what was asked for |
+| 300ms | a partition curtain covers the viewport and names the destination | 300ms is where a wait stops reading as instant |
+
+The curtain's cells are `splashFrame(0)`, the same partition the site opens
+with, at viewport scale. Both read one function so they cannot drift into looking
+like two different ideas.
+
+**Consequences.** The overlay is `transition:persist`, because the half of it
+that matters plays *after* the swap and would otherwise be destroyed by it.
+Revealing is deferred by `requestAnimationFrame` so `clip-path` has a layout
+value to transition from, and the exit is on a 320ms timeout rather than
+`transitionend`, because a transition interrupted by a re-render never fires the
+event that would have cleaned it up. `MAX_HOLD_MS` exists for the navigation the
+router abandons without swapping; the overlay must never outlive the page it is
+covering. The same-page hash jump is excluded — it fetches nothing, so a curtain
+over an already-visible section is pure noise. Cells grow by `clip-path`, not
+`transform: scale`, because a scale pulls each cell out of its own rectangle and
+opens gaps along the shared edges mid-wipe — the same invariant as
+[Rule 8](#rule-8--a-partition-draws-its-boundaries-once-from-the-geometry).
 
 ## Dead code
 

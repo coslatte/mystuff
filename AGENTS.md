@@ -22,7 +22,7 @@
 
 ## Frontend
 - Read `docs/frontend-architecture.md` **before changing anything under
-  `frontend/src/`**. It is the decision record: the rules a change must obey, the
+  `src/frontend/src/`**. It is the decision record: the rules a change must obey, the
   dependency direction between layers, the file index that says where a change
   belongs, and the reasoning behind decisions that look arbitrary.
 - That document is living. Update it in the same commit as the code whenever you
@@ -32,10 +32,10 @@
 - Rule 6 in that document governs comments: explain *why*, never *what*. The
   test is whether the comment would still be true after renaming the function to
   something accurate.
-- Run `bun run check` from `frontend/` before committing. `astro build`
+- Run `bun run check` from `src/frontend/` before committing. `astro build`
   transpiles without type checking, so a build alone proves nothing about types.
 - After changing a Java DTO or a controller signature, run `bun run gen:api`
-  from `frontend/` with the API up. See `frontend/src/lib/api/README.md`.
+  from `src/frontend/` with the API up. See `src/frontend/src/lib/api/README.md`.
 
 <!-- codebase-memory-mcp:start -->
 # Codebase Memory

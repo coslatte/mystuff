@@ -1,2 +1,2 @@
-/backend/mvnw text eol=lf
+/src/backend/mvnw text eol=lf
 *.cmd text eol=crlf

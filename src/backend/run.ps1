@@ -1,7 +1,7 @@
 # Loads .env from the repo root and starts Spring Boot
-# Usage: powershell -ExecutionPolicy Bypass -File backend/run.ps1
+# Usage: powershell -ExecutionPolicy Bypass -File src/backend/run.ps1
 
-$root = Split-Path $PSScriptRoot -Parent
+$root = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $envFile = Join-Path $root ".env"
 
 if (Test-Path $envFile) {

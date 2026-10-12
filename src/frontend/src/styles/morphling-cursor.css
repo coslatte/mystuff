@@ -1,4 +1,4 @@
-.fractal-cursor {
+.morphling-cursor {
   position: fixed;
   inset: 0;
   z-index: 70;
@@ -6,12 +6,12 @@
   mix-blend-mode: difference;
 }
 
-html.boot-locked .fractal-cursor {
+html.boot-locked .morphling-cursor {
   display: none;
 }
 
 @media (pointer: coarse), (prefers-reduced-motion: reduce) {
-  .fractal-cursor {
+  .morphling-cursor {
     display: none;
   }
 }
