@@ -7,6 +7,13 @@ export default defineConfig({
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()],
+    build: {
+      // The only chunk past the default is the three.js splash (~516 kB min, ~130 kB
+      // gzip), which the boot controller already imports dynamically and only when
+      // motion is allowed. The limit sits above it so that warning stays armed for
+      // a chunk that is actually on the critical path.
+      chunkSizeWarningLimit: 600,
+    },
   },
   server: {
     // 4321 falls inside the Windows excluded port range (4301-4400, reserved by
