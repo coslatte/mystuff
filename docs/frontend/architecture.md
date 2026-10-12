@@ -370,6 +370,7 @@ Framework-free unless the name says otherwise.
 | `playback-ui.ts` | Glyphs and clock formatting shared by three toggles. |
 | `now-playing-element.ts` | **Browser only.** The `<now-playing-el>` custom element. |
 | `morphling-cursor.ts` | **Browser only.** Morphs local shape points so the outline follows the pointer during transitions; caps control outlines at 450 × 300 pixels. |
+| `fm-wave.ts` | Pure geometry and frequency calculation for the hero's modulated sine wave. |
 | `route-curtain.ts` | **Browser only.** Adaptive-delay loading curtain for `ClientRouter` navigations. Also exports `curtainCells`. |
 | `api/schema.ts` | Generated from `openapi.json`. Never hand-edited. |
 | `api/README.md` | How and when to regenerate. |
@@ -429,6 +430,7 @@ Framework-free unless the name says otherwise.
 | `src/frontend/scripts/sim-preview.mts` | Renders the shipped simulation to a PNG contact sheet. |
 | `src/frontend/scripts/recursion-preview.mts` | Renders partitions to a PNG contact sheet; `--check` verifies tiling, grid boundaries and exact regular grids. |
 | `src/frontend/scripts/png.ts` | Minimal PNG encoder, so the above has no dependency. |
+| `src/frontend/src/lib/fm-wave.test.ts` | Checks the FM frequency sweep and wave cycle. |
 
 Both exist because every attempt to tune the simulation by statistics produced a
 number that improved while the picture stayed broken. Judged by eye, not by
