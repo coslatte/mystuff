@@ -42,7 +42,7 @@ Read it in this order, and stop as soon as you have your answer.
 
 | Piece | Where | Config |
 | --- | --- | --- |
-| Frontend | Vercel | `src/frontend/vercel.json` (`bun install`, `astro build`) |
+| Frontend | Vercel | `src/frontend/vercel.json` (`bun install`, `astro build`), Node pinned to 22 in `package.json` because `@astrojs/vercel` 8 only knows 18/20/22 and warns on anything newer |
 | API | Render | Spring Boot, `com.cosmiclatte.dev.portfolio`, no `render.yaml` in the repo |
 | Database + audio | Supabase | `src/backend/src/main/resources/application.yml` |
 | CI | GitHub Actions | `.github/workflows/ci.yml`, on `master` |
@@ -148,6 +148,11 @@ the chunk lands, and stands in permanently under `prefers-reduced-motion` or
 without WebGL.
 
 Adding a scene must not put it in the entry chunk.
+
+It is also the only chunk over Vite's default 500 kB warning, which is why
+`build.chunkSizeWarningLimit` sits at 600. The number tracks this chunk, not a
+taste: raise it only for a scene that is lazily imported the same way, and never
+to quiet a chunk that is on the critical path.
 
 Scenes read their palette from the `@theme` custom properties with
 `getComputedStyle` rather than repeating hex values, so they follow
