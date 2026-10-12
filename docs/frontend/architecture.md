@@ -419,7 +419,7 @@ Framework-free unless the name says otherwise.
 | `brut-word.css` | Hover plates and extruded shadows on the two highlighted hero words. |
 | `server-pulse.css` | `ServerPulse` animation. |
 | `social-button.css` | `SocialButton` surfaces. |
-| `morphling-cursor.css` | Canvas overlay stacking and motion/accessibility fallbacks. |
+| `morphling-cursor.css` | Canvas overlay, native cursor suppression on links and buttons, and motion/accessibility fallbacks. |
 | `route-curtain.css` | Curtain cells, the destination plate, and the pending-link wash. |
 
 ### Verification tooling — not shipped

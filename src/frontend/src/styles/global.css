@@ -33,6 +33,7 @@
 
   html {
     scrollbar-gutter: stable;
+    cursor: none;
   }
 
   /* Fallback for browsers without scrollbar-gutter support */

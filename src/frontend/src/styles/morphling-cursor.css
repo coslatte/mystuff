@@ -6,6 +6,14 @@
   mix-blend-mode: difference;
 }
 
+@media (pointer: fine) {
+  a,
+  button,
+  [role="button"] {
+    cursor: none;
+  }
+}
+
 html.boot-locked .morphling-cursor {
   display: none;
 }

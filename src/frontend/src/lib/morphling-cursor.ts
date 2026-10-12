@@ -12,6 +12,12 @@ const MAX_TARGET_WIDTH = 800;
 const MAX_TARGET_HEIGHT = 600;
 const SAMPLES = 72;
 const ROTATION_CYCLE_MS = 25_000;
+const DOT_RADIUS = 8;
+const GRADIENT_CYCLE_MS = 6_000;
+const COLOR_FIELD_SIZE = 64;
+const COLOR_FIELD_SIZE_CSS = DOT_RADIUS * 6;
+const COLOR_WAVE_STRENGTH = 0.9;
+const RGB = [[255, 0, 0], [0, 255, 0], [0, 0, 255]] as const;
 
 function clamp(value: number, low: number, high: number): number {
   return Math.min(Math.max(value, low), high);
@@ -19,6 +25,35 @@ function clamp(value: number, low: number, high: number): number {
 
 function mix(start: number, end: number, progress: number): number {
   return start + (end - start) * progress;
+}
+
+function paintColorField(pixels: Uint8ClampedArray, now: number): void {
+  const time = now / 1_000;
+  const colorOffset = now / GRADIENT_CYCLE_MS;
+
+  for (let y = 0; y < COLOR_FIELD_SIZE; y += 1) {
+    const v = (y / (COLOR_FIELD_SIZE - 1) - 0.5) * 2.6;
+    for (let x = 0; x < COLOR_FIELD_SIZE; x += 1) {
+      const u = (x / (COLOR_FIELD_SIZE - 1) - 0.5) * 2.6;
+      const warpedX = u + Math.sin(v * 2.8 + time * 0.32) * 0.28
+        + Math.sin((u + v) * 2.1 - time * 0.18) * 0.13;
+      const warpedY = v + Math.cos(u * 2.5 - time * 0.27) * 0.26
+        + Math.sin((v - u) * 2.4 + time * 0.21) * 0.14;
+      const wave = Math.sin(warpedX * 2.3 + warpedY * 1.7 + time * 0.22)
+        + Math.cos(warpedY * 3.5 - warpedX * 1.2 - time * 0.16) * 0.5;
+      const phase = ((colorOffset + wave * COLOR_WAVE_STRENGTH) % RGB.length + RGB.length) % RGB.length;
+      const segment = Math.floor(phase);
+      const progress = (1 - Math.cos((phase - segment) * Math.PI)) / 2;
+      const from = RGB[segment] ?? RGB[0];
+      const to = RGB[(segment + 1) % RGB.length] ?? RGB[1];
+      const pixel = (y * COLOR_FIELD_SIZE + x) * 4;
+
+      pixels[pixel] = mix(from[0], to[0], progress);
+      pixels[pixel + 1] = mix(from[1], to[1], progress);
+      pixels[pixel + 2] = mix(from[2], to[2], progress);
+      pixels[pixel + 3] = 255;
+    }
+  }
 }
 
 function polygon(sides: number): Point[] {
@@ -132,6 +167,13 @@ export function startMorphlingCursor(): void {
   if (window.matchMedia("(prefers-reduced-motion: reduce), (pointer: coarse)").matches) return;
   const context = canvas.getContext("2d");
   if (!context) return;
+  const colorField = document.createElement("canvas");
+  colorField.width = COLOR_FIELD_SIZE;
+  colorField.height = COLOR_FIELD_SIZE;
+  const colorFieldContext = colorField.getContext("2d");
+  if (!colorFieldContext) return;
+  const drawingColorFieldContext = colorFieldContext;
+  const colorFieldPixels = colorFieldContext.createImageData(COLOR_FIELD_SIZE, COLOR_FIELD_SIZE);
   canvas.dataset.ready = "true";
   const drawingCanvas = canvas;
   const drawingContext = context;
@@ -248,6 +290,22 @@ export function startMorphlingCursor(): void {
         drawingContext.strokeStyle = "#fff";
         drawingContext.stroke();
       }
+
+      paintColorField(colorFieldPixels.data, now);
+      drawingColorFieldContext.putImageData(colorFieldPixels, 0, 0);
+      drawingContext.save();
+      drawingContext.beginPath();
+      drawingContext.arc(pointer.x, pointer.y, DOT_RADIUS, 0, Math.PI * 2);
+      drawingContext.clip();
+      // The oversized field lets its waves flow beyond the dot without losing color coverage.
+      drawingContext.drawImage(
+        colorField,
+        pointer.x - COLOR_FIELD_SIZE_CSS / 2,
+        pointer.y - COLOR_FIELD_SIZE_CSS / 2,
+        COLOR_FIELD_SIZE_CSS,
+        COLOR_FIELD_SIZE_CSS
+      );
+      drawingContext.restore();
     }
     requestAnimationFrame(paint);
   }
