@@ -30,6 +30,7 @@ Read it in this order, and stop as soon as you have your answer.
 | You want to | Go to |
 | --- | --- |
 | add a component | [The rules](#the-rules), then [Where to go](#where-to-go) |
+| decide what lives on which route | [ADR-012](#adr-012--the-routes-are-the-sections) |
 | change how data is fetched | [Rule 2](#rule-2--live-data-does-not-block-the-server), [Rule 5](#rule-5--the-server-client-line-is-not-negotiable) |
 | add a hook, service or lib | [Dependency direction](#dependency-direction) |
 | rename or move a file | [File index](#file-index), [ADR-006](#adr-006-layer-over-subfolder) |
@@ -64,9 +65,9 @@ component cannot be a child of a `.tsx` one.
 
 ### Rule 2 — Live data does not block the server
 
-`/` renders on demand (`prerender = false`) because GitHub answers fast. `/music`
-fetches its tracks from the browser instead, because an SSR request would block
-on a cold start that outlasts the Vercel function timeout.
+`/coding` renders on demand (`prerender = false`) because GitHub answers fast. `/music`
+fetches its tracks from the browser instead, because an SSR request would block on a
+cold start that outlasts the Vercel function timeout.
 
 Do not "improve" this by moving `/music` to SSR.
 
@@ -78,8 +79,8 @@ There are five interactive roots, each mounted `client:load`:
 | --- | --- |
 | `MusicSection.tsx` | `/music` |
 | `AdminUpload.tsx` | `/admin` |
-| `PigmentFlow.tsx` | `/spectral` |
-| `RecursiveSubdivision.tsx` | `/subdivision` |
+| `PigmentFlow.tsx` | `/experimentation/spectral` |
+| `RecursiveSubdivision.tsx` | `/experimentation/subdivision` |
 | `LoadingTracksLoop.tsx` | `/loading` |
 
 Their children are React because of Rule 1, not because each needs its own
@@ -98,8 +99,9 @@ reach a server module.
 
 | Module | Side | Why it matters |
 | --- | --- | --- |
-| `services/github.ts` | **server only** | reads `GITHUB_TOKEN`, runs during the prerender of `/` |
+| `services/github.ts` | **server only** | reads `GITHUB_TOKEN`, runs during the render of `/coding` |
 | `lib/now-playing-element.ts` | **browser only** | `customElements.define`; no computed style on the server |
+| `lib/fractal-cursor.ts` | **browser only** | canvas, `requestAnimationFrame`, pointer events; a prerender has nothing to drive |
 | `lib/three/*`, `lib/sim/*` | **browser only** | canvas, WebGL, `requestAnimationFrame` |
 
 An island's module body also runs while the page is being rendered on the
@@ -179,12 +181,12 @@ Snapping happens twice, on purpose: `subdivide` snaps to a power-of-two lattice 
 no drift accumulates, and the renderer snaps to whole device pixels so no edge falls
 between two of them.
 
-On `/subdivision`, geometry updates atomically. A recut can change cut directions
-and adjacency, so interpolating rectangles or grid lines independently produces
-overlaps and gaps during the transition even when both endpoints tile exactly.
-Only background colours transition. At a cut ratio of `0.5`, the algorithm always
-bisects the longer side, giving a regular grid independent of seed, grain and bias.
-This is the page's initial setting; lower ratios enable irregular partitions.
+On `/experimentation/subdivision`, geometry updates atomically. A recut can change cut
+directions and adjacency, so interpolating rectangles or grid lines independently produces
+overlaps and gaps during the transition even when both endpoints tile exactly. Only
+background colours transition. At a cut ratio of `0.5`, the algorithm always bisects the
+longer side, giving a regular grid independent of seed, grain and bias. This is the page's
+initial setting; lower ratios enable irregular partitions.
 
 ## Dependency direction
 
@@ -266,12 +268,17 @@ One line per file. Read this before you move something.
 
 ### `src/pages/` — routes
 
+The four sections are `/`, `/coding`, `/music` and `/experimentation`. See
+[ADR-012](#adr-012--the-routes-are-the-sections).
+
 | File | Role |
 | --- | --- |
-| `index.astro` | `/`. SSR, GitHub pinned repos. |
+| `index.astro` | `/`. Profile, education, research, Bicotex experience, skills, interests, contact. Prerendered. |
+| `coding.astro` | `/coding`. SSR, GitHub pinned repos + contribution count. |
 | `music.astro` | `/music`. Static shell, mounts `MusicSection`. |
-| `spectral.astro` | `/spectral`. Static shell, mounts `PigmentFlow`. |
-| `subdivision.astro` | `/subdivision`. Static shell, mounts `SubdivisionImage`. |
+| `experimentation/index.astro` | `/experimentation`. Index of the experiments. |
+| `experimentation/spectral.astro` | Static shell, mounts `PigmentFlow`. |
+| `experimentation/subdivision.astro` | Static shell, mounts `RecursiveSubdivision`. |
 | `admin.astro` | `/admin`. Static shell, mounts `AdminUpload`. |
 | `loading.astro` | `/loading`. Dev workbench; nothing links to it. |
 
@@ -288,11 +295,12 @@ One line per file. Read this before you move something.
 | `BootScreen.astro` | First-visit splash. In the layout, so one copy covers all routes. |
 | `Navbar.astro` | Site navigation. |
 | `Footer.astro` | Footer shell; mounts `NowPlaying` once. |
-| `Hero.astro` | `/` hero block; wraps `BrutWords`. |
-| `BrutWords.astro` | Decorative typographic treatment used by `Hero`. |
-| `RepoRow.astro` | One row in the `/` repos list. |
+| `Hero.astro` | `/` introduction, centered heading with separate brutalist hover plates on `code` and `sounds`, portrait, and route into the biography. |
+| `ExperimentHeader.astro` | Shared heading and back link for individual experiments. |
+| `RepoRow.astro` | One row in the `/coding` repos list. |
 | `SocialButton.astro` | One outbound social link. |
 | `NowPlaying.astro` | Defines `<now-playing-el>`; the bridge to `lib/now-playing-element.ts`. |
+| `FractalCursor.astro` | Persistent canvas overlay for the fine-pointer cursor treatment. |
 
 ### `src/components/` — `.tsx`, inside an island
 
@@ -300,9 +308,9 @@ One line per file. Read this before you move something.
 | --- | --- |
 | `MusicSection.tsx` | `/music` root. Composes PlayerBar, albums, tracks. |
 | `AdminUpload.tsx` | `/admin` root. Key entry, song list, replace/delete. |
-| `PigmentFlow.tsx` | `/spectral` root. Canvas, camera, pointer, keys. |
-| `PigmentControls.tsx` | The `/spectral` panel. One slider per settings field. |
-| `RecursiveSubdivision.tsx` | `/subdivision` root. Pixel-snapped cells, grid layer, knobs. |
+| `PigmentFlow.tsx` | `/experimentation/spectral` root. Canvas, camera, pointer, keys. |
+| `PigmentControls.tsx` | The `/experimentation/spectral` panel. One slider per settings field. |
+| `RecursiveSubdivision.tsx` | `/experimentation/subdivision` root. Pixel-snapped cells, grid layer, knobs. |
 | `controls.tsx` | The `Slider`/`Chips`/`Toggle`/`Panel` primitives both lab pages share. |
 | `LoadingTracksLoop.tsx` | `/loading` island. Fake clock at 4x. |
 | `PlayerBar.tsx` | Transport + spectrum/waveform canvases. |
@@ -333,7 +341,7 @@ One line per file. Read this before you move something.
 | --- | --- |
 | `api.ts` | Typed client. `fetch` for JSON, XHR for upload progress. |
 | `errors.ts` | Turns any thrown value into a user-facing message. |
-| `github.ts` | **Server only.** Pinned repos + media images. |
+| `github.ts` | **Server only.** Pinned repos, validated daily contribution calendar, media images. |
 | `player.ts` | `PlayerEngine` singleton, waveform cache. |
 | `embed-players.ts` | SoundCloud and Spotify widget transports. |
 
@@ -349,11 +357,12 @@ Framework-free unless the name says otherwise.
 | `audio-file.ts` | Upload validation mirrored from the server. |
 | `color-theory.ts` | OKLCh harmony palettes. |
 | `pigment-math.ts` | Kubelka-Munk mixing and its cache. |
-| `pigment-settings.ts` | Every knob on `/spectral`, its ranges, presets, persistence. |
+| `pigment-settings.ts` | Every knob on `/experimentation/spectral`, its ranges, presets, persistence. |
 | `paint-surface.ts` | Grid where overlapping pigment resolves into colour. |
 | `playback-canvas.ts` | 2D spectrum and waveform painters. |
 | `playback-ui.ts` | Glyphs and clock formatting shared by three toggles. |
 | `now-playing-element.ts` | **Browser only.** The `<now-playing-el>` custom element. |
+| `fractal-cursor.ts` | **Browser only.** Morphs local shape points so the outline follows the pointer during transitions; caps control outlines at 450 × 300 pixels. |
 | `api/schema.ts` | Generated from `openapi.json`. Never hand-edited. |
 | `api/README.md` | How and when to regenerate. |
 | `boot/boot-controller.ts` | Splash lifecycle and the three.js dynamic import. |
@@ -399,9 +408,10 @@ Framework-free unless the name says otherwise.
 | `global.css` | Theme, base layer, and the `@utility` surfaces. |
 | `brutal-button.css` | The `brut-up` hover reveal. |
 | `boot-screen.css` | Static composition held until three.js lands. |
-| `brut-word.css` | `BrutWords` typography. |
+| `brut-word.css` | Hover plates and extruded shadows on the two highlighted hero words. |
 | `server-pulse.css` | `ServerPulse` animation. |
 | `social-button.css` | `SocialButton` surfaces. |
+| `fractal-cursor.css` | Canvas overlay stacking and motion/accessibility fallbacks. |
 
 ### Verification tooling — not shipped
 
@@ -431,7 +441,7 @@ no longer holds.
 <a id="adr-001"></a>
 ### ADR-001 — Astro-first, React only at island boundaries
 
-**Context.** Three of six routes have no interactive state at all.
+**Context.** Three of eight routes have no interactive state at all.
 **Decision.** `.astro` by default; `.tsx` only where client state exists.
 **Consequences.** `/` ships no `react-dom`. The cost is that React children
 cannot be `.astro`, so an island's subtree is permanently React.
@@ -547,7 +557,7 @@ output tiles the board exactly is now load-bearing enough to be worth asserting.
 <a id="adr-010"></a>
 ### ADR-010 — One settings object, and one range table behind it
 
-**Context.** `/spectral` had fifteen pieces of state and twenty-eight props, and was
+**Context.** `/experimentation/spectral` had fifteen pieces of state and twenty-eight props, and was
 asked for more: a direction, a camera, a pointer, tracers, an overlay, presets. At
 that prop count each one is another argument, another effect that has to push its
 value into the simulation, and nowhere to put a preset or a keyboard shortcut.
@@ -586,6 +596,52 @@ does re-seat the grid and does throw the picture away once, deliberately. Removi
 the brush also removed the only caller of `PaintSurface` at device resolution, so
 the surface is now single-purpose. The page's own claim, that nothing on the canvas
 is a stroke, became literally true.
+
+<a id="adr-012"></a>
+### ADR-012 — The routes are the sections
+
+**Context.** `/` had the hero, three blocks of biography and the whole repos list,
+and the navbar called that one page "coding". Two audiences with nothing in common
+landed on the same URL, and the second one to arrive — someone looking for what you
+have built — had to scroll past the biography to find it.
+
+**Decision.** Four sections, four top-level routes, one per audience.
+
+| Section | Route | Renders on |
+| --- | --- | --- |
+| me | `/` | build |
+| coding | `/coding` | demand, because it reads GitHub |
+| music | `/music` | build |
+| experimentation | `/experimentation` | build, plus one child route per experiment |
+
+An experiment is nested rather than kept beside the sections, because a sixth
+top-level entry in the navbar would read as a sixth section. The list on
+`/experimentation` is an array in the page, so adding an experiment is one entry
+plus one page.
+
+**Consequences.** The GitHub fetch left `/`, which is now prerendered: the one route
+that had no live data no longer pays for a function invocation. `services/github.ts`
+gained a second query, and both share `requestGraphQL` because the token is
+rate-limited and `/coding` asks twice per cold render. The old `/spectral` and
+`/subdivision` URLs 301 from `redirects` in `astro.config.mjs`, so the adapter owns
+them; a new section must be added there too, not only to the navbar.
+
+Contact lives on `/`, not at the bottom of the repos list. It was never about the
+repos, it just happened to sit under them.
+
+<a id="adr-013"></a>
+### ADR-013 — Links use stable visual states
+
+**Context.** The SVG glitch treatment made text harder to read on hover and added a
+document-wide filter and event listeners for five links.
+
+**Decision.** Use `editorial-link` for text calls to action and `channel-link`
+for the YouTube channels. Each has a clear focus state and a color change. The
+channels sit beside the paragraph that explains the interests they relate to.
+
+**Consequences.** The link filter, timer, and wrapper component are gone. The
+music platform links still use `SocialButton.astro`, where a compact row of
+platform destinations helps people choose where to listen.
 
 ## Dead code
 
@@ -659,3 +715,18 @@ changes in the same commit.
 3. **Did you learn why something is the way it is?** That reasoning is the most
    expensive thing in this repository to reconstruct and the easiest to lose.
    Put it next to the decision, not next to the code.
+
+### Preserved presentation requirements
+
+The home heading centers `code & sounds` and applies the hover plate separately
+only to `code` and `sounds`. The ampersand stays plain. The effect lives in
+`brut-word.css`; the removed `BrutWords` wrapper is no longer needed for one heading.
+
+The coding profile displays the daily contribution calendar, not only its total.
+`services/github.ts` validates the calendar before caching it. Partial weeks keep
+GitHub's weekday positions; narrow screens scroll the chart without widening the page.
+Missing data shows a link to GitHub instead of fabricated contribution cells.
+
+Music and experiment copy uses descriptive titles, short instructions, and factual
+status messages. Remove rhetorical questions, slogans, and repeated explanations
+of implementation details from these pages.

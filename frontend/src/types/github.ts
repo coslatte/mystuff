@@ -1,10 +1,10 @@
 /*
  * GitHub GraphQL shapes.
  *
- * Server-only: imported by `services/github.ts`, which runs during the
- * prerender of `/`. Nothing here may be reachable from a browser bundle.
+ * Server-only: imported by `services/github.ts`, which runs during the render of
+ * `/coding`. Nothing here may be reachable from a browser bundle.
  *
- * These mirror the pinned-repos query in `services/github.ts`. They are typed by
+ * These mirror the queries in `services/github.ts`. They are typed by
  * hand because springdoc describes the Spring API, not the third-party GraphQL
  * responses this page fetches.
  */
@@ -18,7 +18,19 @@ export interface PinnedRepo {
   repositoryTopics: { nodes: Array<{ topic: { name: string } }> };
 }
 
-/** One row as `/` renders it, after the GraphQL shape has been flattened. */
+export interface ContributionSummary {
+  totalContributions: number;
+  weeks: Array<{
+    contributionDays: Array<{
+      color: string;
+      contributionCount: number;
+      date: string;
+      weekday: number;
+    }>;
+  }>;
+}
+
+/** One row as `/coding` renders it, after the GraphQL shape has been flattened. */
 export interface RepoView {
   index: string;
   title: string;

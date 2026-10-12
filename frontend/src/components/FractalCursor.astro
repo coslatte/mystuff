@@ -1,0 +1,11 @@
+---
+import "../styles/fractal-cursor.css";
+---
+
+<canvas class="fractal-cursor" data-fractal-cursor aria-hidden="true" transition:persist="fractal-cursor"></canvas>
+
+<script>
+  import { startFractalCursor } from "../lib/fractal-cursor";
+
+  startFractalCursor();
+</script>

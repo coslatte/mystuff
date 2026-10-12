@@ -3,6 +3,7 @@ import { ClientRouter } from "astro:transitions";
 import Navbar from "../components/Navbar.astro";
 import Footer from "../components/Footer.astro";
 import BootScreen from "../components/BootScreen.astro";
+import FractalCursor from "../components/FractalCursor.astro";
 import "../styles/global.css";
 
 interface Props {
@@ -31,6 +32,7 @@ const { title = "CosmicLatte", bootReplay = false } = Astro.props;
   <body class="flex min-h-screen flex-col">
     <!-- First child so it paints over everything below it. -->
     <BootScreen />
+    <FractalCursor />
     <Navbar />
     <main class="mx-auto w-full max-w-7xl flex-1 border-x-2 border-black tv:max-w-[100rem]">
       <slot />

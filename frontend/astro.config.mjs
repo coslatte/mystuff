@@ -30,4 +30,10 @@ export default defineConfig({
   },
   output: "static",
   adapter: vercel(),
+  // The experiments moved under /experimentation when the sections split. Built
+  // here rather than in vercel.json so the adapter owns them with everything else.
+  redirects: {
+    "/spectral": "/experimentation/spectral",
+    "/subdivision": "/experimentation/subdivision",
+  },
 });

@@ -15,15 +15,25 @@ const socials = [
 ---
 
 <Layout title="music | cosmiclatte">
-  <section class="border-b-2 border-black">
-    <div class="flex flex-col justify-between gap-4 p-6 tablet:p-8 laptop:p-10">
-      <h1 class="font-display text-4xl font-black tracking-tighter tablet:text-6xl tv:text-7xl">songs i've made.</h1>
-      <div class="flex flex-wrap gap-2">
-        {socials.map((social) => (
-          <SocialButton name={social.name} url={social.url} />
-        ))}
+  <section class="border-b-2 border-black bg-white">
+    <div class="grid gap-8 p-6 tablet:p-8 laptop:grid-cols-[1fr_18rem] laptop:items-end laptop:p-10">
+      <div>
+        <p class="brut-label text-brut-violet">03 / music</p>
+        <h1 class="mt-4 font-display text-5xl font-black leading-none tracking-tighter tablet:text-7xl">Music</h1>
+        <p class="mt-5 max-w-2xl text-base leading-7">
+          Original tracks and releases.
+        </p>
       </div>
-      <p class="max-w-md font-mono text-sm text-gray-700">play, rate and comment if u like <span class="bg-yellow-100 px-1">&#58;&gt;</span></p>
+      <p class="border-l-2 border-black pl-4 font-mono text-sm leading-6 text-neutral-700">
+        Listen, rate tracks, and leave comments.
+      </p>
+    </div>
+  </section>
+
+  <section class="border-b-2 border-black bg-neutral-100 p-6 tablet:p-8 laptop:p-10" aria-label="Music platforms">
+    <p class="brut-label mb-4">Platforms and links</p>
+    <div class="flex flex-wrap gap-2">
+      {socials.map((social) => <SocialButton name={social.name} url={social.url} />)}
     </div>
   </section>
 

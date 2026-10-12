@@ -22,13 +22,9 @@ type Status = {
 function statusFor(serverReady: boolean, elapsed: number): Status {
   if (serverReady) {
     return {
-      chunks: [
-        { text: "we are " },
-        { text: "finally", emphasis: true },
-        { text: " awake: loading tracks..." },
-      ],
+      chunks: [{ text: "Loading tracks..." }],
       stage: "ready",
-      detail: "this should only take a lil moment.",
+      detail: "The server is ready.",
     };
   }
   if (elapsed < 3) {
@@ -36,22 +32,22 @@ function statusFor(serverReady: boolean, elapsed: number): Status {
   }
   if (elapsed < 10) {
     return {
-      chunks: [{ text: "ok the server was asleep: waking it up..." }],
+      chunks: [{ text: "Starting the server..." }],
       stage: "waking",
-      detail: "this is a normal cold start, hold on a few seconds.",
+      detail: "The first request may take up to a minute.",
     };
   }
   if (elapsed < 25) {
     return {
-      chunks: [{ text: "still starting up. free hosting can take up to a minute on the first visit..." }],
+      chunks: [{ text: "Waiting for the server..." }],
       stage: "booting",
-      detail: "your patience is literally doing the heavy lifting here.",
+      detail: "Tracks will load when the connection is ready.",
     };
   }
   return {
-    chunks: [{ text: "almost there" }],
+    chunks: [{ text: "Waiting for the server..." }],
     stage: "almost",
-    detail: "(_　_)。゜zｚＺ",
+    detail: "If this continues, reload the page.",
   };
 }
 

@@ -21,6 +21,16 @@
 }
 
 @layer base {
+  ::selection {
+    background-color: var(--color-brut-black);
+    color: #fff;
+  }
+
+  ::-moz-selection {
+    background-color: var(--color-brut-black);
+    color: #fff;
+  }
+
   html {
     scrollbar-gutter: stable;
   }
@@ -89,4 +99,22 @@
 
 @utility brut-meta {
   @apply font-mono text-[10px] font-bold;
+}
+
+@utility editorial-link {
+  @apply inline-flex items-center gap-2 border-b-2 border-black pb-1 font-mono text-sm font-bold no-underline transition-colors;
+
+  &:hover,
+  &:focus-visible {
+    @apply border-brut-blue text-brut-blue;
+  }
+}
+
+@utility channel-link {
+  @apply inline-flex items-center gap-3 border-2 border-black bg-white px-3 py-2 font-mono text-xs font-bold no-underline transition-colors;
+
+  &:hover,
+  &:focus-visible {
+    @apply bg-black text-white;
+  }
 }

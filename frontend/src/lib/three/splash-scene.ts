@@ -5,11 +5,12 @@
  * flipping between ink and paper as it travels. The abstraction is a clock face:
  * discrete ticks, mechanical movement, no continuous drift.
  *
- * It is the same partition algorithm as the `/subdivision` page, deliberately. The
- * earlier version scattered independent rectangles over a grid, and independent
- * rectangles overlap: their edges cross, one rectangle's outline lands in the middle
- * of its neighbour, and nothing lines up with anything. A partition cannot overlap,
- * so the drawing is flush by construction and the same module produces both screens.
+ * It is the same partition algorithm as the `/experimentation/subdivision` page,
+ * deliberately. The earlier version scattered independent rectangles over a grid, and
+ * independent rectangles overlap: their edges cross, one rectangle's outline lands in
+ * the middle of its neighbour, and nothing lines up with anything. A partition cannot
+ * overlap, so the drawing is flush by construction and the same module produces both
+ * screens.
  *
  * Flat by construction: an orthographic camera, unlit planes, no shadows and no
  * post-processing. Three.js is doing the timing and the pixel mapping, not the

@@ -1,66 +1,176 @@
 ---
-export const prerender = false;
-
 import Layout from "../layouts/Layout.astro";
 import Hero from "../components/Hero.astro";
-import RepoRow from "../components/RepoRow.astro";
-import { fetchPinnedRepos, fetchRepoMediaImage } from "../services/github";
-import type { RepoView } from "../types/github";
 
-// The pinned repos are the single source of truth for this section. When the
-// GitHub API is unavailable (no token, rate limit, outage) we show an empty
-// state instead of a hardcoded list that would drift from the real profile.
-const pinned = await fetchPinnedRepos("coslatte");
+const channels = [
+  { name: "3Blue1Brown", url: "https://www.youtube.com/@3blue1brown", note: "math" },
+  { name: "Veritasium", url: "https://www.youtube.com/@veritasium", note: "science" },
+  { name: "Fireship", url: "https://www.youtube.com/@Fireship", note: "software" },
+  { name: "Juja", url: "https://www.youtube.com/@jujalag", note: "games" },
+];
 
-const repos: RepoView[] = await Promise.all(
-  pinned.map(async (repo, index): Promise<RepoView> => ({
-    index: String(index + 1).padStart(2, "0"),
-    title: repo.name.toLowerCase(),
-    category: repo.primaryLanguage?.name?.toLowerCase() || "project",
-    description: repo.description?.toLowerCase() || "no description provided.",
-    tags: repo.repositoryTopics.nodes.map((node) => node.topic.name),
-    imageSrc: await fetchRepoMediaImage(repo.url),
-    githubUrl: repo.url,
-  }))
-);
-
-Astro.response.headers.set(
-  "Cache-Control",
-  "public, s-maxage=600, stale-while-revalidate=3600"
-);
+const skills = [
+  {
+    name: "Frontend, Backend & Programming Languages",
+    items: [
+      "React, Next.js, Astro, TailwindCSS, responsive UI, API integration",
+      "Spring Boot, Spring Security, Spring Data JPA, JWT, FastAPI, REST APIs, DTO design, service and repository patterns",
+      "Java, Python, JS/TS, Kotlin, Dart (Flutter), PHP, Rust, Lua, C#, C",
+    ],
+  },
+  {
+    name: "AI Agents & Code Editors",
+    items: ["Claude Code, Codex, OpenCode, Gemini, Cursor, IntelliJ IDEA, VSCode, Zed, Neovim"],
+  },
+  {
+    name: "Art, Design & Music",
+    items: ["Adobe Photoshop & Illustrator, Blender, FL Studio, Ableton, Bitwig Studio"],
+  },
+  {
+    name: "Data, Architecture & Tools",
+    items: ["PostgreSQL, SQL, SQLite, Flyway, relational modeling, layered and modular architecture, microservices, multi-tenancy, RBAC, Git, GitHub Actions, Docker, Maven, Gradle"],
+  },
+];
 ---
 
-<Layout title="repos | cosmiclatte">
+<Layout title="Gabriel Paz ][ cosmiclatte.dev">
   <Hero />
 
-  <section id="repos" class="border-t-2 border-black">
-    <div class="flex items-center justify-between border-b-2 border-black bg-black px-3 py-3 font-mono text-sm font-bold text-white">
-      <a
-        href="https://github.com/coslatte?tab=repositories"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="brut-up brut-up--on-dark brut-up--seam"
-      >
-        <span>view repositories ↗</span>
-      </a>
-    </div>
-
-    {repos.length > 0
-      ? repos.map((repo) => <RepoRow {...repo} />)
-      : (
-        <p class="border-b-2 border-black bg-white p-8 text-center font-mono text-sm">
-          could not load the repos right now.{" "}
-          <a
-            href="https://github.com/coslatte?tab=repositories"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-brut-red underline">see them on github ↗</a>
+  <section id="about" class="border-b-2 border-black bg-white">
+    <div class="grid laptop:grid-cols-[minmax(15rem,0.8fr)_minmax(0,1.6fr)]">
+      <div class="border-b-2 border-black bg-brut-yellow p-6 tablet:p-8 laptop:border-b-0 laptop:border-r-2 laptop:p-10">
+        <p class="brut-label">01 / background</p>
+        <h2 class="mt-8 max-w-lg font-display text-4xl font-black leading-[1.05] tracking-tighter tablet:text-5xl">
+          Software for real work.
+        </h2>
+      </div>
+      <div class="grid gap-8 p-6 tablet:p-8 laptop:p-10">
+        <p class="max-w-3xl text-lg leading-relaxed tablet:text-xl">
+          I'm a software engineer based in Santa Clara, Cuba. I turn requirements into software people can use.
+          I design modular applications, build fullstack environments, and write about improvements for UI/UX,
+          always worried about the client.
         </p>
-      )}
-
-    <div class="border-black bg-white p-8 text-center font-mono">
-      want to contact me?{" "}
-      <a href="mailto:hola@coslatte.dev" class="text-brut-red underline">send me an email</a>.
+        <div class="grid gap-3 border-t-2 border-black pt-6 tablet:grid-cols-[8rem_1fr] tablet:gap-6">
+          <p class="brut-label">Education</p>
+          <p class="max-w-2xl leading-7">
+            I began electrical engineering in 2022 and moved to software engineering in 2023 at
+            Universidad Central “Marta Abreu” de Las Villas. I graduated in 2026 with outstanding results.
+          </p>
+        </div>
+        <div class="grid gap-3 border-t-2 border-black pt-6 tablet:grid-cols-[8rem_1fr] tablet:gap-6">
+          <p class="brut-label">Research</p>
+          <p class="max-w-2xl leading-7">
+            I presented an intensive care patient simulation engine at scientific events in Villa Clara
+            and built the platform that brings it together with other clinical tools for the Arnaldo Milián
+            Castro Hospital. This work received a Research for Simulation Software award in 2025.
+          </p>
+        </div>
+        <div class="grid gap-3 border-t-2 border-black pt-6 tablet:grid-cols-[8rem_1fr] tablet:gap-6">
+          <p class="brut-label">Languages</p>
+          <p class="max-w-2xl leading-7">
+            Spanish (native) / English (C1+)
+          </p>
+        </div>
+      </div>
     </div>
+  </section>
+
+  <section class="border-b-2 border-black bg-white">
+    <div class="grid laptop:grid-cols-[minmax(15rem,0.8fr)_minmax(0,1.6fr)]">
+      <div class="border-b-2 border-black bg-black p-6 text-white tablet:p-8 laptop:border-b-0 laptop:border-r-2 laptop:p-10">
+        <p class="brut-label text-brut-yellow">02 / experience</p>
+        <h2 class="mt-8 max-w-lg font-display text-4xl font-black leading-[1.05] tracking-tighter tablet:text-5xl">
+          Building for production.
+        </h2>
+      </div>
+      <div class="p-6 tablet:p-8 laptop:p-10">
+        <div class="flex flex-col gap-2 tablet:flex-row tablet:items-start tablet:justify-between">
+          <div>
+            <p class="brut-label text-brut-blue">Bicotex Software</p>
+            <h3 class="mt-2 font-display text-3xl font-black tracking-tight">Backend Engineer</h3>
+          </div>
+          <p class="font-mono text-xs font-bold text-neutral-600">February 2026 – present</p>
+        </div>
+        <p class="mt-6 max-w-3xl text-lg leading-8">
+          I build production software for logistics, warehousing, inventory, transportation, and food
+          retail operations. The work crosses business rules, APIs, data, security, and user interfaces.
+        </p>
+        <ul class="mt-6 grid gap-4 border-t-2 border-black pt-6 leading-7 tablet:grid-cols-2 tablet:gap-8">
+          <li>Design REST APIs, DTOs, persistence layers, and PostgreSQL migrations with Java and Spring Boot.</li>
+          <li>Implement multi-tenant and branch-scoped access using Spring Security, JWT, and RBAC.</li>
+          <li>Build workflows for products, inventory management, batches, payments, transfers, reports..</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-white">
+    <div class="border-b-2 border-black p-6 tablet:p-8 laptop:p-10">
+      <p class="brut-label">03 / skills</p>
+      <h2 class="mt-3 font-display text-3xl font-black tracking-tighter tablet:text-5xl">What I work with.</h2>
+    </div>
+    <div class="grid tablet:grid-cols-2">
+      {skills.map((skill, index) => (
+        <article class:list={[
+          "border-b-2 border-black p-6 tablet:p-8 laptop:p-10",
+          index % 2 === 0 && "tablet:border-r-2",
+        ]}>
+          <h3 class="font-display text-2xl font-black tracking-tight">{skill.name}</h3>
+          {skill.items.map((item) => (
+            <p class="mt-4 max-w-xl leading-7 text-neutral-700">{item}.</p>
+          ))}
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="border-b-2 border-black bg-neutral-100">
+    <div class="border-b-2 border-black p-6 tablet:p-8 laptop:p-10">
+      <p class="brut-label">04 / outside the editor</p>
+      <h2 class="mt-3 font-display text-3xl font-black tracking-tighter tablet:text-5xl">What keeps me awake.</h2>
+    </div>
+    <div class="grid laptop:grid-cols-2">
+      <article class="border-b-2 border-black p-6 tablet:p-8 laptop:border-b-0 laptop:border-r-2 laptop:p-10">
+        <p class="brut-label text-brut-blue">Listening</p>
+        <h3 class="mt-3 font-display text-2xl font-bold tracking-tight">Music, from every angle.</h3>
+        <p class="mt-4 max-w-xl leading-7">
+          Experimental music, piano, jazz. I make music too, and I love sound design and the physics
+          behind it.
+        </p>
+        <a class="editorial-link mt-6 inline-flex" href="/music">hear my music <span aria-hidden="true">↗</span></a>
+      </article>
+      <article class="p-6 tablet:p-8 laptop:p-10">
+        <p class="brut-label text-brut-violet">Free time</p>
+        <h3 class="mt-3 font-display text-2xl font-bold tracking-tight">When I'm not working.</h3>
+        <p class="mt-4 max-w-xl leading-7">
+          I enjoy playing modded minecraft, factorio, balatro, elden ring and online games
+          like Delta Force, Battlefield VI and other dumb emerging gems with my homies.
+          I also consume quite a lot of youtube.
+        </p>
+        <p class="mt-5 max-w-xl leading-7">These are some of the people I keep coming back to:</p>
+        <ul class="mt-4 flex flex-wrap gap-2" aria-label="Favorite YouTube channels">
+          {channels.map((channel) => (
+            <li>
+              <a class="channel-link" href={channel.url} target="_blank" rel="noopener noreferrer"
+                aria-label={`${channel.name}, ${channel.note}, on YouTube`}>
+                <span>{channel.name}</span><span aria-hidden="true">↗</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section class="flex flex-col gap-5 bg-black p-6 text-white tablet:flex-row tablet:items-center tablet:justify-between tablet:p-8 laptop:p-10">
+    <div>
+      <p class="brut-label text-brut-yellow">05 / contact</p>
+      <h2 class="mt-2 font-display text-3xl font-black tracking-tighter tablet:text-4xl">Have something in mind?</h2>
+      <p class="mt-3 font-mono text-sm text-neutral-300">
+        Santa Clara, Villa Clara, Cuba · (55) 58778025
+      </p>
+    </div>
+    <a class="border-2 border-white px-5 py-3 font-mono font-bold text-white transition-colors hover:bg-brut-yellow hover:text-black focus-visible:bg-brut-yellow focus-visible:text-black"
+      href="mailto:gabrielpazruiz02@gmail.com">gabrielpazruiz02@gmail.com ↗</a>
   </section>
 </Layout>
