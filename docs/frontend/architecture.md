@@ -302,7 +302,7 @@ The four sections are `/`, `/coding`, `/music` and `/experimentation`. See
 | `RouteCurtain.astro` | Navigation loading overlay. In the layout, persisted across swaps. |
 | `Navbar.astro` | Site navigation. |
 | `Footer.astro` | Footer shell; mounts `NowPlaying` once. |
-| `Hero.astro` | `/` introduction, centered heading with separate brutalist hover plates on `code` and `sounds`, portrait, and route into the biography. |
+| `Hero.astro` | `/` introduction, centered heading with an ASCII animation on the brutalist `code` plate and an FM wave on `soundwaves`, portrait, and route into the biography. |
 | `ExperimentHeader.astro` | Shared heading and back link for individual experiments. |
 | `RepoRow.astro` | One row in the `/coding` repos list. |
 | `SocialButton.astro` | One outbound social link. |
@@ -417,7 +417,7 @@ Framework-free unless the name says otherwise.
 | `global.css` | Theme, base layer, and the `@utility` surfaces. |
 | `brutal-button.css` | The `brut-up` hover reveal. |
 | `boot-screen.css` | Static composition held until three.js lands. |
-| `brut-word.css` | Hover plates and extruded shadows on the two highlighted hero words. |
+| `brut-word.css` | Hover plates and layered animations on the two highlighted hero words. |
 | `server-pulse.css` | `ServerPulse` animation. |
 | `social-button.css` | `SocialButton` surfaces. |
 | `morphling-cursor.css` | Canvas overlay, native cursor suppression on links and buttons, and motion/accessibility fallbacks. |
@@ -764,9 +764,17 @@ changes in the same commit.
 
 ### Preserved presentation requirements
 
-The home heading centers `code & sounds` across the full page width, above the
-portrait and introduction. It applies the hover plate separately
-only to `code` and `sounds`. The ampersand stays plain. The effect lives in
+The home heading centers `i code & shrink soundwaves` across the full page width,
+above the portrait and introduction. `code` keeps its hover plate. Hovering
+`code` reveals a smaller, inverted source-code layer after the plate appears.
+Each page load picks a fragment from the frontend or backend; its characters
+rotate to 120 degrees and scroll down slowly. Hovering
+`soundwaves` raises it with the same black extrusion, then fades in a red fill
+clipped to an edge-to-edge frequency-modulated sine wave. Its modulator varies
+from 0.6 to 1.4 cycles across the word in a 32-second cycle as the wave moves right.
+The browser updates the path at 30 frames per second only while the word is hovered.
+The text is white on red and black above it. The ampersand stays plain. The math
+lives in `fm-wave.ts`, the interaction in `Hero.astro`, and the styling in
 `brut-word.css`; the removed `BrutWords` wrapper is no longer needed for one heading.
 
 The coding profile displays the daily contribution calendar, not only its total.
