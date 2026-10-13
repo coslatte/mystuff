@@ -178,7 +178,7 @@ function SongRow({ song, busy, onReplace, onDelete }: RowProps) {
           type="button"
           disabled={busy}
           onClick={() => onReplace(song, replacement)}
-          className="border-2 border-black bg-white px-2 py-1 font-mono text-xs hover:bg-brut-yellow disabled:opacity-50"
+          className="border-2 border-black bg-white px-2 py-1 font-mono text-xs hover:bg-brut-blue hover:text-white disabled:opacity-50"
         >
           {busy ? "subiendo..." : "replace"}
         </button>

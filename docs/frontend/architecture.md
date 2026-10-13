@@ -276,9 +276,9 @@ The sections are `/`, `/coding`, `/music`, `/contact` and `/experimentation`. Se
 
 | File | Role |
 | --- | --- |
-| `index.astro` | `/`. Profile, education, research, Bicotex experience, skills, interests, contact. Prerendered. |
+| `index.astro` | `/`. Profile, education, research, Bicotex experience, creative skills, interests, contact. Prerendered. |
 | `contact.astro` | `/contact`. Static shell, mounts `ContactForm` for message submissions. |
-| `coding.astro` | `/coding`. SSR, GitHub pinned repos + contribution count. |
+| `coding.astro` | `/coding`. Programming skills, SSR GitHub pinned repos + contribution calendar. |
 | `music.astro` | `/music`. Static shell, mounts `MusicSection`. |
 | `experimentation/index.astro` | `/experimentation`. Index of the experiments. |
 | `experimentation/spectral.astro` | Static shell, mounts `PigmentFlow`. |
@@ -665,6 +665,10 @@ them; a new section must be added there too, not only to the navbar.
 Contact lives on `/`, not at the bottom of the repos list. It was never about the
 repos, it just happened to sit under them.
 
+Programming languages, frameworks, AI agents, editors, and data and architecture
+tools live on `/coding`, before the GitHub profile. Art, design, and music tools
+stay on `/` with the personal interests.
+
 <a id="adr-013"></a>
 ### ADR-013 — Links use stable visual states
 
@@ -775,6 +779,28 @@ changes in the same commit.
    Put it next to the decision, not next to the code.
 
 ### Preserved presentation requirements
+
+The interface uses cobalt blue (`#2448c8`), vermilion red (`#c6382b`), and
+green (`#398653`), with warm paper (`#f3f1eb`), white, black, and neutral grays.
+These are project colors, not historical Bauhaus color specifications. The
+composition follows Bauhaus studies of color weight and contrast, documented
+by [Getty](https://www.getty.edu/research/exhibitions_events/exhibitions/bauhaus/new_artist/form_color/color/).
+Yellow stays excluded from the interface palette.
+
+Blue leads navigation, buttons, and focus. Neutral surfaces occupy most of
+each page; full color belongs to selected planes, not every heading or card.
+The home background panel is paper, the experience panel is red, the Coding
+profile is blue, and the music track heading is red beside a neutral album
+heading. Green confirms delivery and completed uploads. Red also marks errors
+and destructive actions; text and icons carry the status as well as color.
+
+Social buttons preserve their platform brand colors, and the SoundCloud embed
+keeps its orange accent. Artwork, external embeds, contribution data, and the
+experiments' generated palettes remain content rather than theme tokens.
+
+`brut-label` text is black. Labels on colored or black panels have white backing,
+including numbered section labels. Blue and red surfaces use white text; green
+status surfaces use black text. These foreground pairs exceed 4.5:1 contrast.
 
 The home heading centers `i code & shrink soundwaves` across the full page width,
 above the portrait and introduction. `code` keeps its hover plate. Hovering

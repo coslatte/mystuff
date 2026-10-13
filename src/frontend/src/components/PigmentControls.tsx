@@ -79,7 +79,7 @@ export default function PigmentControls({
       </Panel>
 
       <Panel title="colour">
-        <SettingSlider field="hue" settings={settings} onChange={set} format={(v) => `${v.toFixed(0)}°`} accent="text-brut-violet" />
+        <SettingSlider field="hue" settings={settings} onChange={set} format={(v) => `${v.toFixed(0)}°`} accent="text-brut-blue" />
         <Chips
           label="harmony"
           value={settings.harmony}

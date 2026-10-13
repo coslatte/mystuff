@@ -15,6 +15,6 @@ export function formatClock(seconds: number): string {
 export function playPauseClass(isPlaying: boolean, base: string): string {
   const state = isPlaying
     ? "bg-brut-red text-white hover:bg-black hover:text-white"
-    : "bg-brut-yellow text-black hover:bg-black hover:text-white";
+    : "bg-brut-blue text-white hover:bg-black hover:text-white";
   return `${base} ${state}`;
 }

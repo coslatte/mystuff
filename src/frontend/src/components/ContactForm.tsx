@@ -131,7 +131,7 @@ export default function ContactForm() {
           ? "The service is taking a little longer to respond. Please keep this page open; your message is still here."
           : "Submitting your message…"}</p>}
         {state.kind === "error" && <p className="border-2 border-black bg-white p-4 text-sm">{state.message}</p>}
-        {state.kind === "accepted" && <div className="border-2 border-black bg-brut-yellow p-4">
+        {state.kind === "accepted" && <div className="border-2 border-black bg-brut-green p-4 text-black">
           <p className="font-bold">Your message has been received for delivery.</p>
           <p className="mt-2 break-all font-mono text-xs">Reference: {state.reference}</p>
         </div>}

@@ -1,11 +1,11 @@
 ---
 name: brutalist-button
-description: Reusable brutalist hover animation for buttons and links (black surface that reveals a yellow fill sliding up from the bottom). Use when adding CTA buttons, navigation actions or any interactive element that should look like the existing `.brut-up` buttons. Triggers on: button, hover, animation, brutalist, brut-up, repos button.
+description: Reusable brutalist hover animation for buttons and links (black surface that reveals a blue fill sliding up from the bottom). Use when adding CTA buttons, navigation actions or any interactive element that should look like the existing `.brut-up` buttons. Triggers on: button, hover, animation, brutalist, brut-up, repos button.
 ---
 
 # Brutalist "up" button
 
-A black surface with white text that reveals a yellow fill sliding up from the
+A black surface with white text that reveals a blue fill sliding up from the
 bottom on hover/focus. It uses the same reveal as `.soc`, where the platform
 name slides out on hover.
 

@@ -27,7 +27,7 @@ export default function MusicSection() {
 
       <div className="grid grid-cols-1 laptop:grid-cols-2">
         <section className="flex flex-col border-b-2 border-black laptop:border-b-0 laptop:border-r-2">
-          <div className="flex flex-col gap-2 border-b-2 border-black bg-brut-yellow p-3 tablet:flex-row tablet:flex-wrap tablet:items-center tablet:justify-between">
+          <div className="flex flex-col gap-2 border-b-2 border-black bg-white p-3 tablet:flex-row tablet:flex-wrap tablet:items-center tablet:justify-between">
             <h3 className="font-display text-lg font-bold laptop:text-xl">albums</h3>
             <div className="flex items-center gap-1">
               <span className="shrink-0 font-mono text-[10px] font-bold">listen on</span>
@@ -40,7 +40,7 @@ export default function MusicSection() {
                   className={`flex-1 border-2 border-black px-2 py-1.5 font-mono text-[11px] font-bold transition-colors tablet:flex-none tablet:py-1 laptop:text-[10px] ${
                     platform === platformId
                       ? "bg-black text-white"
-                      : "bg-white hover:bg-black hover:text-white"
+                      : "bg-white text-black hover:bg-black hover:text-white"
                   }`}
                 >
                   {platformId}
@@ -67,7 +67,7 @@ export default function MusicSection() {
         </section>
 
         <section className="flex flex-col">
-          <h3 className="border-b-2 border-black bg-brut-yellow p-3 font-display text-lg font-bold laptop:text-xl">
+          <h3 className="border-b-2 border-black bg-brut-red text-white p-3 font-display text-lg font-bold laptop:text-xl">
             tracks
           </h3>
           <div className="flex flex-col gap-2 bg-neutral-100 p-3 tablet:p-4 laptop:p-5">

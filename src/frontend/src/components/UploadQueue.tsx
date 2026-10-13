@@ -71,7 +71,7 @@ export default function UploadQueue({
           takeFiles(e.dataTransfer.files);
         }}
         className={`border-2 border-dashed p-6 text-center transition-colors ${
-          dragging ? "border-black bg-brut-yellow" : "border-neutral-400 bg-neutral-50"
+          dragging ? "border-black bg-brut-blue text-white" : "border-neutral-400 bg-neutral-50"
         }`}
       >
         <input
@@ -138,7 +138,7 @@ export default function UploadQueue({
                 <button
                   type="button"
                   onClick={onRetryAll}
-                  className="border-2 border-black bg-white px-2 py-1 font-bold hover:bg-brut-yellow"
+                  className="border-2 border-black bg-white px-2 py-1 font-bold hover:bg-brut-blue hover:text-white"
                 >
                   reintentar todo
                 </button>
@@ -200,7 +200,7 @@ function QueueRow({ item, disabled, onMetaChange, onRemove, onRetry }: RowProps)
                 : item.status === "failed"
                   ? "bg-brut-red text-white"
                   : item.status === "uploading"
-                    ? "bg-brut-yellow text-black"
+                    ? "bg-brut-blue text-white"
                     : "bg-white text-black"
             }`}
           >
@@ -211,7 +211,7 @@ function QueueRow({ item, disabled, onMetaChange, onRemove, onRetry }: RowProps)
             <button
               type="button"
               onClick={() => onRetry(item.id)}
-              className="border-2 border-black bg-white px-2 py-0.5 font-mono text-[10px] font-bold hover:bg-brut-yellow"
+              className="border-2 border-black bg-white px-2 py-0.5 font-mono text-[10px] font-bold hover:bg-brut-blue hover:text-white"
             >
               reintentar
             </button>

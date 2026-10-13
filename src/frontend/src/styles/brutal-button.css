@@ -1,6 +1,6 @@
 /*
  * Brutalist "up" button.
- * Black button that reveals a yellow fill sliding up from the bottom on
+ * Black button that reveals a blue fill sliding up from the bottom on
  * hover/focus, same reveal the `.soc` buttons use for their name.
  */
 .brut-up {
@@ -26,7 +26,7 @@
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: var(--color-brut-yellow);
+  background: var(--color-brut-blue);
   transform: translateY(101%);
   transition: transform 0.2s cubic-bezier(0.7, 0, 0.3, 1);
 }
@@ -38,7 +38,7 @@
 
 .brut-up:hover,
 .brut-up:focus-visible {
-  color: #000;
+  color: #fff;
   outline: none;
 }
 

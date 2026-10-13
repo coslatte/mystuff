@@ -64,7 +64,7 @@ export function Chips<T extends string>({ label, value, options, onChange }: Chi
             onClick={() => onChange(option)}
             aria-pressed={option === value}
             className={`border-2 border-black px-2 py-1 font-mono text-xs font-bold ${
-              option === value ? "bg-black text-white" : "bg-white hover:bg-brut-yellow"
+              option === value ? "bg-black text-white" : "bg-white hover:bg-brut-blue hover:text-white"
             }`}
           >
             {option}
@@ -88,7 +88,7 @@ export function Toggle({ label, checked, onChange }: ToggleProps) {
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
-        className="h-4 w-4 accent-black"
+        className="h-4 w-4 accent-brut-blue"
       />
       {label}
     </label>

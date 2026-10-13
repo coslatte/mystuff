@@ -28,7 +28,7 @@ export default function TrackBlock({ song, onRate }: Props) {
   }
 
   return (
-    <div className={`border-2 border-black bg-white ${active ? "bg-brut-yellow" : ""}`}>
+    <div className={`border-2 bg-white ${active ? "border-brut-blue" : "border-black"}`}>
       <div className="flex items-center gap-3 p-3">
         <button
           type="button"

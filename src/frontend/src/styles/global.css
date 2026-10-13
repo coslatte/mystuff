@@ -3,13 +3,11 @@
 @import "./server-pulse.css";
 
 @theme {
-  --color-brut-bg: #f2f2f2;
+  --color-brut-bg: #f3f1eb;
   --color-brut-black: #000000;
-  --color-brut-yellow: #ffd600;
-  --color-brut-red: #ff3300;
-  --color-brut-violet: #9900ff;
-  --color-brut-blue: #0055ff;
-  --color-brut-green: #00cc33;
+  --color-brut-red: #c6382b;
+  --color-brut-blue: #2448c8;
+  --color-brut-green: #398653;
 
   --font-display: "Space Grotesk", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
@@ -63,6 +61,12 @@
     text-transform: lowercase;
   }
 
+  input[type="range"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--color-brut-blue);
+  }
+
   h1,
   h2,
   h3,
@@ -77,7 +81,7 @@
 @layer utilities {
   .brut-btn {
     @apply border-2 border-black bg-white px-4 py-2 font-bold transition-none
-      hover:bg-brut-yellow active:bg-brut-red active:text-white;
+      hover:bg-brut-blue hover:text-white active:bg-brut-red active:text-white;
   }
 }
 
@@ -92,11 +96,11 @@
  * call site, so a utility never fights a breakpoint variant.
  */
 @utility brut-field {
-  @apply border-2 border-black bg-white font-mono outline-none focus:bg-brut-yellow;
+  @apply border-2 border-black bg-white font-mono outline-none focus:border-brut-blue;
 }
 
 @utility brut-field-quiet {
-  @apply border-2 border-black bg-neutral-100 font-mono outline-none focus:bg-brut-yellow;
+  @apply border-2 border-black bg-neutral-100 font-mono outline-none focus:border-brut-blue;
 }
 
 @utility brut-panel {
@@ -108,7 +112,7 @@
 }
 
 @utility brut-label {
-  @apply font-mono text-xs font-bold uppercase;
+  @apply font-mono text-xs font-bold uppercase text-black;
 }
 
 @utility brut-meta {

@@ -248,7 +248,7 @@ export default function RecursiveSubdivision() {
       <div className="flex flex-col gap-3">
         <Panel
           title="partition"
-          aside={<span className="font-mono text-[10px] text-brut-yellow">{count}</span>}
+          aside={<span className="font-mono text-[10px] text-white">{count}</span>}
         >
           <Chips
             label="depth"
@@ -271,7 +271,7 @@ export default function RecursiveSubdivision() {
             min={0}
             max={0.9}
             step={0.02}
-            accent="text-brut-violet"
+            accent="text-brut-blue"
             hint="how often a cell inherits its parent's cut direction"
             onChange={setGrain}
           />
@@ -294,7 +294,7 @@ export default function RecursiveSubdivision() {
             max={359}
             step={1}
             format={(value) => `${value.toFixed(0)}°`}
-            accent="text-brut-violet"
+            accent="text-brut-blue"
             onChange={setHue}
           />
           <Chips label="harmony" value={harmony} options={HARMONY_NAMES} onChange={setHarmony} />
@@ -320,7 +320,7 @@ export default function RecursiveSubdivision() {
             min={0}
             max={1}
             step={0.02}
-            accent="text-brut-violet"
+            accent="text-brut-blue"
             hint="0 uses a position-based gradient; 1 increases random color variation"
             onChange={setColourVariance}
           />

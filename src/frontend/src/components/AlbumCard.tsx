@@ -76,7 +76,7 @@ export default function AlbumCard({ album, platform, open, onToggle }: Props) {
           type="button"
           onClick={onToggle}
           aria-expanded={open}
-          className="flex min-w-0 flex-1 items-center gap-3 text-left transition-colors hover:bg-brut-yellow"
+          className="group flex min-w-0 flex-1 items-center gap-3 text-left transition-colors hover:bg-brut-blue hover:text-white focus-visible:bg-brut-blue focus-visible:text-white"
         >
           <span className="block h-14 w-14 shrink-0 overflow-hidden border-2 border-black bg-black laptop:h-16 laptop:w-16">
             {album.artworkUrl ? (
@@ -96,7 +96,7 @@ export default function AlbumCard({ album, platform, open, onToggle }: Props) {
             <span className="block truncate font-display text-base font-bold leading-tight">
               {album.title}
             </span>
-            <span className="font-mono text-xs text-gray-600">
+            <span className="font-mono text-xs text-gray-600 group-hover:text-white group-focus-visible:text-white">
               {album.setType ?? "album"}
               {album.trackCount != null ? ` · ${album.trackCount} tracks` : ""}
               {album.releaseDate ? ` · ${album.releaseDate}` : ""}
@@ -108,7 +108,7 @@ export default function AlbumCard({ album, platform, open, onToggle }: Props) {
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`open ${album.title} on ${link.platform}`}
-          className="shrink-0 border-2 border-black bg-white px-2 py-1 font-mono text-xs hover:bg-brut-yellow"
+          className="shrink-0 border-2 border-black bg-white px-2 py-1 font-mono text-xs hover:bg-brut-blue hover:text-white"
         >
           ↗
         </a>

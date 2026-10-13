@@ -14,7 +14,7 @@ const links = [
 <header class="border-b-2 border-black bg-white">
   <div class="mx-auto grid w-full max-w-7xl laptop:grid-cols-[auto_1fr] tv:max-w-[100rem]">
     <a href="/" data-cursor-skip class="flex min-h-16 items-center justify-between border-b-2 border-black bg-black px-6 font-display text-xl font-black tracking-tighter text-white tablet:px-8 tablet:text-2xl laptop:border-b-0 laptop:border-r-2">
-      <span>cosmiclatte<span class="text-brut-yellow">.</span></span>
+      <span>cosmiclatte<span class="text-brut-green">.</span></span>
       <span class="font-mono text-[10px] font-normal uppercase tracking-widest text-neutral-400 laptop:hidden">portfolio</span>
     </a>
     <nav aria-label="Main navigation" class="grid grid-cols-2 tablet:grid-cols-4">
@@ -22,10 +22,10 @@ const links = [
         <a href={link.href} aria-current={link.active ? "page" : undefined}
           class:list={[
             "group flex min-h-12 items-center justify-between gap-2 border-b border-r border-black px-4 py-2 font-mono text-xs font-bold transition-colors focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-brut-blue tablet:min-h-16 tablet:border-b-0 tablet:px-5 tablet:text-sm",
-            link.active ? "bg-brut-yellow text-black" : "hover:bg-neutral-100",
+            link.active ? "bg-brut-blue text-white" : "hover:bg-neutral-100",
           ]}>
           <span>{link.label}</span>
-          <span class:list={["text-[10px]", link.active ? "text-black/60" : "text-neutral-400"]}>{link.number}</span>
+          <span class:list={["text-[10px]", link.active ? "text-white" : "text-neutral-600"]}>{link.number}</span>
         </a>
       ))}
     </nav>

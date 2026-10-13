@@ -152,7 +152,7 @@ export default function CommentThread({ songId }: Props) {
                   <button
                     type="button"
                     onClick={() => saveEdit(comment)}
-                    className="border-2 border-black bg-brut-yellow px-2 py-0.5 font-mono text-[10px] font-bold"
+                    className="border-2 border-black bg-brut-blue text-white px-2 py-0.5 font-mono text-[10px] font-bold"
                   >
                     save
                   </button>
