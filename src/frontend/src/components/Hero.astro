@@ -87,7 +87,10 @@ import "../styles/brut-word.css";
   const codeMatrix = document.querySelector<HTMLPreElement>(".brut-word__code-matrix");
   if (codeMatrix) {
     const fragment = codeFragments[Math.floor(Math.random() * codeFragments.length)] ?? codeFragments[0];
-    codeMatrix.textContent = Array.from({ length: 12 }, () => fragment).join("\n");
+    // Whole blocks only: an even count makes the half-height CSS loop seamless, and enough
+    // of them keep the tilted box covering the word at the top of the loop.
+    const blocks = 2 * Math.ceil(20 / fragment.split("\n").length);
+    codeMatrix.textContent = Array.from({ length: blocks }, () => fragment).join("\n");
   }
 
   const FRAME_INTERVAL_MS = 1000 / 30;
