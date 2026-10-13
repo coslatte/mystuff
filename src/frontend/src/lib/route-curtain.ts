@@ -29,11 +29,14 @@ import { splashFrame } from "./boot/frame";
 /** How long a navigation may run before the curtain covers the page. */
 const SHOW_DELAY_MS = 300;
 
-/** Hard ceiling on the curtain. The router can abandon a navigation without
- *  firing `astro:after-swap` — a cancelled `before-preparation`, a failed fetch
- *  that falls back to a full page load — and the one thing this overlay must
- *  never do is stay up over a page that has finished loading. */
-const MAX_HOLD_MS = 4000;
+/** How often the watchdog checks whether the router is still fetching. */
+const WATCHDOG_MS = 4000;
+
+/** Absolute ceiling on the curtain, counted from the click. The router can
+ *  abandon a navigation without firing `astro:after-swap`, and the fetch it is
+ *  waiting on has no timeout of its own, so this is the only thing standing
+ *  between a hung SSR route and an overlay the user cannot dismiss. */
+const MAX_HOLD_MS = 15000;
 
 type Elements = {
   root: HTMLElement;
@@ -83,6 +86,10 @@ export function startRouteCurtain(): void {
   let revealTimer = 0;
   let releaseTimer = 0;
   let origin = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  /** True from `before-preparation` to `after-swap`: the router is fetching and
+   *  the page the user is looking at is not the one they asked for. */
+  let inFlight = false;
+  let deadline = 0;
 
   function clearTimers(): void {
     if (revealTimer) window.clearTimeout(revealTimer);
@@ -107,6 +114,26 @@ export function startRouteCurtain(): void {
     }, 320);
   }
 
+  /**
+   * Asks the router whether it is still fetching, and re-asks while it is.
+   *
+   * This was one blind timer, so a navigation slower than it — `/coding`, where
+   * the document is an SSR function waiting on GitHub — took the curtain down
+   * and revealed the page the user had just asked to leave. The wait was legible
+   * for four seconds and then silent, which is worse than never covering it.
+   * Only an abandoned navigation, or one still in flight past the ceiling, puts
+   * the overlay down on the router's behalf.
+   */
+  function watchdog(): void {
+    releaseTimer = window.setTimeout(() => {
+      if (inFlight && Date.now() < deadline) {
+        watchdog();
+        return;
+      }
+      release();
+    }, WATCHDOG_MS);
+  }
+
   function onPreparing(event: DocumentEventMap["astro:before-preparation"]): void {
     const { to, sourceElement } = event;
 
@@ -114,10 +141,14 @@ export function startRouteCurtain(): void {
     // pending reveal rather than leaving the previous navigation's timer to fire
     // over an already-visible section.
     clearTimers();
+    inFlight = false;
 
     // A same-page hash jump never fetches anything, so there is nothing to wait
     // for and a curtain over it is pure noise.
     if (to.pathname === location.pathname && to.hash) return;
+
+    inFlight = true;
+    deadline = Date.now() + MAX_HOLD_MS;
 
     if (sourceElement instanceof HTMLElement) {
       sourceElement.setAttribute("data-nav-pending", "");
@@ -146,13 +177,14 @@ export function startRouteCurtain(): void {
     }, SHOW_DELAY_MS);
 
     // A navigation that never reaches the swap must not leave the overlay up.
-    releaseTimer = window.setTimeout(release, MAX_HOLD_MS);
+    watchdog();
   }
 
   function onSwap(): void {
     document.querySelectorAll("[data-nav-pending]").forEach((node) => {
       node.removeAttribute("data-nav-pending");
     });
+    inFlight = false;
     clearTimers();
     release();
   }
