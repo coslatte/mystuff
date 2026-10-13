@@ -5,7 +5,7 @@ import "../styles/brut-word.css";
 <section class="border-b-2 border-black bg-white">
   <div class="border-b-2 border-black px-6 py-10 text-center tablet:px-8 tablet:py-12 laptop:px-10">
     <p class="brut-label">Gabriel Paz / Cuba</p>
-    <h1 class="mx-auto mt-6 max-w-5xl font-display text-[clamp(3.4rem,9vw,7rem)] font-black leading-[1.05] tracking-[-0.07em]">
+    <h1 class="mx-auto mt-6 max-w-5xl break-words font-display text-[clamp(2.75rem,10vw,7.5rem)] font-black leading-[1.05] tracking-[-0.07em]">
       i <span class="brut-word brut-word--code">
         <span class="brut-word__code-clip" aria-hidden="true">
           <pre class="brut-word__code-matrix"></pre>
@@ -20,7 +20,7 @@ import "../styles/brut-word.css";
         <span class="brut-word__wave-text" aria-hidden="true">soundwaves</span>
         <svg class="brut-word__mask-defs" viewBox="0 0 1 1" aria-hidden="true" focusable="false">
           <defs>
-            <mask id="soundwaves-fm-mask" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox" mask-type="alpha">
+            <mask id="soundwaves-fm-mask" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox" mask-type="alpha" x="0" y="0" width="1" height="1">
               <path
                 data-fm-path
                 fill="white"
@@ -35,12 +35,11 @@ import "../styles/brut-word.css";
   <div class="grid laptop:grid-cols-[minmax(0,1.5fr)_minmax(17rem,0.7fr)]">
     <div class="flex flex-col justify-center gap-6 p-6 tablet:p-8 laptop:border-r-2 laptop:border-black laptop:p-10">
       <p class="max-w-xl text-base leading-7 tablet:text-lg">
-        I'm a software engineer and music producer. I kind of craft fullstack applications and compose sountracks for whatever music genre i focus on.
+        I'm a software engineer and music producer. I craft fullstack applications and compose sountracks for whatever music genre I focus on.
       </p>
-      <a class="editorial-link self-start" href="#about">get to know me ↓</a>
     </div>
     <div class="flex items-center gap-6 border-t-2 border-black bg-brut-black p-6 tablet:p-8 laptop:border-t-0">
-      <img src="https://github.com/coslatte.png?size=800" alt="Portrait of Gabriel Paz" width="800" height="800"
+      <img src="https://github.com/coslatte.png?size=800" alt="pfp" width="800" height="800"
         class="aspect-square w-28 shrink-0 border-2 border-black bg-neutral-200 object-cover tablet:w-36" />
       <p class="brut-label text-white">software / music / experimentation</p>
     </div>
@@ -48,7 +47,7 @@ import "../styles/brut-word.css";
 </section>
 
 <script>
-  import { FM_WAVE_CYCLE_MS, buildFmWavePath } from "../lib/fm-wave";
+  import { buildFmWavePath, fmWaveOffset } from "../lib/fm-wave";
 
   const codeFragments = [
     `function mix(start: number, end: number, progress: number): number {
@@ -114,7 +113,8 @@ import "../styles/brut-word.css";
     }
 
     if (now - lastFrameAt >= FRAME_INTERVAL_MS) {
-      activePath.setAttribute("d", buildFmWavePath((now - startedAt) % FM_WAVE_CYCLE_MS));
+      const elapsed = now - startedAt;
+      activePath.setAttribute("d", buildFmWavePath(elapsed, fmWaveOffset(elapsed)));
       lastFrameAt = now;
     }
 
@@ -139,7 +139,7 @@ import "../styles/brut-word.css";
 
       activePath = path;
       startedAt = performance.now();
-      activePath.setAttribute("d", buildFmWavePath(0));
+      activePath.setAttribute("d", buildFmWavePath(0, 0));
       lastFrameAt = startedAt - FRAME_INTERVAL_MS;
       frameId = requestAnimationFrame(drawWave);
     });

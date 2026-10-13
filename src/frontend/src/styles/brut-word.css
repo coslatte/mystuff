@@ -108,10 +108,15 @@
   pointer-events: none;
 }
 
+/* The masked box is twice the word, reaching left: the wave scrolls through the
+   visible right half, which the path samples with an offset. */
 .brut-word--soundwaves::before,
 .brut-word__wave-text {
   position: absolute;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 200%;
   z-index: 1;
   opacity: 0;
   pointer-events: none;
@@ -129,6 +134,7 @@
 .brut-word--soundwaves::before {
   content: "";
   background-color: var(--color-brut-red);
+  clip-path: inset(0 0 0 50%);
 }
 
 .brut-word__wave-text {
@@ -136,6 +142,7 @@
   padding: 0.1em 0.06em;
   color: #fff;
   line-height: 1;
+  text-align: right;
   white-space: nowrap;
 }
 
