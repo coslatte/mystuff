@@ -20,6 +20,21 @@ public interface ContactMapper {
     @Mapping(target = "status", constant = "accepted")
     ContactAcceptedResponse toAcceptedResponse(UUID messageId);
 
+    default String toTelegramPayload(UUID messageId, CreateContactMessageRequest request,
+                                     String chatId, Instant createdAt, ObjectMapper json) {
+        String text = "Portfolio contact\nName: " + request.name() + "\nEmail: " + request.email()
+                + "\nDate: " + createdAt + "\nReference: " + messageId + "\n\n" + request.message();
+        String suffix = "\n[Message truncated; full text is in the email.]";
+        // Telegram limits a text message to 4096 characters; email retains the full inquiry.
+        if (text.length() > 4096) {
+            int end = 4096 - suffix.length();
+            if (Character.isHighSurrogate(text.charAt(end - 1))) end--;
+            text = text.substring(0, end) + suffix;
+        }
+        return json.writeValueAsString(Map.of("chat_id", chatId, "text", text,
+                "link_preview_options", Map.of("is_disabled", true)));
+    }
+
     default String toGmailPayload(UUID messageId, CreateContactMessageRequest request,
                                   String from, String to, Instant createdAt, ObjectMapper json) {
         String domain = from.substring(from.lastIndexOf('@') + 1);

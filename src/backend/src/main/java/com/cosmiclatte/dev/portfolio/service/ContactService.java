@@ -12,14 +12,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 @Service
 @RequiredArgsConstructor
@@ -53,6 +53,10 @@ public class ContactService {
         UUID id = UUID.randomUUID();
         String payload = mapper.toGmailPayload(id, request, config.fromEmail(), config.toEmail(), now, json);
         repository.insert(id, request, fingerprint, payload);
+        if (config.telegramEnabled()) {
+            repository.insertTelegramDelivery(id,
+                    mapper.toTelegramPayload(id, request, config.telegramChatId(), now, json));
+        }
         return mapper.toAcceptedResponse(id);
     }
 

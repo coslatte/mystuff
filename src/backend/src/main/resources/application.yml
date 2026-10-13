@@ -64,6 +64,9 @@ app:
   contact:
     email-enabled: ${CONTACT_EMAIL_ENABLED:false}
     telegram-enabled: ${CONTACT_TELEGRAM_ENABLED:false}
+    telegram-bot-token: ${TELEGRAM_BOT_TOKEN:}
+    telegram-chat-id: ${TELEGRAM_CHAT_ID:}
+    telegram-api-url: ${TELEGRAM_API_URL:https://api.telegram.org}
     processing-enabled: ${CONTACT_PROCESSING_ENABLED:false}
     scheduled-enabled: ${CONTACT_SCHEDULED_ENABLED:false}
     immediate-enabled: ${CONTACT_IMMEDIATE_ENABLED:true}

@@ -55,7 +55,11 @@ public class ContactRepository {
         jdbc.update("INSERT INTO contact_deliveries(message_id, channel, payload) VALUES (?, 'EMAIL', ?)", id, payload);
     }
 
-    public List<Delivery> claim() {
+    public void insertTelegramDelivery(UUID id, String payload) {
+        jdbc.update("INSERT INTO contact_deliveries(message_id, channel, payload) VALUES (?, 'TELEGRAM', ?)", id, payload);
+    }
+
+    public List<Delivery> claim(boolean emailEnabled, boolean telegramEnabled) {
         jdbc.update("""
                 UPDATE contact_deliveries SET state = 'REQUIRES_REVIEW', failure_code = 'runner_interrupted',
                     outcome_uncertain = TRUE, lease_token = NULL, lease_expires_at = NULL, updated_at = NOW()
@@ -71,7 +75,7 @@ public class ContactRepository {
         return jdbc.query("""
                 WITH candidate AS (
                     SELECT message_id, channel FROM contact_deliveries
-                    WHERE channel = 'EMAIL' AND attempts < 5
+                    WHERE ((channel = 'EMAIL' AND ?) OR (channel = 'TELEGRAM' AND ?)) AND attempts < 5
                       AND state = 'PENDING' AND next_attempt_at <= NOW()
                     ORDER BY next_attempt_at LIMIT 1 FOR UPDATE SKIP LOCKED
                 )
@@ -83,7 +87,8 @@ public class ContactRepository {
                 """, (rs, n) -> new Delivery(rs.getObject("message_id", UUID.class),
                 Channel.valueOf(rs.getString("channel")), rs.getString("payload"), rs.getInt("attempts"),
                 rs.getObject("first_attempt_at", OffsetDateTime.class).toInstant(),
-                rs.getObject("lease_token", UUID.class), rs.getBoolean("outcome_uncertain")), lease);
+                rs.getObject("lease_token", UUID.class), rs.getBoolean("outcome_uncertain")),
+                emailEnabled, telegramEnabled, lease);
     }
 
     public boolean renewLease(Delivery delivery) {

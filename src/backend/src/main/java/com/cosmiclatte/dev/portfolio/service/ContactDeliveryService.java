@@ -2,23 +2,24 @@ package com.cosmiclatte.dev.portfolio.service;
 
 import com.cosmiclatte.dev.portfolio.config.ContactProperties;
 import com.cosmiclatte.dev.portfolio.repository.ContactRepository;
+import com.cosmiclatte.dev.portfolio.repository.ContactRepository.Channel;
 import com.cosmiclatte.dev.portfolio.repository.ContactRepository.Delivery;
 import com.cosmiclatte.dev.portfolio.repository.ContactRepository.State;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.TaskRejectedException;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.util.LinkedMultiValueMap;
 import tools.jackson.databind.JsonNode;
 
 import java.time.Duration;
@@ -48,13 +49,15 @@ public class ContactDeliveryService {
      */
     public int process() {
         repository.cleanup();
-        if (!config.processingEnabled() || config.gmailRefreshToken().isBlank()) return 0;
+        if (!config.processingEnabled()) return 0;
         int processed = 0;
         Instant deadline = Instant.now().plusSeconds(40);
         while (processed < 5 && Instant.now().isBefore(deadline)) {
-            var jobs = repository.claim();
+            var jobs = repository.claim(config.emailEnabled(), config.telegramEnabled());
             if (jobs.isEmpty()) break;
-            send(jobs.getFirst());
+            var delivery = jobs.getFirst();
+            if (delivery.channel() == Channel.TELEGRAM) sendTelegram(delivery);
+            else send(delivery);
             processed++;
         }
         return processed;
@@ -134,6 +137,55 @@ public class ContactDeliveryService {
         } finally {
             log.info("Contact attempt message={} channel={} attempt={} elapsedMs={}", delivery.id(),
                     delivery.channel(), delivery.attempts(), (System.nanoTime() - started) / 1_000_000);
+        }
+    }
+
+    private void sendTelegram(Delivery delivery) {
+        if (!repository.renewLease(delivery)) return;
+        try {
+            JsonNode response = client.post()
+                    .uri(config.telegramApiUrl() + "/bot" + config.telegramBotToken() + "/sendMessage")
+                    .contentType(MediaType.APPLICATION_JSON).body(delivery.payload())
+                    .retrieve().body(JsonNode.class);
+            if (response != null && response.path("ok").asBoolean()
+                    && response.path("result").path("message_id").canConvertToLong()
+                    && response.path("result").path("message_id").asLong() > 0) {
+                repository.complete(delivery, State.PROVIDER_ACCEPTED,
+                        response.path("result").path("message_id").asText(), null, 0, false);
+                log.info("Contact delivery message={} channel={} state=PROVIDER_ACCEPTED attempt={}",
+                        delivery.id(), delivery.channel(), delivery.attempts());
+            } else if (response != null && response.path("ok").isBoolean() && !response.path("ok").asBoolean()
+                    && response.path("error_code").canConvertToInt()) {
+                telegramRejected(delivery, response.path("error_code").asInt(), response);
+            } else {
+                requireReview(delivery, "telegram_invalid_receipt");
+            }
+        } catch (RestClientResponseException ex) {
+            JsonNode body = null;
+            try {
+                body = ex.getResponseBodyAs(JsonNode.class);
+            } catch (RuntimeException ignored) {
+                // HTTP status still determines whether retrying can duplicate a notification.
+            }
+            telegramRejected(delivery, ex.getStatusCode().value(), body);
+        } catch (RestClientException ex) {
+            requireReview(delivery, "telegram_network_or_response");
+        }
+    }
+
+    private void telegramRejected(Delivery delivery, int status, JsonNode response) {
+        String code = "telegram_http_" + status;
+        if (status == 429) {
+            long delay = response == null ? 0 : Math.max(0,
+                    Math.min(86400, response.path("parameters").path("retry_after").asLong()));
+            retry(delivery, code, delay);
+        } else if (status >= 400 && status < 500) {
+            repository.complete(delivery, State.FAILED, null, code, 0, false);
+            log.warn("Contact delivery message={} channel={} state=FAILED failure={}",
+                    delivery.id(), delivery.channel(), code);
+        } else {
+            // sendMessage has no idempotency key, so an uncertain result needs manual review.
+            requireReview(delivery, code);
         }
     }
 

@@ -3,11 +3,11 @@
 Replace the portfolio's email link with `/contact`. Accept the visitor's name,
 email, and message through the existing Spring Boot API. Store the message in
 Postgres before acknowledging it, then notify `gabrielpazruiz02@gmail.com`
-through the Gmail API over HTTPS. Prepare independent Telegram deliveries without
-implementing or activating the bot in this release.
+through the Gmail API over HTTPS. Optionally notify the owner through a Telegram
+bot, with an independent delivery for each channel.
 
 Status: implemented locally. Production activation requires the external inputs
-listed at the end. Telegram remains disabled and has no sender implementation.
+listed at the end. Telegram is implemented and disabled by default.
 
 ## Existing integration points
 
@@ -30,13 +30,13 @@ listed at the end. Telegram remains disabled and has no sender implementation.
 ```text
 Visitor -> home contact link -> /contact -> POST /api/contact/messages
   -> validate and enforce limits
-  -> commit message and EMAIL delivery in one transaction
+  -> commit message, EMAIL delivery, and optional TELEGRAM delivery in one transaction
   -> dispatch a background send after commit and return 202 Accepted
 
 Delivery runner -> claim due deliveries in Postgres
   -> refresh the owner's OAuth token and call Gmail outside the database transaction
   -> record provider acceptance or schedule a retry
-  -> future TELEGRAM adapter follows the same independent delivery lifecycle
+  -> send enabled TELEGRAM jobs through the Bot API with independent receipts and retries
 ```
 
 Use the existing backend instead of adding a second backend in Vercel.
@@ -297,20 +297,35 @@ Reject request bodies above 32 KiB at the contact boundary. Keep names and email
 addresses out of custom mail headers. Never log message bodies, visitor email
 addresses, IP addresses, API keys, or authorization headers.
 
-## Prepare Telegram without activating it
+## Telegram activation
 
 `ContactRepository.Channel` defines EMAIL and TELEGRAM. The delivery processor
-claims EMAIL jobs only. Telegram has a disabled feature setting. Enabling
-Telegram fails configuration validation until a sender exists. Add a shared
-sender contract when the second sender is implemented.
+claims jobs for enabled channels only. Telegram is disabled by default. Both senders
+reuse the existing HTTP client, leases, bounded retries, and recovery runner.
+
+1. Create a bot through BotFather and save `TELEGRAM_BOT_TOKEN` in `.env.local`.
+2. Open the bot's private chat and send `/start`. Read the chat ID from the Bot
+   API's `getUpdates` response and save it as `TELEGRAM_CHAT_ID`.
+3. Set `CONTACT_TELEGRAM_ENABLED=true`. Keep `CONTACT_PROCESSING_ENABLED=true`
+   and configure the recovery runner, then restart the backend.
+4. Submit one new contact message. Inspect EMAIL and TELEGRAM rows by message ID,
+   and confirm the notification in the owner's private chat.
+
+The bot sends contact notifications and does not implement command replies.
+It does not need a webhook or continuous incoming-update polling.
 
 Create delivery rows only for enabled, implemented channels at intake time.
 Existing messages will not automatically receive Telegram notifications when
 the channel is added. Any historical replay must be an explicit operation.
 
-The future Telegram sender owns formatting, chat destination, token, timeouts,
-and channel-specific retry rules. A Telegram failure must never reset EMAIL
-success. Telegram will need its own rules for uncertain send outcomes.
+Telegram payloads store the destination and plain text at intake time. No HTML or
+Markdown parse mode is used, and link previews are disabled. Notifications longer
+than 4096 UTF-16 code units are truncated with a notice; email retains the full
+message. Explicit HTTP 429 rejection uses `parameters.retry_after` and the bounded
+local backoff. Other 4xx responses fail visibly. Network failures, 5xx responses,
+invalid receipts, and interrupted leases require manual review without automatic
+resend because `sendMessage` has no idempotency key. Telegram failure never resets
+an accepted EMAIL delivery. See the [Telegram Bot API](https://core.telegram.org/bots/api#sendmessage).
 
 ## Configuration and retention
 
@@ -335,7 +350,10 @@ Add placeholders to the root `.env.example` and map them through
 | `CONTACT_DAILY_LIMIT` | New messages per UTC day across all clients |
 | `CONTACT_PROVIDER_URL` | Provider endpoint, overridable for local tests |
 | `GMAIL_TOKEN_URL` | Token refresh endpoint, overridable for local tests |
-| `CONTACT_TELEGRAM_ENABLED` | False until a sender exists |
+| `CONTACT_TELEGRAM_ENABLED` | Optional Telegram deliveries for new messages, false by default |
+| `TELEGRAM_BOT_TOKEN` | Private BotFather credential, backend only |
+| `TELEGRAM_CHAT_ID` | Numeric owner chat destination |
+| `TELEGRAM_API_URL` | Bot API base URL, overridable for local tests |
 
 Require nonempty production settings when contact is enabled. Keep all secrets
 out of frontend bundles. Reuse `PUBLIC_API_URL` for browser transport.
@@ -373,7 +391,7 @@ their contents.
    the deployed form, inspect Gmail, and verify Reply-To by replying.
 
 Keep changes atomic with English Conventional Commit subjects. New frontend
-files require architecture updates. Do not create a Telegram bot in these phases.
+files require architecture updates. Telegram activation follows the setup above.
 
 ## Verification matrix
 
@@ -392,6 +410,8 @@ files require architecture updates. Do not create a Telegram bot in these phases
 | Expired lease | Review required without stale completion overwrites |
 | Uncertain outcome | Review required, no automatic resend |
 | Telegram disabled | No Telegram rows or network calls |
+| Telegram enabled | Atomic EMAIL and TELEGRAM rows, independent accepted receipts |
+| Telegram retry or failure | EMAIL success unchanged, bounded 429 retries, uncertain outcomes require review |
 | Invalid runner token | Rejected before queue access |
 | Browser network error or cold start | Draft retained and retry remains possible |
 | Production email | Received in Gmail with the correct Reply-To |
@@ -456,7 +476,12 @@ and disabled configurations. The frontend was also exercised in desktop and
 mobile browsers against a local API and provider simulator. Browser checks
 covered retained drafts, stable retry IDs, invalid receipts, field focus, and
 the JavaScript fallback. Owner OAuth credentials are required for the
-separate production Gmail check.
+separate production Gmail check. Telegram tests exercise atomic channel creation,
+independent retries, permanent failures, uncertain outcomes, disabled channels,
+plain-text length limits, and retention. Local verification passed 30 backend
+tests. A real submission through a temporary backend using an isolated local
+database received EMAIL and TELEGRAM provider acceptance on the first attempt.
+The owner's normal backend must restart to load Telegram settings and new code.
 
 ## Production prerequisites still to resolve
 

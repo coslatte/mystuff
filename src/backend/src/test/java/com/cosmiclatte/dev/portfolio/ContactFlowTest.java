@@ -1,42 +1,45 @@
 package com.cosmiclatte.dev.portfolio;
 
 import com.cosmiclatte.dev.portfolio.config.ContactProperties;
+import com.cosmiclatte.dev.portfolio.controller.ContactController;
 import com.cosmiclatte.dev.portfolio.dto.CreateContactMessageRequest;
 import com.cosmiclatte.dev.portfolio.mapper.ContactMapper;
 import com.cosmiclatte.dev.portfolio.repository.ContactRepository;
 import com.cosmiclatte.dev.portfolio.repository.ContactRepository.State;
-import com.cosmiclatte.dev.portfolio.service.ContactService;
 import com.cosmiclatte.dev.portfolio.service.ContactDeliveryService;
-import com.cosmiclatte.dev.portfolio.controller.ContactController;
+import com.cosmiclatte.dev.portfolio.service.ContactService;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Base64;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -61,6 +64,8 @@ class ContactFlowTest {
     private static final String TOKEN = "contact-runner-test-secret-32-characters";
     private static final AtomicInteger providerStatus = new AtomicInteger(200);
     private static final AtomicInteger tokenStatus = new AtomicInteger(200);
+    private static final AtomicInteger telegramStatus = new AtomicInteger(200);
+    private static final List<String> telegramPayloads = new CopyOnWriteArrayList<>();
     private static final List<String> payloads = new CopyOnWriteArrayList<>();
     private static final List<String> keys = new CopyOnWriteArrayList<>();
     private static final HttpServer provider = startProvider();
@@ -106,6 +111,17 @@ class ContactFlowTest {
                 exchange.sendResponseHeaders(tokenStatus.get(), response.length);
                 try (var output = exchange.getResponseBody()) { output.write(response); }
             });
+            server.createContext("/bot123456:test-telegram-bot-token/sendMessage", exchange -> {
+                telegramPayloads.add(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+                int status = telegramStatus.get();
+                String body = status == 200 ? "{\"ok\":true,\"result\":{\"message_id\":123}}"
+                        : status == 201 ? "{\"ok\":true,\"result\":{}}"
+                        : "{\"ok\":false,\"error_code\":" + status + ",\"parameters\":{\"retry_after\":600}}";
+                byte[] response = body.getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+                exchange.sendResponseHeaders(status == 201 ? 200 : status, response.length);
+                try (var output = exchange.getResponseBody()) { output.write(response); }
+            });
             server.start();
             return server;
         } catch (IOException ex) {
@@ -127,6 +143,8 @@ class ContactFlowTest {
         keys.clear();
         providerStatus.set(200);
         tokenStatus.set(200);
+        telegramStatus.set(200);
+        telegramPayloads.clear();
     }
 
     private Map<String, Object> message(UUID submission) {
@@ -150,7 +168,105 @@ class ContactFlowTest {
                 config.scheduledEnabled(), true, config.gmailClientId(), config.gmailClientSecret(),
                 config.gmailRefreshToken(), config.fromEmail(), config.toEmail(), config.runnerToken(),
                 config.ipHashKey(), config.trustForwardedFor(), config.ipLimit(), config.dailyLimit(),
-                config.providerUrl(), config.tokenUrl());
+                config.providerUrl(), config.tokenUrl(), config.telegramBotToken(), config.telegramChatId(),
+                config.telegramApiUrl());
+    }
+
+    private ContactProperties telegramDelivery() {
+        return new ContactProperties(config.emailEnabled(), true, config.processingEnabled(), false, false,
+                config.gmailClientId(), config.gmailClientSecret(), config.gmailRefreshToken(), config.fromEmail(),
+                config.toEmail(), config.runnerToken(), config.ipHashKey(), config.trustForwardedFor(),
+                config.ipLimit(), config.dailyLimit(), config.providerUrl(), config.tokenUrl(),
+                "123456:test-telegram-bot-token", "123456789", "http://127.0.0.1:" + provider.getAddress().getPort());
+    }
+
+    private void acceptWithTelegram(CreateContactMessageRequest request) {
+        var configured = new ContactService(repository, telegramDelivery(), json, mapper);
+        new TransactionTemplate(new DataSourceTransactionManager(jdbc.getDataSource()))
+                .executeWithoutResult(status -> configured.accept(request, "127.0.0.1"));
+    }
+
+    private String channelState(String channel) {
+        return jdbc.queryForObject("SELECT state FROM contact_deliveries WHERE channel = ?", String.class, channel);
+    }
+
+    @Test
+    void telegramRetriesIndependentlyWithoutResendingEmail() {
+        UUID submission = UUID.randomUUID();
+        var request = new CreateContactMessageRequest(submission, "Alex", "alex@example.com",
+                "Hello from Telegram test.", "");
+        acceptWithTelegram(request);
+        acceptWithTelegram(request);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM contact_deliveries", Integer.class)).isEqualTo(2);
+        var sender = new ContactDeliveryService(repository, telegramDelivery(), client, executor);
+        telegramStatus.set(429);
+        sender.process();
+        assertThat(channelState("EMAIL")).isEqualTo("PROVIDER_ACCEPTED");
+        assertThat(channelState("TELEGRAM")).isEqualTo("PENDING");
+        assertThat(jdbc.queryForObject("""
+                SELECT next_attempt_at > NOW() + INTERVAL '9 minutes'
+                FROM contact_deliveries WHERE channel='TELEGRAM'
+                """, Boolean.class)).isTrue();
+        new ContactDeliveryService(repository, config, client, executor).process();
+        assertThat(telegramPayloads).hasSize(1);
+        jdbc.update("UPDATE contact_deliveries SET next_attempt_at = NOW() WHERE channel='TELEGRAM'");
+        telegramStatus.set(200);
+        sender.process();
+        assertThat(channelState("TELEGRAM")).isEqualTo("PROVIDER_ACCEPTED");
+        assertThat(payloads).hasSize(1);
+        assertThat(telegramPayloads).hasSize(2);
+        assertThat(telegramPayloads.get(0)).isEqualTo(telegramPayloads.get(1));
+        assertThat(json.readTree(telegramPayloads.getFirst()).path("text").asText()).contains("Reference:", request.message());
+        sender.process();
+        assertThat(telegramPayloads).hasSize(2);
+    }
+
+    @Test
+    void telegramFailuresCannotResetAcceptedEmailOrDeleteUnresolvedMessages() {
+        for (int status : List.of(403, 503, 201)) {
+            jdbc.update("DELETE FROM contact_messages");
+            jdbc.update("DELETE FROM contact_rate_limits");
+            telegramPayloads.clear();
+            acceptWithTelegram(new CreateContactMessageRequest(UUID.randomUUID(), "Alex", "alex@example.com",
+                    "Hello from Telegram test.", ""));
+            telegramStatus.set(status);
+            var sender = new ContactDeliveryService(repository, telegramDelivery(), client, executor);
+            sender.process();
+            assertThat(channelState("EMAIL")).isEqualTo("PROVIDER_ACCEPTED");
+            assertThat(channelState("TELEGRAM")).isEqualTo(status == 403 ? "FAILED" : "REQUIRES_REVIEW");
+            sender.process();
+            assertThat(telegramPayloads).hasSize(1);
+            jdbc.update("UPDATE contact_messages SET created_at = NOW() - INTERVAL '31 days'");
+            repository.cleanup();
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM contact_messages", Integer.class)).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void telegramInsertionFailureRollsBackEmailMessageAndQuota() {
+        jdbc.execute("ALTER TABLE contact_deliveries ADD CONSTRAINT contact_test_block CHECK (channel <> 'TELEGRAM')");
+        try {
+            assertThatThrownBy(() -> acceptWithTelegram(new CreateContactMessageRequest(UUID.randomUUID(), "Alex",
+                    "alex@example.com", "Hello from Telegram test.", ""))).isInstanceOf(RuntimeException.class);
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM contact_messages", Integer.class)).isZero();
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM contact_deliveries", Integer.class)).isZero();
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM contact_rate_limits", Integer.class)).isZero();
+        } finally {
+            jdbc.execute("ALTER TABLE contact_deliveries DROP CONSTRAINT contact_test_block");
+        }
+    }
+
+    @Test
+    void telegramLongMessagesStayPlainTextWithinProviderLimit() {
+        var request = new CreateContactMessageRequest(UUID.randomUUID(), "<b>Alex</b>", "alex@example.com",
+                "😀".repeat(2500), "");
+        JsonNode body = json.readTree(mapper.toTelegramPayload(UUID.randomUUID(), request, "123456789",
+                Instant.now(), json));
+        String text = body.path("text").asText();
+        assertThat(text.length()).isLessThanOrEqualTo(4096);
+        assertThat(text).contains("<b>Alex</b>").endsWith("[Message truncated; full text is in the email.]");
+        assertThat(body.has("parse_mode")).isFalse();
+        assertThat(body.path("link_preview_options").path("is_disabled").asBoolean()).isTrue();
     }
 
     @Test
@@ -347,12 +463,12 @@ class ContactFlowTest {
     @Test
     void interruptedGmailSendRequiresReviewAndStaleRunnerCannotOverwriteIt() throws Exception {
         post("/api/contact/messages", message(UUID.randomUUID()), null);
-        var original = repository.claim().getFirst();
+        var original = repository.claim(true, false).getFirst();
         assertThat(repository.renewLease(original)).isTrue();
-        assertThat(repository.claim()).isEmpty();
+        assertThat(repository.claim(true, false)).isEmpty();
         jdbc.update("UPDATE contact_deliveries SET lease_expires_at = NOW() - INTERVAL '1 minute'");
         assertThat(repository.renewLease(original)).isFalse();
-        assertThat(repository.claim()).isEmpty();
+        assertThat(repository.claim(true, false)).isEmpty();
         repository.complete(original, State.FAILED, null, "stale", 0, true);
         assertThat(state()).isEqualTo("REQUIRES_REVIEW");
         assertThat(jdbc.queryForObject("SELECT failure_code FROM contact_deliveries", String.class)).isEqualTo("runner_interrupted");
@@ -383,20 +499,26 @@ class ContactFlowTest {
     }
 
     @Test
-    void missingConfigurationAndUnimplementedTelegramFailStartup() {
-        new ApplicationContextRunner().withUserConfiguration(ContactService.class)
-                .withBean(ContactRepository.class, () -> repository)
-                .withBean(ObjectMapper.class, () -> json)
-                .withPropertyValues("app.contact.telegram-enabled=true")
+    void missingEmailOrTelegramConfigurationFailsStartup() {
+        var telegram = telegramDelivery();
+        new ApplicationContextRunner().withBean(ContactProperties.class, () -> telegram)
+                .run(context -> assertThat(context).hasNotFailed());
+        var missingTelegram = new ContactProperties(telegram.emailEnabled(), true, true, false, false,
+                telegram.gmailClientId(), telegram.gmailClientSecret(), telegram.gmailRefreshToken(), telegram.fromEmail(),
+                telegram.toEmail(), telegram.runnerToken(), telegram.ipHashKey(), false, 3, 50,
+                telegram.providerUrl(), telegram.tokenUrl(), "", "", telegram.telegramApiUrl());
+        new ApplicationContextRunner().withBean(ContactProperties.class, () -> missingTelegram)
                 .run(context -> assertThat(context).hasFailed());
         var disabled = new ContactProperties(false, false, true, false, false, "", "", "", "", "", "", "", false, 3, 50,
-                "https://gmail.googleapis.com/gmail/v1/users/me/messages/send", "https://oauth2.googleapis.com/token");
+                "https://gmail.googleapis.com/gmail/v1/users/me/messages/send", "https://oauth2.googleapis.com/token",
+                "", "", "https://api.telegram.org");
         var inactive = new ContactService(repository, disabled, json, mapper);
         assertThatThrownBy(() -> inactive.accept(new CreateContactMessageRequest(UUID.randomUUID(), "Alex",
                 "alex@example.com", "Hello project discussion.", ""), "127.0.0.1"))
                 .hasMessageContaining("temporarily unavailable");
         var missing = new ContactProperties(true, false, true, false, false, "", "", "", "", "", "", "", false, 3, 50,
-                "https://gmail.googleapis.com/gmail/v1/users/me/messages/send", "https://oauth2.googleapis.com/token");
+                "https://gmail.googleapis.com/gmail/v1/users/me/messages/send", "https://oauth2.googleapis.com/token",
+                "", "", "https://api.telegram.org");
         new ApplicationContextRunner().withBean(ContactProperties.class, () -> missing)
                 .run(context -> assertThat(context).hasFailed());
     }
