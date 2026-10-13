@@ -1,16 +1,4 @@
-/*
- * Boot splash.
- *
- * The overlay is hidden until the controller marks it `data-state="active"`, which
- * is what makes it safe: the script that hides it again is the same script that
- * reveals it, so a bundle that never loads leaves no overlay over the page.
- *
- * The static frame below is the composition three.js draws: the same partition from
- * `lib/boot/frame`, the same grey ground, the same black-on-white and white-on-black
- * rectangles with inverted borders. It holds the space while the three chunk
- * downloads, so the layout never jumps, and it is also the permanent answer under
- * `prefers-reduced-motion` or without WebGL.
- */
+/* The head marker shows the server frame before the client controller starts. */
 
 /* Scrolling is frozen while the overlay is up, and released by the controller when
    it tears the splash down. `scrollbar-gutter: stable` on html keeps the page from
@@ -23,6 +11,7 @@ html.boot-locked {
   display: none;
 }
 
+html[data-boot-pending] .boot-screen,
 .boot-screen[data-state="active"] {
   display: flex;
   position: fixed;
@@ -48,7 +37,6 @@ html.boot-locked {
   text-transform: lowercase;
 }
 
-/* Square stage: the three scene letterboxes into the same box it measures. */
 .boot-stage {
   position: relative;
   width: min(70vmin, 420px);
@@ -82,28 +70,34 @@ html.boot-locked {
   opacity: 0;
 }
 
-/*
- * One cell of the partition.
- *
- * The border is the inverse of the fill, which is what keeps both kinds of cell
- * legible on the grey ground. Every cell inks its own edge inward and the cells tile
- * exactly, so a shared edge is drawn from both sides at the same coordinate and the
- * lines come out one css pixel wide and perfectly registered — the same weight
- * `splash-scene.ts` insets its fills by.
- */
+
 .boot-rect {
   position: absolute;
-  border: 1px solid;
 }
 
 .boot-rect--ink {
   background-color: var(--color-brut-black);
-  border-color: var(--color-brut-bg);
 }
 
 .boot-rect--paper {
   background-color: var(--color-brut-bg);
-  border-color: var(--color-brut-black);
+}
+
+html[data-boot-pending] body > :not(.boot-screen):not(.route-curtain) {
+  visibility: hidden;
+}
+
+.boot-rect:nth-child(11n + 4) { background-color: var(--color-brut-blue); }
+.boot-rect:nth-child(11n + 8) { background-color: var(--color-brut-red); }
+
+.boot-grid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--color-brut-bg);
+  stroke-width: 1;
 }
 
 .boot-readout {

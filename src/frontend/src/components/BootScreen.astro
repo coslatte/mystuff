@@ -1,24 +1,12 @@
 ---
 import "../styles/boot-screen.css";
 import { splashFrame } from "../lib/boot/frame";
+import { interiorEdges } from "../lib/recursion/subdivide";
 
-/*
- * First-visit splash.
- *
- * Server-rendered on every page so the markup ships in the initial HTML, but
- * invisible until the controller marks it active. Keeping it in the layout rather
- * than in a page means one copy covers `/`, `/music` and `/admin`, and a visit
- * that decides it does not need a splash never downloads the three.js chunk.
- *
- * The partition below is the static frame: the opening frame of the same clock
- * `lib/three/splash-scene.ts` runs. It holds the square while the three chunk
- * downloads and stands in permanently under reduced motion or without WebGL. It is
- * generated from `lib/boot/frame` rather than hand-placed because the two crossfade
- * into each other, and hand-placed rectangles cannot agree with the scene about
- * where the edges are.
- */
+/* The server frame is visible before the client bundle can start. */
 
 const { cells, ink } = splashFrame(0);
+const edges = interiorEdges(cells);
 ---
 
 <div
@@ -43,6 +31,9 @@ const { cells, ink } = splashFrame(0);
           />
         ))
       }
+      <svg class="boot-grid" viewBox="0 0 1 1" preserveAspectRatio="none">
+        {edges.map(edge => <line x1={edge.x1} y1={edge.y1} x2={edge.x2} y2={edge.y2} vector-effect="non-scaling-stroke" />)}
+      </svg>
     </div>
     <canvas class="boot-stage__canvas" data-boot-canvas aria-hidden="true"></canvas>
   </div>

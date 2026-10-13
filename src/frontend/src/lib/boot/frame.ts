@@ -1,20 +1,9 @@
-/*
- * The splash's still frame, shared by both renderers.
- *
- * The CSS composition in `BootScreen.astro` and the three.js scene have to agree on
- * the opening frame exactly, because one crossfades into the other and any
- * difference shows as the drawing jumping at the moment the canvas takes over. So
- * the depth, the cut parameters, the seed and the ink assignment all live here and
- * both renderers read them. A `Math.random()` at the scene's mount would make that
- * impossible, which is also why the splash starts from a fixed seed: the reduced
- * motion and no-WebGL answers are then a true still of the animation rather than
- * an arbitrary one.
- */
+/* A fixed seed keeps the server fallback and the first animated frame identical. */
 
 import { subdivide, type Cell } from "../recursion/subdivide";
 
-/** Eight cells, about as many as read at the size the stage renders. */
-export const splashDepth = 3;
+/** Sixteen cells keep the square stage legible on phones. */
+export const splashDepth = 4;
 
 /** Fixed so the first frame is reproducible; beats after that increment it. */
 export const SPLASH_SEED = 41307;
@@ -43,8 +32,8 @@ function isInk(index: number, seed: number): boolean {
 }
 
 /** The frame for one beat of the clock. Beat 0 is what both renderers open on. */
-export function splashFrame(beat: number): SplashFrame {
+export function splashFrame(beat: number, phase = 0, depth = splashDepth): SplashFrame {
   const seed = (SPLASH_SEED + beat) % BEATS;
-  const cells = subdivide({ depth: splashDepth, ...CUT, seed });
+  const cells = subdivide({ depth, ...CUT, seed, phase });
   return { cells, ink: cells.map((_, index) => isInk(index, seed)) };
 }

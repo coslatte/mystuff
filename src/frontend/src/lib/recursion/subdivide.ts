@@ -92,6 +92,8 @@ export type SubdivisionOptions = {
   minArea?: number;
   /** Seed for the random draws. The same seed always produces the same partition. */
   seed?: number;
+  /** Moves shared cuts while keeping the seed's split tree. */
+  phase?: number;
 };
 
 /** Depth 7 is 128 cells, which is about as many as a board this size can carry. */
@@ -207,34 +209,46 @@ export function subdivide(options: SubdivisionOptions): Cell[] {
     )
   );
 
-  function walk(box: Box, level: number, inherited: 1 | 0, share: number): void {
+  function walk(box: Box, reference: Box, level: number, inherited: 1 | 0, share: number): void {
     if (level <= 0) {
       cells.push({ index: cells.length, depth, share, axis: inherited, ...box });
       return;
     }
 
     const axis = floor === 0.5
-      ? (box.x1 - box.x0 >= box.y1 - box.y0 ? 1 : 0)
-      : chooseAxis(box, inherited, options, random);
+      ? (reference.x1 - reference.x0 >= reference.y1 - reference.y0 ? 1 : 0)
+      : chooseAxis(reference, inherited, options, random);
     // The draw is symmetric around a half, so `floor` and `1 - floor` are equally
     // likely and the partition stays unbiased.
-    const ratio = Math.max(floor, Math.min(1 - floor, 0.5 + (random() * 2 - 1) * (0.5 - floor)));
+    const base = Math.max(floor, Math.min(1 - floor, 0.5 + (random() * 2 - 1) * (0.5 - floor)));
+    const phase = options.phase ?? 0;
+    const offset = base * 12 + level;
+    const movement = (Math.sin(phase * (0.55 + level * 0.11) + offset) - Math.sin(offset))
+      * (0.5 - floor) * 0.45;
+    const ratio = Math.max(floor, Math.min(1 - floor, base + movement));
 
     // One cut, one number, given to both children as their shared edge. This is
     // the whole reason the partition has no seams.
     if (axis === 1) {
       const mid = snapCut(box.x0, box.x1, ratio);
-      walk({ x0: box.x0, y0: box.y0, x1: mid, y1: box.y1 }, level - 1, axis, ratio);
-      walk({ x0: mid, y0: box.y0, x1: box.x1, y1: box.y1 }, level - 1, axis, 1 - ratio);
+      const fixed = snapCut(reference.x0, reference.x1, base);
+      walk({ x0: box.x0, y0: box.y0, x1: mid, y1: box.y1 },
+        { ...reference, x1: fixed }, level - 1, axis, ratio);
+      walk({ x0: mid, y0: box.y0, x1: box.x1, y1: box.y1 },
+        { ...reference, x0: fixed }, level - 1, axis, 1 - ratio);
       return;
     }
 
     const mid = snapCut(box.y0, box.y1, ratio);
-    walk({ x0: box.x0, y0: box.y0, x1: box.x1, y1: mid }, level - 1, axis, ratio);
-    walk({ x0: box.x0, y0: mid, x1: box.x1, y1: box.y1 }, level - 1, axis, 1 - ratio);
+    const fixed = snapCut(reference.y0, reference.y1, base);
+    walk({ x0: box.x0, y0: box.y0, x1: box.x1, y1: mid },
+      { ...reference, y1: fixed }, level - 1, axis, ratio);
+    walk({ x0: box.x0, y0: mid, x1: box.x1, y1: box.y1 },
+      { ...reference, y0: fixed }, level - 1, axis, 1 - ratio);
   }
 
-  walk({ x0: 0, y0: 0, x1: 1, y1: 1 }, depth, 1, 1);
+  const root = { x0: 0, y0: 0, x1: 1, y1: 1 };
+  walk(root, root, depth, 1, 1);
   return cells;
 }
 

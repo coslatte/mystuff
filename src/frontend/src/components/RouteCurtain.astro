@@ -1,22 +1,12 @@
 ---
 import "../styles/route-curtain.css";
 import { curtainCells } from "../lib/route-curtain";
+import { interiorEdges } from "../lib/recursion/subdivide";
 
-/*
- * The route curtain.
- *
- * Server-rendered into every response and hidden until the controller marks it,
- * for the same reason the splash is: the script that reveals it is the script
- * that takes it away, so a bundle that fails to load leaves no overlay over the
- * site.
- *
- * Persisted across swaps rather than re-rendered. The interesting half of this
- * component plays *after* the new page has landed, and without `transition:persist`
- * the DOM it animates is destroyed by that very swap. MorphlingCursor.astro
- * persists for the mirror-image reason.
- */
+/* Persistence keeps the loading animation alive while Astro replaces the page. */
 
 const { cells, ink } = curtainCells();
+const edges = interiorEdges(cells);
 ---
 
 <div class="route-curtain" data-route-curtain role="status" aria-live="polite"
@@ -25,12 +15,16 @@ const { cells, ink } = curtainCells();
     cells.map((cell, index) => (
       <div
         class={`route-curtain__cell route-curtain__cell--${ink[index] ? "ink" : "paper"}`}
-        data-route-curtain-cell
+        aria-hidden="true"
         style={`left:${cell.x0 * 100}%;top:${cell.y0 * 100}%;width:${(cell.x1 - cell.x0) * 100}%;height:${(cell.y1 - cell.y0) * 100}%`}
       />
     ))
   }
 
+  <svg class="route-curtain__grid" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">
+    {edges.map(edge => <line x1={edge.x1} y1={edge.y1} x2={edge.x2} y2={edge.y2} vector-effect="non-scaling-stroke" />)}
+  </svg>
+  <canvas class="route-curtain__canvas" aria-hidden="true"></canvas>
   <div class="route-curtain__plate">
     <span class="route-curtain__caption">loading</span>
     <span class="route-curtain__target" data-route-curtain-label>&nbsp;</span>

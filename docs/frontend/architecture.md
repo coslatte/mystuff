@@ -139,32 +139,23 @@ happen to share a preamble — `vents.ts` is the abandoned earlier iteration of
 the same module and `layouts.ts` replaced it. `vents.ts` is dead; see
 [Dead code](#dead-code).
 
-### Rule 7 — Three.js is loaded by dynamic import, never awaited before first paint
+### Rule 7 — Loading paints before application content
 
-The bundle is ~129 kB gzipped. Vite splits it into its own chunk, which
-`lib/boot/boot-controller.ts` pulls in only after the splash is on screen.
-`styles/boot-screen.css` ships a static composition that holds the frame until
-the chunk lands, and stands in permanently under `prefers-reduced-motion` or
-without WebGL.
+`Layout.astro` sets `data-boot-pending` in an inline head script on every full
+page load, including reloads in the same tab. CSS shows the server-rendered
+partition and hides application content before the client bundle executes.
+Without JavaScript the marker is absent and the page remains usable. A 6.5s
+inline timeout removes the marker and overlay if the client bundle fails.
 
-Adding a scene must not put it in the entry chunk.
+Boot and route loading share the Canvas 2D painter in `lib/route-curtain.ts`.
+It reads theme properties, draws at most 30fps, caps DPR at 2, stops in hidden
+tabs, and holds its frame under reduced motion. Shared cuts move through the
+partition engine; no WebGL download is required to animate loading.
 
-It is also the only chunk over Vite's default 500 kB warning, which is why
-`build.chunkSizeWarningLimit` sits at 600. The number tracks this chunk, not a
-taste: raise it only for a scene that is lazily imported the same way, and never
-to quiet a chunk that is on the critical path.
-
-Scenes read their palette from the `@theme` custom properties with
-`getComputedStyle` rather than repeating hex values, so they follow
-`global.css` instead of drifting from it.
-
-Every scene registers its teardown through `createCleanupRegistry`, because a
-scene that skips teardown keeps a render loop scheduled against a detached
-canvas and never gives the tab's GPU memory back.
-
-`lib/playback-canvas.ts` is 2D and stays that way: the spectrum and waveform are
-cheap per-frame painters with no scene graph, and three.js would be a regression
-there.
+Future WebGL scenes must load through dynamic imports after first paint and
+register teardown through `createCleanupRegistry`. The old three.js splash
+scene and its custom Vite chunk warning limit were removed when the loading
+painter became 2D. `lib/playback-canvas.ts` also remains 2D.
 
 ### Rule 8 — A partition draws its boundaries once, from the geometry
 
@@ -192,6 +183,12 @@ overlaps and gaps during the transition even when both endpoints tile exactly. O
 background colours transition. At a cut ratio of `0.5`, the algorithm always bisects the
 longer side, giving a regular grid independent of seed, grain and bias. This is the page's
 initial setting; lower ratios enable irregular partitions.
+
+Loading passes a continuous `phase` to the same engine. Split directions are
+chosen from the seed's reference boxes, while moving ratios rebuild each parent
+and both children from one shared cut. This permits continuous motion without
+interpolating unrelated leaf rectangles. Phase zero reproduces the static seed;
+a cut ratio of `0.5` stays a regular grid at every phase.
 
 ## Dependency direction
 
@@ -373,10 +370,10 @@ Framework-free unless the name says otherwise.
 | `now-playing-element.ts` | **Browser only.** The `<now-playing-el>` custom element. Flips `data-playing`, which is what shows the bar. |
 | `morphling-cursor.ts` | **Browser only.** Morphs local shape points so the outline follows the pointer during transitions; caps control outlines at 450 × 300 pixels. |
 | `fm-wave.ts` | Pure geometry and frequency calculation for the hero's modulated sine wave. |
-| `route-curtain.ts` | **Browser only.** Adaptive-delay loading curtain for `ClientRouter` navigations. Also exports `curtainCells`. |
+| `route-curtain.ts` | **Browser only.** Immediate navigation loading, readiness and cancellation handling, and the shared 2D partition painter. Also exports `curtainCells`. |
 | `api/schema.ts` | Generated from `openapi.json`. Never hand-edited. |
 | `api/README.md` | How and when to regenerate. |
-| `boot/boot-controller.ts` | Splash lifecycle and the three.js dynamic import. |
+| `boot/boot-controller.ts` | Every-load splash lifecycle, browser readiness, replay and bounded teardown. |
 | `boot/progress.ts` | Pure milestone arithmetic behind the percentage. |
 | `boot/frame.ts` | The splash's opening partition, read by the CSS frame and the scene. |
 | `recursion/subdivide.ts` | The partition itself. Exact tiling, plus its boundary list. |
@@ -393,7 +390,6 @@ Framework-free unless the name says otherwise.
 | `subdivision/cages.ts` | **Dead.** See [Dead code](#dead-code). |
 | `subdivision/fit.ts` | **Dead.** See [Dead code](#dead-code). |
 | `three/dispose.ts` | `createCleanupRegistry` and `frameBudget`. |
-| `three/splash-scene.ts` | The splash clock: the partition from `boot/frame`, recut per beat. |
 | `three/subdivision-scene.ts` | **Dead.** See [Dead code](#dead-code). |
 
 ### `src/data/`
@@ -418,19 +414,20 @@ Framework-free unless the name says otherwise.
 | --- | --- |
 | `global.css` | Theme, base layer, and the `@utility` surfaces. |
 | `brutal-button.css` | The `brut-up` hover reveal. |
-| `boot-screen.css` | Static composition held until three.js lands. |
+| `boot-screen.css` | First-paint splash visibility, static partition and canvas crossfade. |
 | `brut-word.css` | Hover plates and layered animations on the two highlighted hero words. |
 | `server-pulse.css` | `ServerPulse` animation. |
 | `social-button.css` | `SocialButton` surfaces. |
 | `morphling-cursor.css` | Canvas overlay, native cursor suppression on links and buttons, and motion/accessibility fallbacks. |
-| `route-curtain.css` | Curtain cells, the destination plate, and the pending-link wash. |
+| `route-curtain.css` | Full-viewport partition, destination plate, exit fade and pending-link wash. |
 
 ### Verification tooling — not shipped
 
 | File | Role |
 | --- | --- |
 | `src/frontend/scripts/sim-preview.mts` | Renders the shipped simulation to a PNG contact sheet. |
-| `src/frontend/scripts/recursion-preview.mts` | Renders partitions to a PNG contact sheet; `--check` verifies tiling, grid boundaries and exact regular grids. |
+| `src/frontend/scripts/recursion-preview.mts` | Renders partition contact sheets; `--check` verifies 5,600 animated partitions, pixel coverage, boundaries and regular grids. |
+| `src/frontend/scripts/responsive-check.mjs` | Responsive browser checks; `--loading` verifies first paint, reloads, route loading, motion preferences and recovery. |
 | `src/frontend/scripts/png.ts` | Minimal PNG encoder, so the above has no dependency. |
 | `src/frontend/src/lib/fm-wave.test.ts` | Checks the FM frequency sweep, the wave cycle and the scroll direction. |
 
@@ -542,16 +539,23 @@ same reasoning applied to comments. When a flat layer does outgrow itself, split
 the *concept*, not the file type.
 
 <a id="adr-007"></a>
-### ADR-007 — The splash is `.astro` and gated by its own controller
+### ADR-007 — Every full load starts with the splash
 
-**Context.** The splash appears on `/`, which has no island.
-**Decision.** `BootScreen.astro` sits in the layout, server-rendered into every
-response, and stays `display: none` until `boot-controller.ts` sets
-`data-state="active"`. The same script that reveals it removes it.
-**Consequences.** A bundle that fails to load cannot leave an overlay covering
-the site forever. It shows once per tab (`sessionStorage`) and only when the
-page is slow (adaptive delay). `boot/progress.ts` maps five real milestones onto
-weights, with a creep term capped below 100 and a hard 4s deadline.
+**Context.** The adaptive delay and session flag skipped loading on warm home
+loads and reloads, revealing application content before its loading screen.
+
+**Decision.** An inline head marker shows the static splash before application
+content. The client controller starts immediately, waits for DOM, fonts, assets
+and actual `astro:hydrate` signals, then ramps to 100 and removes the overlay.
+The `load` listener belongs to `window`; already-completed signals are checked
+before listeners are registered. API requests inside islands retain their own
+loading UI and do not hold the splash.
+
+**Consequences.** Loading also appears on warm loads and repeat visits. A short
+minimum hold makes the sequence visible. The client has a 4s readiness deadline,
+with bounded teardown, and the inline 6.5s fallback covers a missing bundle.
+Page controls are inert until the splash leaves. `/loading` uses the same
+controller with scripted milestones; leaving it cancels the replay and restart.
 
 <a id="adr-008"></a>
 ### ADR-008 — The `Painter` boundary in the subdivision image
@@ -676,43 +680,26 @@ music platform links still use `SocialButton.astro`, where a compact row of
 platform destinations helps people choose where to listen.
 
 <a id="adr-014"></a>
-### ADR-014 — Navigation feedback is two signals, not one overlay
+### ADR-014 — Navigation starts with a persisted animated partition
 
-**Context.** `ClientRouter` fetches the next document with nothing on screen to
-say so. On a prerendered route off the cache that gap is short enough to read as
-instant; on `/coding` (an SSR function with GitHub behind it) or `/music` (client
-fetch against a cold Spring Boot) it runs to seconds and the site reads as hung.
-The obvious fix — show a loading overlay on every click — makes the common case
-worse, because most navigations finish in well under 100ms and a full-screen
-overlay flashing for that long is more alarming than the silence it replaced.
+**Context.** A 300ms reveal delay skipped loading on warm navigations. Releasing
+at `astro:after-swap` exposed the destination before its scripts and islands
+were ready. Independent rectangle interpolation also created gaps in the splash.
 
-**Decision.** Two signals at two different latencies.
+**Decision.** `astro:before-preparation` shows the overlay immediately and wraps
+Astro's loader so the loading frame paints before fetching the destination.
+The partition shares its engine and painter with boot loading, using 32 cells
+at viewport scale. It persists across the document swap and remains visible
+through `astro:page-load`, font readiness and island hydration. A minimum 600ms
+hold and a 260ms exit fade keep warm navigations readable.
 
-| At | Signal | Why that latency |
-| --- | --- | --- |
-| 0ms | the clicked link washes `brut-yellow` | instant, and it points at what was asked for |
-| 300ms | a partition curtain covers the viewport and names the destination | 300ms is where a wait stops reading as instant |
-
-The curtain's cells are `splashFrame(0)`, the same partition the site opens
-with, at viewport scale. Both read one function so they cannot drift into looking
-like two different ideas.
-
-**Consequences.** The overlay is `transition:persist`, because the half of it
-that matters plays *after* the swap and would otherwise be destroyed by it.
-Revealing is deferred by `requestAnimationFrame` so `clip-path` has a layout
-value to transition from, and the exit is on a 320ms timeout rather than
-`transitionend`, because a transition interrupted by a re-render never fires the
-event that would have cleaned it up. Taking the curtain down is *verified*, not
-timed: the watchdog only releases once the router has swapped, or once it has
-stopped fetching, or `MAX_HOLD_MS` has passed — the absolute ceiling, which is
-what stops a hung SSR route from leaving an overlay the user cannot dismiss. A
-blind timer was the previous behaviour and it read as a bug on every route slower
-than it, because the overlay lifted over the page the user had just asked to
-leave. The same-page hash jump is excluded — it fetches nothing, so a curtain
-over an already-visible section is pure noise. Cells grow by `clip-path`, not
-`transform: scale`, because a scale pulls each cell out of its own rectangle and
-opens gaps along the shared edges mid-wipe — the same invariant as
-[Rule 8](#rule-8--a-partition-draws-its-boundaries-once-from-the-geometry).
+**Consequences.** Every route change, including returning home and history
+navigation, shows loading first. Same-page hash jumps bypass it. Controls are
+inert and scrolling is locked through the exit. Cancellation and overlapping
+navigations use a generation id so stale callbacks cannot release a newer load.
+A 15s deadline releases a stalled overlay. Timers, observers and animation
+frames are stopped when the overlay leaves. Reduced motion keeps the partition
+still and removes the exit fade.
 
 ## Dead code
 
@@ -757,8 +744,8 @@ reachable only from code that nothing reaches.
   square only ever sees tracks the site hosts. SoundCloud and Spotify report
   metadata and nothing more, which is why their title is a fallback and not a
   measurement.
-- **Limited tests.** `bun scripts/recursion-preview.mts --check` verifies 1,120
-  partitions across depths and seeds. Other pure pieces (`applyVote`, `runOptimistic`, `playback-canvas`,
+- **Limited tests.** `bun scripts/recursion-preview.mts --check` verifies 5,600
+  animated partitions across depths, seeds and phases. Other pure pieces (`applyVote`, `runOptimistic`, `playback-canvas`,
   `streaming-albums`, `errors`, `catmull-clark`, `pigment-math`, `pigment-settings`,
   `recursion/subdivide`, `sim/camera`, `sim/tracers`, `sim/field-view`) are already
   shaped for further coverage.

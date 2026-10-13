@@ -19,45 +19,57 @@ if (process.argv.includes("--check")) {
   for (let depth = 1; depth <= 7; depth++) {
     for (let seed = 1; seed <= 40; seed++) {
       for (const irregularity of [0.06, 0.28, 0.49, 0.5]) {
-        const cells = subdivide({ depth, seed, irregularity, grain: 0.3, bias: 0.55 });
-        assert.equal(cells.length, 2 ** depth);
-        let area = 0;
-        for (const [index, cell] of cells.entries()) {
-          assert.ok(cell.x0 >= 0 && cell.y0 >= 0 && cell.x1 <= 1 && cell.y1 <= 1);
-          assert.ok(cell.x1 > cell.x0 && cell.y1 > cell.y0);
-          area += (cell.x1 - cell.x0) * (cell.y1 - cell.y0);
-          for (const other of cells.slice(index + 1)) {
-            assert.ok(Math.min(cell.x1, other.x1) <= Math.max(cell.x0, other.x0)
-              || Math.min(cell.y1, other.y1) <= Math.max(cell.y0, other.y0));
+        const options = { depth, seed, irregularity, grain: 0.3, bias: 0.55 };
+        const opening = subdivide(options);
+        assert.deepEqual(subdivide({ ...options, phase: 0 }), opening);
+        for (const phase of [0, 0.7, 2.4, 6.28, 12]) {
+          const cells = subdivide({ ...options, phase });
+          assert.deepEqual(cells.map(cell => cell.axis), opening.map(cell => cell.axis));
+          assert.equal(cells.length, 2 ** depth);
+          let area = 0;
+          for (const [index, cell] of cells.entries()) {
+            assert.ok(cell.x0 >= 0 && cell.y0 >= 0 && cell.x1 <= 1 && cell.y1 <= 1);
+            assert.ok(cell.x1 > cell.x0 && cell.y1 > cell.y0);
+            area += (cell.x1 - cell.x0) * (cell.y1 - cell.y0);
+            for (const other of cells.slice(index + 1)) {
+              assert.ok(Math.min(cell.x1, other.x1) <= Math.max(cell.x0, other.x0)
+                || Math.min(cell.y1, other.y1) <= Math.max(cell.y0, other.y0));
+            }
+            if (irregularity === 0.5) {
+              assert.equal(cell.x1 - cell.x0, 1 / 2 ** Math.ceil(depth / 2));
+              assert.equal(cell.y1 - cell.y0, 1 / 2 ** Math.floor(depth / 2));
+            }
           }
-          if (irregularity === 0.5) {
-            assert.equal(cell.x1 - cell.x0, 1 / 2 ** Math.ceil(depth / 2));
-            assert.equal(cell.y1 - cell.y0, 1 / 2 ** Math.floor(depth / 2));
+          assert.equal(area, 1);
+          for (const [width, height] of [[320, 180], [390, 844], [1440, 900]]) {
+            const pixelArea = cells.reduce((sum, cell) => sum
+              + (Math.round(cell.x1 * width) - Math.round(cell.x0 * width))
+              * (Math.round(cell.y1 * height) - Math.round(cell.y0 * height)), 0);
+            assert.equal(pixelArea, width * height);
           }
+          const edges = interiorEdges(cells);
+          for (const edge of edges) {
+            const vertical = edge.x1 === edge.x2;
+            const at = vertical ? edge.x1 : edge.y1;
+            const from = vertical ? edge.y1 : edge.x1;
+            const to = vertical ? edge.y2 : edge.x2;
+            const covered = cells.reduce((sum, cell) => {
+              if ((vertical ? cell.x1 : cell.y1) !== at) return sum;
+              return sum + Math.max(0, Math.min(to, vertical ? cell.y1 : cell.x1)
+                - Math.max(from, vertical ? cell.y0 : cell.x0));
+            }, 0);
+            assert.equal(covered, to - from);
+          }
+          const expectedLength = cells.reduce((sum, cell) => sum
+            + (cell.x1 < 1 ? cell.y1 - cell.y0 : 0)
+            + (cell.y1 < 1 ? cell.x1 - cell.x0 : 0), 0);
+          assert.equal(edges.reduce((sum, edge) => sum + edge.x2 - edge.x1 + edge.y2 - edge.y1, 0), expectedLength);
+          partitions++;
         }
-        assert.equal(area, 1);
-        const edges = interiorEdges(cells);
-        for (const edge of edges) {
-          const vertical = edge.x1 === edge.x2;
-          const at = vertical ? edge.x1 : edge.y1;
-          const from = vertical ? edge.y1 : edge.x1;
-          const to = vertical ? edge.y2 : edge.x2;
-          const covered = cells.reduce((sum, cell) => {
-            if ((vertical ? cell.x1 : cell.y1) !== at) return sum;
-            return sum + Math.max(0, Math.min(to, vertical ? cell.y1 : cell.x1)
-              - Math.max(from, vertical ? cell.y0 : cell.x0));
-          }, 0);
-          assert.equal(covered, to - from);
-        }
-        const expectedLength = cells.reduce((sum, cell) => sum
-          + (cell.x1 < 1 ? cell.y1 - cell.y0 : 0)
-          + (cell.y1 < 1 ? cell.x1 - cell.x0 : 0), 0);
-        assert.equal(edges.reduce((sum, edge) => sum + edge.x2 - edge.x1 + edge.y2 - edge.y1, 0), expectedLength);
-        partitions++;
       }
     }
   }
-  console.log(`PASS: ${partitions} partitions tile exactly, with matching edges and exact regular grids`);
+  console.log(`PASS: ${partitions} animated partitions tile exactly in normalized and device pixels, with matching edges and fixed split directions`);
   process.exit(0);
 }
 

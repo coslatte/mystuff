@@ -15,9 +15,128 @@ const comment = { id: 1, songId: 1, author: longText, content: longText, created
 const browser = await chromium.launch({
   ...(process.env.BROWSER_PATH ? { executablePath: process.env.BROWSER_PATH } : {}),
 });
+if (process.argv.includes("--loading")) {
+  try {
+    await checkLoading();
+  } finally {
+    await browser.close();
+  }
+  process.exit(0);
+}
 const failures = [];
 let checks = 0;
 if (output) await mkdir(output, { recursive: true });
+
+async function checkLoading() {
+  const errors = [];
+  for (const reducedMotion of ["no-preference", "reduce"]) {
+    const context = await browser.newContext({ reducedMotion, viewport: { width: 390, height: 844 } });
+    await context.route("**/api/**", route => route.fulfill({ json: { success: true, data: [] } }));
+    await context.route(/fonts\.google/, route => route.abort());
+    await context.addInitScript(() => {
+      sessionStorage.setItem("clm_boot_seen", "1");
+      window.loadingEvents = [];
+      for (const name of ["astro:before-preparation", "astro:after-swap", "astro:page-load"]) {
+        document.addEventListener(name, () => queueMicrotask(() => {
+          window.loadingEvents.push({ name, state: document.querySelector("[data-route-curtain]")?.dataset.state });
+        }));
+      }
+      function firstPaint() {
+        if (!document.querySelector("main")) return requestAnimationFrame(firstPaint);
+        window.loadingFirstPaint = {
+          pending: document.documentElement.hasAttribute("data-boot-pending"),
+          mainVisibility: getComputedStyle(document.querySelector("main")).visibility,
+          bootDisplay: getComputedStyle(document.querySelector("[data-boot-screen]")).display,
+        };
+      }
+      requestAnimationFrame(firstPaint);
+    });
+    const page = await context.newPage();
+    page.on("pageerror", error => errors.push(error.message));
+    const settle = () => page.waitForFunction(() =>
+      !document.documentElement.matches("[data-boot-pending], .boot-locked, .route-locked")
+      && !document.querySelector("main").inert);
+    await page.goto(baseURL + "/");
+    await settle();
+    assert.deepEqual(await page.evaluate(() => window.loadingFirstPaint), {
+      pending: true, mainVisibility: "hidden", bootDisplay: "flex",
+    }, "Loading must precede content, including visits with the old session flag");
+    await page.reload();
+    await settle();
+    assert.equal(await page.evaluate(() => window.loadingFirstPaint.pending), true, "Warm reloads must show loading");
+
+    await page.locator('a[href="/experimentation"]').first().click();
+    await page.waitForURL("**/experimentation");
+    await settle();
+    const events = await page.evaluate(() => window.loadingEvents.filter(event => event.name !== "astro:page-load" || event.state));
+    assert.ok(events.length >= 3);
+    assert.ok(events.every(event => event.state === "in"), JSON.stringify(events));
+
+    await page.route("**/experimentation/subdivision", async route => {
+      await new Promise(resolve => setTimeout(resolve, 1800));
+      await route.continue();
+    });
+    await page.locator('a[href="/experimentation/subdivision"]').first().click();
+    const curtain = page.locator("[data-route-curtain]");
+    await curtain.waitFor({ state: "visible" });
+    assert.equal(await curtain.getAttribute("data-state"), "in");
+    const canvas = curtain.locator("canvas");
+    const pixels = () => canvas.evaluate(element => element.toDataURL());
+    const before = await pixels();
+    await page.waitForTimeout(250);
+    const after = await pixels();
+    assert.equal(before === after, reducedMotion === "reduce", "Motion must follow the visitor preference");
+    if (output) {
+      await mkdir(output, { recursive: true });
+      await page.screenshot({ path: output + "/loading-" + reducedMotion + ".png" });
+    }
+    await page.waitForURL("**/experimentation/subdivision");
+    await settle();
+    await page.locator('a[href="/"]').first().click();
+    await page.waitForURL(baseURL + "/");
+    await settle();
+    assert.equal(await curtain.getAttribute("data-state"), null);
+
+    await page.evaluate(() => {
+      const link = document.createElement("a");
+      link.href = "/experimentation/subdivision";
+      document.body.append(link);
+      link.click();
+      setTimeout(() => document.querySelector('a[href="/experimentation"]').click(), 30);
+    });
+    await page.waitForURL("**/experimentation");
+    await settle();
+    await page.waitForTimeout(1900);
+    assert.equal(await curtain.getAttribute("data-state"), null, "Stale navigation must not reactivate loading");
+
+    await page.goBack();
+    await settle();
+    await page.goto(baseURL + "/loading");
+    await page.locator('[data-boot-screen][data-state="active"]').waitFor();
+    await page.locator('a[href="/"]').first().evaluate(link => link.click());
+    await page.waitForURL(baseURL + "/");
+    await settle();
+    await page.waitForTimeout(1700);
+    assert.equal(await page.locator('[data-boot-screen][data-state="active"]').count(), 0, "An abandoned replay must not restart");
+    await context.close();
+  }
+
+  const blocked = await browser.newContext();
+  await blocked.route("**/*", route => route.request().resourceType() === "script" ? route.abort() : route.continue());
+  const page = await blocked.newPage();
+  await page.goto(baseURL + "/");
+  await page.waitForFunction(() => !document.documentElement.hasAttribute("data-boot-pending"));
+  assert.equal(await page.locator("main").evaluate(element => getComputedStyle(element).visibility), "visible");
+  await blocked.close();
+
+  const noJS = await browser.newContext({ javaScriptEnabled: false });
+  const staticPage = await noJS.newPage();
+  await staticPage.goto(baseURL + "/");
+  assert.equal(await staticPage.locator("main").isVisible(), true);
+  await noJS.close();
+  assert.deepEqual(errors, [], "Loading must not produce browser errors");
+  console.log("PASS: loading precedes content on initial paint, reloads, warm and slow navigation, history and replay exit; motion, cancellation and failed-bundle recovery work.");
+}
 
 async function check(page, label, touch) {
   await page.waitForTimeout(100);
@@ -146,7 +265,7 @@ try {
         assert.equal(await page.locator("#contact-message").inputValue(), longText);
         contactState = "network";
         await send.click();
-        await page.getByRole("status").last().getByText("service unavailable").waitFor();
+        await page.getByRole("status").last().getByText(/We could not confirm receipt/).waitFor();
         assert.equal(submissions[0].submissionId, submissions[1].submissionId);
         contactState = "invalid";
         await send.click();

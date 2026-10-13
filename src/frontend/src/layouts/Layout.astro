@@ -21,6 +21,22 @@ const { title = "CosmicLatte", bootReplay = false } = Astro.props;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script is:inline>
+      if (document.readyState === "loading" && !document.documentElement.hasAttribute("data-boot-replay")) {
+        document.documentElement.setAttribute("data-boot-pending", "");
+        document.documentElement.classList.add("boot-locked");
+        // A blocked client bundle must still give the visitor access to the page.
+        window.setTimeout(() => {
+          if (!document.documentElement.hasAttribute("data-boot-pending")) return;
+          document.querySelector("[data-boot-screen]")?.remove();
+          document.documentElement.removeAttribute("data-boot-pending");
+          document.documentElement.classList.remove("boot-locked");
+          document.querySelectorAll("body > header, body > main, body > footer").forEach(element => {
+            element.inert = document.documentElement.classList.contains("route-locked");
+          });
+        }, 6500);
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -31,7 +47,6 @@ const { title = "CosmicLatte", bootReplay = false } = Astro.props;
     <ClientRouter />
   </head>
   <body class="flex min-h-screen flex-col">
-    <!-- First child so it paints over everything below it. -->
     <BootScreen />
     <RouteCurtain />
     <MorphlingCursor />
