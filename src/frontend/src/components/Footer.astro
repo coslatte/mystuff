@@ -2,12 +2,20 @@
 import NowPlaying from "./NowPlaying.astro";
 ---
 
-<footer class="sticky bottom-0 z-40 border-t-2 border-black bg-white">
-  <div class="mx-auto grid w-full max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-3">
-    <div aria-hidden="true"></div>
-    <div class="flex justify-center" transition:name="now-playing" transition:persist="now-playing">
-      <NowPlaying />
-    </div>
-    <span class="hidden justify-self-end font-mono text-xs text-gray-400 sm:block">cosmiclatte</span>
+<!--
+  The only thing this bar carries is the now-playing widget, so it stays out of
+  the document until a source has something to report: `data-playing` on the
+  widget is what turns it on, and its height is fixed so the widget sizes the
+  spectrum to it instead of the other way round.
+-->
+<footer
+  class="sticky bottom-0 z-40 hidden h-16 animate-footer-rise border-t-2 border-black bg-white has-[now-playing-el[data-playing]]:flex tablet:h-20 motion-reduce:animate-none"
+>
+  <div
+    class="mx-auto flex h-full w-full max-w-7xl items-center justify-center px-4"
+    transition:name="now-playing"
+    transition:persist="now-playing"
+  >
+    <NowPlaying />
   </div>
 </footer>

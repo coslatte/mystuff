@@ -1,12 +1,14 @@
 import { player } from "../services/player";
 import { drawPseudoSpectrum, drawSpectrum, sizeCanvas } from "./playback-canvas";
-import { playPauseClass, playPauseGlyph } from "./playback-ui";
+import { formatClock, playPauseClass, playPauseGlyph } from "./playback-ui";
 
 const TOGGLE_BASE =
-  "flex h-7 w-7 shrink-0 items-center justify-center border-2 border-black text-xs font-bold transition-colors";
-const META_CLASS = "truncate font-mono text-xs font-bold leading-tight normal-case text-white";
+  "flex h-11 w-11 shrink-0 items-center justify-center border-2 border-white text-sm font-bold transition-colors";
+const CLOCK_CLASS = "shrink-0 font-mono text-[10px] font-bold tabular-nums text-white tablet:text-xs";
+const TITLE_CLASS =
+  "block truncate font-mono text-xs font-bold leading-tight text-brut-red tablet:text-sm";
 const SQUARE_CLASS =
-  "hidden shrink-0 border-2 border-neutral-700 bg-black p-0.5 tablet:block";
+  "hidden h-full aspect-square shrink-0 border-2 border-neutral-700 bg-black p-0.5 tablet:block";
 
 let registered = false;
 
@@ -31,51 +33,57 @@ export function defineNowPlaying() {
     private resizeObserver: ResizeObserver | undefined;
     private reducedMotion = false;
 
-    private idleBox = document.createElement("div");
     private box = document.createElement("div");
     private toggle = document.createElement("button");
     private icon = document.createElement("span");
-    private metaTitle = document.createElement("span");
-    private detail = document.createElement("span");
+    private elapsed = document.createElement("span");
+    private songName = document.createElement("span");
+    private total = document.createElement("span");
     private canvas = document.createElement("canvas");
 
     // The store notifies on every timeupdate, so render() has to stay cheap.
     // Only the song identity and the play state reach the DOM.
+    private active = false;
     private shownKey: string | null = null;
+    private shownElapsed: string | null = null;
     private shownPlaying: boolean | null = null;
     private shownControllable: boolean | null = null;
 
     constructor() {
       super();
-      this.idleBox.className =
-        "border-2 border-black bg-black px-3 py-1 font-mono text-xs font-bold normal-case text-white";
-      this.idleBox.textContent = "nothing playing";
+      this.elapsed.className = CLOCK_CLASS;
+      this.elapsed.hidden = true;
+      this.total.className = CLOCK_CLASS;
+      this.total.hidden = true;
 
-      this.box.className = "flex min-w-0 items-center gap-3 border-2 border-black bg-black p-2";
+      this.box.className =
+        "flex h-full min-w-0 max-w-full items-center gap-3 border-2 border-black bg-black p-2";
       this.toggle.type = "button";
       this.toggle.addEventListener("click", () => player.toggle());
       this.icon.className = "icon-morph";
       this.toggle.append(this.icon);
 
-      this.metaTitle.className = "text-brut-red";
-      const meta = document.createElement("p");
-      meta.className = META_CLASS;
-      meta.append(this.metaTitle, this.detail);
+      this.songName.className = TITLE_CLASS;
+      const name = document.createElement("p");
+      name.className = "min-w-0";
+      name.append(this.songName);
 
-      // Built once and never replaced: the idle/playing swap swaps whole subtrees,
-      // so a canvas rebuilt here would throw away its backing store every track.
+      // Built once and never replaced, so a track change repaints this canvas
+      // instead of throwing away the backing store it already has.
+      // h-full plus aspect-square is what lets the footer own the height: the
+      // square follows the bar down instead of pushing the bar taller.
       const square = document.createElement("div");
       square.className = SQUARE_CLASS;
       square.setAttribute("aria-hidden", "true");
-      this.canvas.className = "block h-14 w-14";
+      this.canvas.className = "block h-full w-full";
       square.append(this.canvas);
 
-      this.box.append(this.toggle, meta, square);
+      this.box.append(this.toggle, this.elapsed, name, this.total, square);
     }
 
     connectedCallback() {
       this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      this.replaceChildren(this.idleBox);
+      this.replaceChildren(this.box);
       this.unsubscribe = player.subscribe(() => this.render());
       this.resizeObserver = new ResizeObserver(() => this.paint());
       this.resizeObserver.observe(this.canvas);
@@ -129,26 +137,40 @@ export function defineNowPlaying() {
     }
 
     render() {
-      const { nowPlaying, isPlaying } = player.getSnapshot();
+      const { nowPlaying, isPlaying, track } = player.getSnapshot();
 
+      // The footer shows itself off this attribute, so the bar enters and leaves
+      // the document with the widget rather than through a second state channel.
       if (!nowPlaying) {
-        if (this.shownKey === null) return;
-        this.replaceChildren(this.idleBox);
-        this.shownKey = null;
-        this.shownPlaying = isPlaying;
-        this.shownControllable = null;
+        if (this.active) {
+          this.active = false;
+          this.removeAttribute("data-playing");
+          this.shownKey = null;
+        }
         this.stopLoop();
         return;
       }
 
+      if (!this.active) {
+        this.active = true;
+        this.setAttribute("data-playing", "");
+      }
+
       if (this.shownKey !== nowPlaying.key) {
-        this.replaceChildren(this.box);
-        this.metaTitle.textContent = nowPlaying.title;
-        this.detail.textContent = `${nowPlaying.artist ? ` · ${nowPlaying.artist}` : ""}${
-          nowPlaying.durationLabel ? ` · ${nowPlaying.durationLabel}` : ""
-        }`;
+        this.songName.textContent = nowPlaying.title;
+        this.total.textContent = nowPlaying.durationLabel ?? "";
+        this.total.hidden = !nowPlaying.durationLabel;
         this.shownKey = nowPlaying.key;
         this.paint();
+      }
+
+      // An embed never reports a position, so a frozen 0:00 there would be a
+      // clock that lies about a track it cannot see.
+      const elapsed = nowPlaying.source === "tracks" ? formatClock(track.currentTime) : "";
+      if (this.shownElapsed !== elapsed) {
+        this.shownElapsed = elapsed;
+        this.elapsed.textContent = elapsed;
+        this.elapsed.hidden = elapsed === "";
       }
 
       if (this.shownControllable !== nowPlaying.controllable) {

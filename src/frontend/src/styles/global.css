@@ -18,6 +18,19 @@
   --breakpoint-tablet: 40rem; /* >= 640px */
   --breakpoint-laptop: 64rem; /* >= 1024px */
   --breakpoint-tv: 100rem; /* >= 1600px */
+
+  /* The now-playing bar rises from the bottom edge on its first frame. It only
+     ever plays on a display change, so nothing has to re-trigger it by hand. */
+  --animate-footer-rise: footer-rise 0.32s cubic-bezier(0.7, 0, 0.3, 1);
+
+  @keyframes footer-rise {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
 }
 
 @layer base {
