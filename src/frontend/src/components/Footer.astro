@@ -2,6 +2,30 @@
 import NowPlaying from "./NowPlaying.astro";
 ---
 
+<script>
+  const syncFooter = () => {
+    document.querySelectorAll<HTMLElement>("footer[data-collapsed]").forEach((footer) => {
+      footer.style.transform = "translateY(calc(100% - 0.5rem))";
+    });
+  };
+
+  document.addEventListener("click", (event) => {
+    const button = (event.target as Element).closest<HTMLButtonElement>("[data-footer-toggle]");
+    if (!button) return;
+
+    const footer = button.closest("footer");
+    if (!footer) return;
+
+    const collapsed = footer.toggleAttribute("data-collapsed");
+    button.setAttribute("aria-expanded", String(!collapsed));
+    button.setAttribute("aria-label", collapsed ? "show player" : "hide player");
+    button.querySelector("span")!.textContent = collapsed ? "↑" : "↓";
+    footer.style.transform = collapsed ? "translateY(calc(100% - 0.5rem))" : "translateY(0)";
+  });
+
+  document.addEventListener("astro:page-load", syncFooter);
+</script>
+
 <!--
   The only thing this bar carries is the now-playing widget, so it stays out of
   the document until a source has something to report: `data-playing` on the
@@ -10,8 +34,18 @@ import NowPlaying from "./NowPlaying.astro";
 -->
 <footer
   class="sticky bottom-0 z-40 hidden h-16 shrink-0 animate-footer-rise border-t-2 border-black bg-white has-[now-playing-el[data-playing]]:flex motion-reduce:animate-none"
+  style="transition: transform 180ms ease"
 >
+  <button
+    type="button"
+    data-footer-toggle
+    class="absolute -top-8 right-4 flex h-8 w-10 items-center justify-center border-2 border-b-0 border-black bg-white font-mono text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brut-blue"
+    aria-label="hide player"
+    aria-expanded="true"
+    aria-controls="now-playing-player"
+  ><span aria-hidden="true">↓</span></button>
   <div
+    id="now-playing-player"
     class="mx-auto flex h-full w-full max-w-7xl items-center justify-center px-4"
     transition:name="now-playing"
     transition:persist="now-playing"
