@@ -153,6 +153,12 @@ function upload<T>(
 }
 
 export const api = {
+  submitContactMessage: (body: { submissionId: string; name: string; email: string; message: string; website: string }, signal?: AbortSignal) =>
+    request<{ messageId: string; status: string }>("/api/contact/messages", {
+      method: "POST",
+      body: JSON.stringify(body),
+      signal,
+    }),
   health: () => request<Health>("/health"),
   getSongs: (visitorId?: string) =>
     request<Song[]>(`/api/songs${visitorId ? `?visitorId=${encodeURIComponent(visitorId)}` : ""}`),
