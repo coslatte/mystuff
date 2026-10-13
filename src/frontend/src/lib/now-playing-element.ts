@@ -8,7 +8,7 @@ const CLOCK_CLASS = "shrink-0 font-mono text-[10px] font-bold tabular-nums text-
 const TITLE_CLASS =
   "block truncate font-mono text-xs font-bold leading-tight text-brut-red tablet:text-sm";
 const SQUARE_CLASS =
-  "hidden h-full aspect-square shrink-0 border-2 border-neutral-700 bg-black p-0.5 tablet:block";
+  "hidden h-full min-h-0 aspect-square shrink-0 border-2 border-neutral-700 bg-black p-0.5 tablet:block";
 
 let registered = false;
 
@@ -57,7 +57,7 @@ export function defineNowPlaying() {
       this.total.hidden = true;
 
       this.box.className =
-        "flex h-full min-w-0 max-w-full items-center gap-3 border-2 border-black bg-black p-2";
+        "flex h-full min-h-0 min-w-0 max-w-full items-center gap-3 border-2 border-black bg-black px-2 py-1";
       this.toggle.type = "button";
       this.toggle.addEventListener("click", () => player.toggle());
       this.icon.className = "icon-morph";

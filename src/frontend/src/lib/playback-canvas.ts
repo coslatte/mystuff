@@ -17,21 +17,45 @@ const MAX_HZ = 16000;
 const MIN_LOG = Math.log10(MIN_HZ);
 const MAX_LOG = Math.log10(MAX_HZ);
 
-const PLAYED = "#ff3300";
+const PLAYED = "#c6382b";
 const UNPLAYED = "#ffffff";
+
+const SPECTRUM_COLORS: [number, [number, number, number]][] = [
+  [-120, [255, 255, 255]],
+  [-80, [210, 170, 255]],
+  [-40, [125, 145, 255]],
+  [-10, [255, 140, 155]],
+  [0, [255, 255, 255]],
+];
+
+export function spectrumColor(decibels: number): string {
+  // Infinity cannot be an interpolation endpoint; silence fades to white at -120 dB.
+  const db = Math.max(-120, Math.min(0, decibels));
+  for (let i = 1; i < SPECTRUM_COLORS.length; i++) {
+    const [upperDb, upper] = SPECTRUM_COLORS[i];
+    if (db > upperDb) continue;
+    const [lowerDb, lower] = SPECTRUM_COLORS[i - 1];
+    const ratio = (db - lowerDb) / (upperDb - lowerDb);
+    const channels = lower.map((channel, index) =>
+      Math.round(channel + (upper[index] - channel) * ratio)
+    );
+    return `rgb(${channels.join(", ")})`;
+  }
+  return UNPLAYED;
+}
 
 /**
  * Shared across every canvas that reads the analyser, since the player bar and
  * the footer square both paint from it on the same frame. Reallocated only when
  * the fftSize changes, which happens once per page.
  */
-let bands: Uint8Array<ArrayBuffer> | null = null;
+let bands: Float32Array<ArrayBuffer> | null = null;
 
-function readBands(analyser: AnalyserNode): Uint8Array<ArrayBuffer> {
+function readBands(analyser: AnalyserNode): Float32Array<ArrayBuffer> {
   if (!bands || bands.length !== analyser.frequencyBinCount) {
-    bands = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
+    bands = new Float32Array(analyser.frequencyBinCount);
   }
-  analyser.getByteFrequencyData(bands);
+  analyser.getFloatFrequencyData(bands);
   return bands;
 }
 
@@ -66,10 +90,15 @@ export function drawSpectrum(
   const bars = Math.max(1, Math.floor(width / SPECTRUM_BAR_PITCH));
   const barWidth = width / bars;
 
-  ctx.fillStyle = UNPLAYED;
   for (let i = 0; i < bars; i++) {
     const freq = Math.pow(10, MIN_LOG + (i / bars) * (MAX_LOG - MIN_LOG));
-    const value = data ? data[binFor(freq, binHz, maxBin)] / 255 : 0.12;
+    const decibels = data ? data[binFor(freq, binHz, maxBin)] : -Infinity;
+    const value = data && analyser
+      ? Math.floor(Math.max(0, Math.min(1,
+          (decibels - analyser.minDecibels) / (analyser.maxDecibels - analyser.minDecibels)
+        )) * 255) / 255
+      : 0.12;
+    ctx.fillStyle = spectrumColor(decibels);
     const barHeight = Math.max(2, value * height);
     const x = i * barWidth + barWidth * 0.12;
     ctx.fillRect(x, height - barHeight, barWidth * 0.76, barHeight);
@@ -100,13 +129,13 @@ export function drawPseudoSpectrum(
   // keeps the silhouette of the real thing.
   const tilt = seed.length % 7;
 
-  ctx.fillStyle = seed.startsWith("sp:") ? PLAYED : UNPLAYED;
   for (let i = 0; i < bars; i++) {
     const position = i / bars;
     const base = 0.18 + 0.5 * pseudoRandom(seed, i + tilt);
     const sway = Math.sin(phase * 0.0022 + i * 0.42 + tilt) * 0.5 + 0.5;
     const rollOff = 1 - position * 0.55;
     const value = Math.max(0.06, Math.min(1, base * (0.35 + 0.65 * sway) * rollOff));
+    ctx.fillStyle = spectrumColor(-100 + value * 70);
     const barHeight = Math.max(2, value * height);
     const x = i * barWidth + barWidth * 0.12;
     ctx.fillRect(x, height - barHeight, barWidth * 0.76, barHeight);

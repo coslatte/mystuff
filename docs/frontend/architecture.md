@@ -430,6 +430,7 @@ Framework-free unless the name says otherwise.
 | `src/frontend/scripts/responsive-check.mjs` | Responsive browser checks; `--loading` verifies first paint, reloads, route loading, motion preferences and recovery. |
 | `src/frontend/scripts/png.ts` | Minimal PNG encoder, so the above has no dependency. |
 | `src/frontend/src/lib/fm-wave.test.ts` | Checks the FM frequency sweep, the wave cycle and the scroll direction. |
+| `src/frontend/src/lib/playback-canvas.test.ts` | Checks spectrum color anchors, interpolation, silence and clipping. |
 
 Both exist because every attempt to tune the simulation by statistics produced a
 number that improved while the picture stayed broken. Judged by eye, not by
@@ -483,7 +484,9 @@ idle "nothing playing" plate would be a footer that is not about anything.
 The bar's height is fixed and the spectrum square takes it (`h-full` with
 `aspect-square`). Letting the square drive the height meant the footer grew with
 the square on every viewport, and the bar had no height of its own to animate
-from. One direction only: the bar decides, the widget fills it.
+from. One direction only: the bar decides, the widget fills it. The footer stays
+64 CSS pixels tall at every breakpoint. Its widget uses 4px vertical padding so
+the 44px transport target fits; the spectrum fills the remaining inner height.
 
 The reveal is `animate-footer-rise`, declared in the `@theme` block with its
 keyframes. It replays because the footer's `display` changes, so nothing
@@ -748,6 +751,15 @@ reachable only from code that nothing reaches.
   square only ever sees tracks the site hosts. SoundCloud and Spotify report
   metadata and nothing more, which is why their title is a fallback and not a
   measurement.
+  Spectrum colors use float analyser dB values rather than bytes, since byte
+  values clip at the analyser's maximum and would merge -10 dB and 0 dB. Each
+  bar interpolates white at -120 dB, light purple at -80 dB, light blue at
+  -40 dB, salmon pink at -10 dB, and white at 0 dB. Silence is white; -120 dB
+  is the finite interpolation endpoint for negative infinity. Bar heights
+  retain the analyser's byte scaling and frequencies retain the logarithmic
+  layout. Synthetic embed spectra reuse these colors from their decorative
+  levels, mapped to -100 through -30 dB, without claiming measured audio.
+  This content palette is independent of the interface theme colors.
 - **Limited tests.** `bun scripts/recursion-preview.mts --check` verifies 5,600
   animated partitions across depths, seeds and phases. Other pure pieces (`applyVote`, `runOptimistic`, `playback-canvas`,
   `streaming-albums`, `errors`, `catmull-clark`, `pigment-math`, `pigment-settings`,
