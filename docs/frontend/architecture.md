@@ -274,12 +274,13 @@ One line per file. Read this before you move something.
 
 ### `src/pages/` — routes
 
-The four sections are `/`, `/coding`, `/music` and `/experimentation`. See
+The sections are `/`, `/coding`, `/music`, `/contact` and `/experimentation`. See
 [ADR-012](#adr-012--the-routes-are-the-sections).
 
 | File | Role |
 | --- | --- |
 | `index.astro` | `/`. Profile, education, research, Bicotex experience, skills, interests, contact. Prerendered. |
+| `contact.astro` | `/contact`. Static shell, mounts `ContactForm` for message submissions. |
 | `coding.astro` | `/coding`. SSR, GitHub pinned repos + contribution count. |
 | `music.astro` | `/music`. Static shell, mounts `MusicSection`. |
 | `experimentation/index.astro` | `/experimentation`. Index of the experiments. |
@@ -301,8 +302,8 @@ The four sections are `/`, `/coding`, `/music` and `/experimentation`. See
 | `BootScreen.astro` | First-visit splash. In the layout, so one copy covers all routes. |
 | `RouteCurtain.astro` | Navigation loading overlay. In the layout, persisted across swaps. |
 | `Navbar.astro` | Site navigation. |
-| `Footer.astro` | Footer shell; mounts `NowPlaying` once. |
-| `Hero.astro` | `/` introduction, centered heading with an ASCII animation on the brutalist `code` plate and an FM wave on `soundwaves`, portrait, and route into the biography. |
+| `Footer.astro` | The now-playing bar and nothing else. Hidden until a source reports something; fixed height, so the widget sizes the spectrum to it. |
+| `Hero.astro` | `/` introduction, centered heading with a scrolling code fragment on the brutalist `code` plate and an FM wave on `soundwaves`, portrait, and route into the biography. |
 | `ExperimentHeader.astro` | Shared heading and back link for individual experiments. |
 | `RepoRow.astro` | One row in the `/coding` repos list. |
 | `SocialButton.astro` | One outbound social link. |
@@ -314,6 +315,7 @@ The four sections are `/`, `/coding`, `/music` and `/experimentation`. See
 | File | Role |
 | --- | --- |
 | `MusicSection.tsx` | `/music` root. Composes PlayerBar, albums, tracks. |
+| `ContactForm.tsx` | `/contact` form island with validation, stable retry references, and accessible delivery status. |
 | `AdminUpload.tsx` | `/admin` root. Key entry, song list, replace/delete. |
 | `PigmentFlow.tsx` | `/experimentation/spectral` root. Canvas, camera, pointer, keys. |
 | `PigmentControls.tsx` | The `/experimentation/spectral` panel. One slider per settings field. |
@@ -368,7 +370,7 @@ Framework-free unless the name says otherwise.
 | `paint-surface.ts` | Grid where overlapping pigment resolves into colour. |
 | `playback-canvas.ts` | 2D spectrum and waveform painters. |
 | `playback-ui.ts` | Glyphs and clock formatting shared by three toggles. |
-| `now-playing-element.ts` | **Browser only.** The `<now-playing-el>` custom element. |
+| `now-playing-element.ts` | **Browser only.** The `<now-playing-el>` custom element. Flips `data-playing`, which is what shows the bar. |
 | `morphling-cursor.ts` | **Browser only.** Morphs local shape points so the outline follows the pointer during transitions; caps control outlines at 450 × 300 pixels. |
 | `fm-wave.ts` | Pure geometry and frequency calculation for the hero's modulated sine wave. |
 | `route-curtain.ts` | **Browser only.** Adaptive-delay loading curtain for `ClientRouter` navigations. Also exports `curtainCells`. |
@@ -430,7 +432,7 @@ Framework-free unless the name says otherwise.
 | `src/frontend/scripts/sim-preview.mts` | Renders the shipped simulation to a PNG contact sheet. |
 | `src/frontend/scripts/recursion-preview.mts` | Renders partitions to a PNG contact sheet; `--check` verifies tiling, grid boundaries and exact regular grids. |
 | `src/frontend/scripts/png.ts` | Minimal PNG encoder, so the above has no dependency. |
-| `src/frontend/src/lib/fm-wave.test.ts` | Checks the FM frequency sweep and wave cycle. |
+| `src/frontend/src/lib/fm-wave.test.ts` | Checks the FM frequency sweep, the wave cycle and the scroll direction. |
 
 Both exist because every attempt to tune the simulation by statistics produced a
 number that improved while the picture stayed broken. Judged by eye, not by
@@ -475,6 +477,25 @@ island.
 **Decision.** `<now-playing-el>` subscribes to the same store as `PlayerBar`.
 **Consequences.** No `react-dom` on `/`. It can only use HTML and canvas, and it
 must be browser-only.
+
+The bar carries nothing but this widget, so it stays out of the document until a
+source has something to report: the element sets `data-playing` and
+`has-[now-playing-el[data-playing]]:flex` is what gives the footer a box. An
+idle "nothing playing" plate would be a footer that is not about anything.
+
+The bar's height is fixed and the spectrum square takes it (`h-full` with
+`aspect-square`). Letting the square drive the height meant the footer grew with
+the square on every viewport, and the bar had no height of its own to animate
+from. One direction only: the bar decides, the widget fills it.
+
+The reveal is `animate-footer-rise`, declared in the `@theme` block with its
+keyframes. It replays because the footer's `display` changes, so nothing
+re-triggers it, and `motion-reduce:animate-none` holds it still for visitors who
+asked for that.
+
+Elapsed time is shown only for `tracks`. An embed reports no position, and a
+clock stuck at `0:00` next to a moving title is a claim about a track the page
+cannot see.
 
 <a id="adr-004"></a>
 ### ADR-004 — `PlayerEngine` is a singleton, not a hook
@@ -681,9 +702,13 @@ that matters plays *after* the swap and would otherwise be destroyed by it.
 Revealing is deferred by `requestAnimationFrame` so `clip-path` has a layout
 value to transition from, and the exit is on a 320ms timeout rather than
 `transitionend`, because a transition interrupted by a re-render never fires the
-event that would have cleaned it up. `MAX_HOLD_MS` exists for the navigation the
-router abandons without swapping; the overlay must never outlive the page it is
-covering. The same-page hash jump is excluded — it fetches nothing, so a curtain
+event that would have cleaned it up. Taking the curtain down is *verified*, not
+timed: the watchdog only releases once the router has swapped, or once it has
+stopped fetching, or `MAX_HOLD_MS` has passed — the absolute ceiling, which is
+what stops a hung SSR route from leaving an overlay the user cannot dismiss. A
+blind timer was the previous behaviour and it read as a bug on every route slower
+than it, because the overlay lifted over the page the user had just asked to
+leave. The same-page hash jump is excluded — it fetches nothing, so a curtain
 over an already-visible section is pure noise. Cells grow by `clip-path`, not
 `transform: scale`, because a scale pulls each cell out of its own rectangle and
 opens gaps along the shared edges mid-wipe — the same invariant as
@@ -770,10 +795,23 @@ above the portrait and introduction. `code` keeps its hover plate. Hovering
 Each page load picks a fragment from the frontend or backend; its characters
 rotate to 120 degrees and scroll down slowly. Hovering
 `soundwaves` raises it with the same black extrusion, then fades in a red fill
-clipped to an edge-to-edge frequency-modulated sine wave. Its modulator varies
-from 0.6 to 1.4 cycles across the word in a 32-second cycle as the wave moves right.
-The browser updates the path at 30 frames per second only while the word is hovered.
-The text is white on red and black above it. The ampersand stays plain. The math
+clipped to an edge-to-edge frequency-modulated sine wave that scrolls to the
+right, one word every 12 seconds. Its modulator still varies from 0.6 to 1.4
+cycles across the word over a 32-second cycle, and it reaches the carrier as a sine:
+straightening that sine into a phase ramp keeps the scroll but flattens the wave
+into a slow detune, which `fm-wave.test.ts` pins by the curve repeating every half
+box. The scroll is geometry, not CSS:
+Chromium ignores `mask-size`, `mask-position` and `mask-repeat` on a mask
+referenced with `url(#id)`, so the two masked boxes are twice the word and reach
+left, the path samples the wave with an offset, and `clip-path` keeps the red
+plate on the visible right half. Reaching left also keeps the page from gaining
+horizontal scroll. Both masked boxes cover the same box so the white text and the
+red fill never drift apart, and the path has to be continuous along its whole
+width for the same reason. Elapsed time is never wrapped: the scroll has no
+period, so a modulo on it would jump the wave every 32 seconds. The browser
+updates the path at 30 frames per second
+only while the word is hovered. The text is white on red and black above it. The
+ampersand stays plain. The math
 lives in `fm-wave.ts`, the interaction in `Hero.astro`, and the styling in
 `brut-word.css`; the removed `BrutWords` wrapper is no longer needed for one heading.
 
@@ -787,6 +825,12 @@ status messages. Remove rhetorical questions, slogans, and repeated explanations
 of implementation details from these pages.
 
 ### Presentation and loading verification
+
+The now-playing bar carries the transport, the elapsed time, the track name, the
+track length, and the spectrum square, in that order. It is the whole footer, it
+arrives when a source starts playing, and its height is fixed so the square fits
+inside it instead of stretching the bar. The square is a phone-away decoration:
+it stays hidden below `tablet`, where the bar has no room to spare.
 
 Music loads albums and tracks independently. Track loading and errors stay in the
 track column; they must not remove the album catalog or its platform controls.
@@ -804,3 +848,13 @@ resume animation with the existing control.
 
 Verify the home heading center against the main page bounds, not only its text
 column. Hover checks must cover both words separately and leave the ampersand plain.
+
+### Responsive presentation
+
+Keep the hero, navigation, footer controls, form, and page grids usable from
+320px through desktop widths. Long email addresses and media labels wrap or
+truncate inside their panels; they do not widen the page. Touch targets and
+focused controls remain easy to see and use.
+
+Check the contact form at phone widths while editing and after delivery errors
+and accepted receipts. Failed delivery keeps the draft for a safe retry.
