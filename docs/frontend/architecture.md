@@ -776,6 +776,11 @@ reachable only from code that nothing reaches.
 - **Upload limits are duplicated** between `lib/audio-file.ts` and
   `FileStorageService.validate`. They are constants in two languages and the
   alternative is a round trip to find out.
+- **Contact receipts are validated before clearing the draft.** The API boundary
+  requires an `accepted` status and a nonempty `messageId`. An incomplete success
+  response keeps the text and submission id available for a safe retry. Responsive
+  checks exercise server errors, network failures, malformed receipts, and acceptance.
+  Run `node scripts/responsive-check.mjs --contact` for the contact checks alone.
 
 ## Amending this document
 

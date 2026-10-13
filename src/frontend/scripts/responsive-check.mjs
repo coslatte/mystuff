@@ -7,7 +7,8 @@ const output = process.env.SCREENSHOT_DIR;
 const widths = [320, 375, 390, 639, 640, 768, 1023, 1024, 1280, 1599, 1600, 1920];
 const viewports = widths.map(width => ({ width, height: 900 }));
 viewports.push({ width: 844, height: 390 }, { width: 568, height: 320 });
-const routes = ["/", "/coding", "/music", "/experimentation", "/experimentation/spectral", "/experimentation/subdivision", "/admin", "/loading", "/contact"];
+const routes = process.argv.includes("--contact") ? ["/contact"]
+  : ["/", "/coding", "/music", "/experimentation", "/experimentation/spectral", "/experimentation/subdivision", "/admin", "/loading", "/contact"];
 const longText = "LongUnbrokenContent".repeat(12);
 const song = { id: 1, title: longText, artist: longText, duration: "3:24", createdAt: "2026-01-01T00:00:00Z", audioUrl: `${baseURL}/responsive-audio.wav`, avgRating: 4.5, totalVotes: 1234 };
 const album = { id: "responsive", title: longText, trackCount: 12, setType: "album", releaseDate: "2026-01-01", url: "https://soundcloud.com/example/sets/responsive" };
@@ -282,6 +283,7 @@ try {
     });
     const page = await context.newPage();
     for (const path of routes) {
+      await page.setViewportSize({ width: 1280, height: 900 });
       await page.goto(baseURL + path, { waitUntil: "domcontentloaded" });
       // Attached, not visible: the bar only shows once a source has something to
       // report, so on a route with no playback the widget stays hidden.
@@ -359,7 +361,7 @@ try {
         }
       }
     }
-    for (state of ["loading", "error"]) {
+    for (state of process.argv.includes("--contact") ? [] : ["loading", "error"]) {
       await page.goto(baseURL + "/music", { waitUntil: "domcontentloaded" });
       await page.locator("astro-island:not([ssr])").first().waitFor();
       if (state === "loading") await page.locator('[aria-busy="true"]').waitFor();

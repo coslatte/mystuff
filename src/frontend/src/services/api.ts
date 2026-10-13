@@ -153,12 +153,19 @@ function upload<T>(
 }
 
 export const api = {
-  submitContactMessage: (body: { submissionId: string; name: string; email: string; message: string; website: string }, signal?: AbortSignal) =>
-    request<{ messageId: string; status: string }>("/api/contact/messages", {
+  submitContactMessage: async (body: { submissionId: string; name: string; email: string; message: string; website: string }, signal?: AbortSignal) => {
+    const receipt = await request<unknown>("/api/contact/messages", {
       method: "POST",
       body: JSON.stringify(body),
       signal,
-    }),
+    });
+    if (typeof receipt !== "object" || receipt === null
+      || !("messageId" in receipt) || typeof receipt.messageId !== "string" || !receipt.messageId.trim()
+      || !("status" in receipt) || receipt.status !== "accepted") {
+      throw new Error("Invalid contact receipt.");
+    }
+    return { messageId: receipt.messageId, status: receipt.status };
+  },
   health: () => request<Health>("/health"),
   getSongs: (visitorId?: string) =>
     request<Song[]>(`/api/songs${visitorId ? `?visitorId=${encodeURIComponent(visitorId)}` : ""}`),
