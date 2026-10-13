@@ -463,6 +463,7 @@ export default function PigmentFlow() {
           }}
           onContextMenu={(event) => event.preventDefault()}
           className={`block aspect-square w-full touch-none active:cursor-grabbing ${cursor}`}
+          data-cursor={settings.pointer ? "precision" : undefined}
           aria-label="pigment board. move the pointer to stir the flow, scroll to zoom, shift and drag to pan."
         />
         <p className="brut-meta absolute bottom-2 left-2 bg-white px-2 py-1 normal-case">

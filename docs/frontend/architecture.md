@@ -368,7 +368,7 @@ Framework-free unless the name says otherwise.
 | `playback-canvas.ts` | 2D spectrum and waveform painters. |
 | `playback-ui.ts` | Glyphs and clock formatting shared by three toggles. |
 | `now-playing-element.ts` | **Browser only.** The `<now-playing-el>` custom element. Flips `data-playing`, which is what shows the bar. |
-| `morphling-cursor.ts` | **Browser only.** Morphs local shape points so the outline follows the pointer during transitions; caps control outlines at 450 × 300 pixels. |
+| `morphling-cursor.ts` | **Browser only.** Morphs local outline and center paths into an I-beam over editable fields or a tip-anchored arrow over ranges, sliders, and precision surfaces; caps other control outlines at 800 × 600 pixels. |
 | `fm-wave.ts` | Pure geometry and frequency calculation for the hero's modulated sine wave. |
 | `route-curtain.ts` | **Browser only.** Immediate navigation loading, readiness and cancellation handling, and the shared 2D partition painter. Also exports `curtainCells`. |
 | `api/schema.ts` | Generated from `openapi.json`. Never hand-edited. |
@@ -418,7 +418,7 @@ Framework-free unless the name says otherwise.
 | `brut-word.css` | Hover plates and layered animations on the two highlighted hero words. |
 | `server-pulse.css` | `ServerPulse` animation. |
 | `social-button.css` | `SocialButton` surfaces. |
-| `morphling-cursor.css` | Canvas overlay, native cursor suppression on links and buttons, and motion/accessibility fallbacks. |
+| `morphling-cursor.css` | Canvas overlay and native cursor suppression only after initialization on fine pointers without reduced motion. |
 | `route-curtain.css` | Full-viewport partition, destination plate, exit fade and pending-link wash. |
 
 ### Verification tooling — not shipped
@@ -875,6 +875,13 @@ Verify the home heading center against the main page bounds, not only its text
 column. Hover checks must cover both words separately and leave the ampersand plain.
 
 ### Responsive presentation
+
+The cursor morphs both its outline and colored center into an I-beam over text
+fields and a tip-anchored arrow over sliders and `data-cursor="precision"`
+surfaces. Precision mode persists through dragging. The native cursor is hidden
+only when the canvas initializes, with native fallbacks for reduced motion and
+coarse pointers. Run `node scripts/responsive-check.mjs --cursor` against the dev
+server to verify rendered silhouettes, editing, dragging, and route persistence.
 
 Keep the hero, navigation, footer controls, form, and page grids usable from
 320px through desktop widths. Long email addresses and media labels wrap or

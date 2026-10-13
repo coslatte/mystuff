@@ -15,9 +15,10 @@ const comment = { id: 1, songId: 1, author: longText, content: longText, created
 const browser = await chromium.launch({
   ...(process.env.BROWSER_PATH ? { executablePath: process.env.BROWSER_PATH } : {}),
 });
-if (process.argv.includes("--loading")) {
+if (process.argv.includes("--loading") || process.argv.includes("--cursor")) {
   try {
-    await checkLoading();
+    if (process.argv.includes("--cursor")) await checkCursor();
+    else await checkLoading();
   } finally {
     await browser.close();
   }
@@ -26,6 +27,76 @@ if (process.argv.includes("--loading")) {
 const failures = [];
 let checks = 0;
 if (output) await mkdir(output, { recursive: true });
+
+async function checkCursor() {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await context.route(/fonts\.google/, route => route.abort());
+  await page.goto(baseURL + "/contact");
+  await page.waitForFunction(() => !document.documentElement.matches("[data-boot-pending], .boot-locked"));
+  await page.evaluate(() => {
+    const fixture = document.createElement("div");
+    fixture.style.cssText = "position:fixed;left:100px;top:200px;z-index:60;background:white;padding:30px";
+    fixture.innerHTML = '<input id="cursor-text" type="text"><textarea id="cursor-area"></textarea><input id="cursor-range" type="range"><div id="cursor-editable" contenteditable="true">edit</div>';
+    document.body.append(fixture);
+  });
+  const canvas = page.locator("[data-morphling-cursor]");
+  for (const selector of ["#cursor-text", "#cursor-area", "#cursor-editable", "#cursor-range"]) {
+    const target = page.locator(selector);
+    await target.hover();
+    await page.waitForTimeout(300);
+    const mode = selector === "#cursor-range" ? "precision" : "text";
+    assert.equal(await canvas.getAttribute("data-mode"), mode);
+    assert.equal(await target.evaluate(element => getComputedStyle(element).cursor), "none");
+    const box = await target.boundingBox();
+    assert.ok(box);
+    const pixels = await canvas.evaluate((element, pointer) => {
+      const density = element.width / window.innerWidth;
+      const size = Math.round(80 * density);
+      const image = element.getContext("2d").getImageData(Math.round((pointer.x - 40) * density), Math.round((pointer.y - 40) * density), size, size);
+      let left = size, right = 0, top = size, bottom = 0;
+      for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+        if (image.data[(y * size + x) * 4 + 3] === 0) continue;
+        left = Math.min(left, x); right = Math.max(right, x);
+        top = Math.min(top, y); bottom = Math.max(bottom, y);
+      }
+      return { width: (right - left + 1) / density, height: (bottom - top + 1) / density };
+    }, { x: box.x + box.width / 2, y: box.y + box.height / 2 });
+    assert.ok(pixels.width <= (mode === "text" ? 13 : 22), `${mode} outline must stay compact: ${JSON.stringify(pixels)}`);
+    assert.ok(pixels.height >= 24 && pixels.height <= 32, `${mode} must draw its silhouette: ${JSON.stringify(pixels)}`);
+    if (output) {
+      await mkdir(output, { recursive: true });
+      await page.screenshot({ path: `${output}/cursor-${selector.slice(1)}.png` });
+    }
+  }
+  await page.mouse.down();
+  await page.mouse.move(900, 600);
+  assert.equal(await canvas.getAttribute("data-mode"), "precision", "Precision persists throughout a drag");
+  await page.mouse.up();
+  assert.equal(await canvas.getAttribute("data-mode"), "default");
+  await page.locator("#cursor-text").fill("Cursor editing still works");
+  assert.equal(await page.locator("#cursor-text").inputValue(), "Cursor editing still works");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  assert.equal(await canvas.evaluate(element => getComputedStyle(element).display), "none");
+  assert.equal(await page.locator("#cursor-text").evaluate(element => getComputedStyle(element).cursor), "text");
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  const persistedCanvas = await canvas.elementHandle();
+  await page.locator('a[href="/experimentation"]').first().click();
+  await page.waitForURL("**/experimentation");
+  await page.waitForFunction(() => !document.documentElement.matches(".route-locked"));
+  assert.equal(await persistedCanvas.evaluate(element => element === document.querySelector("[data-morphling-cursor]")), true);
+  await page.locator('a[href="/experimentation/subdivision"]').click();
+  await page.waitForURL("**/experimentation/subdivision");
+  await page.waitForFunction(() => !document.documentElement.matches(".route-locked"));
+  await page.locator('input[type="range"]').first().hover();
+  assert.equal(await canvas.getAttribute("data-mode"), "precision");
+  assert.equal(await page.locator('input[type="range"]').first().evaluate(element => getComputedStyle(element).cursor), "none");
+  assert.deepEqual(errors, []);
+  await context.close();
+  console.log("Cursor checks passed: rendered silhouettes, native cursor suppression, drag, editing, reduced-motion fallback, and persistence on experiment navigation.");
+}
 
 async function checkLoading() {
   const errors = [];

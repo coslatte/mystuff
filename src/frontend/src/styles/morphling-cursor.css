@@ -6,11 +6,10 @@
   mix-blend-mode: difference;
 }
 
-@media (pointer: fine) {
-  a,
-  button,
-  [role="button"] {
-    cursor: none;
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  html.morphling-active,
+  html.morphling-active * {
+    cursor: none !important;
   }
 }
 

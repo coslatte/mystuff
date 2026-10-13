@@ -1,11 +1,12 @@
 type Point = { x: number; y: number };
 type Bounds = { left: number; top: number; width: number; height: number };
 type Shape = { path: Point[]; corners: number };
+type CursorMode = "default" | "text" | "precision";
 type Morph =
   | { kind: "shape"; from: Point[]; to: Point[]; startedAt: number; duration: number }
-  | { kind: "hover"; from: Point[]; offset: number; startedAt: number; duration: number };
+  | { kind: "hover"; from: Point[]; fromCenter: Point[]; offset: number; startedAt: number; duration: number };
 
-const TARGETS = "a, button, input, textarea, select, [role='button'], [data-cursor-target]";
+const TARGETS = "a, button, input, textarea, select, [contenteditable], [role='button'], [role='slider'], [data-cursor-target], [data-cursor='precision']";
 const CURSOR_RADIUS = 30;
 const TARGET_PADDING = 7;
 const MAX_TARGET_WIDTH = 800;
@@ -98,6 +99,30 @@ const SHAPES: Shape[] = [
   },
 ];
 
+const TEXT_PATH = resample([
+  { x: -5, y: -13 }, { x: 5, y: -13 }, { x: 5, y: -11 },
+  { x: 1.5, y: -11 }, { x: 1.5, y: 11 }, { x: 5, y: 11 },
+  { x: 5, y: 13 }, { x: -5, y: 13 }, { x: -5, y: 11 },
+  { x: -1.5, y: 11 }, { x: -1.5, y: -11 }, { x: -5, y: -11 },
+]);
+const PRECISION_PATH = resample([
+  { x: 0, y: 0 }, { x: 19, y: 18 }, { x: 11, y: 18 },
+  { x: 15, y: 27 }, { x: 10, y: 29 }, { x: 6, y: 20 }, { x: 0, y: 26 },
+]);
+const DOT_PATH = polygon(SAMPLES).map(({ x, y }) => ({ x: x * DOT_RADIUS, y: y * DOT_RADIUS }));
+const TEXT_CENTER = resample([
+  { x: -0.75, y: -10 }, { x: 0.75, y: -10 },
+  { x: 0.75, y: 10 }, { x: -0.75, y: 10 },
+]);
+const PRECISION_CENTER = PRECISION_PATH.map(({ x, y }) => ({ x: x * 0.72, y: y * 0.72 }));
+
+function cursorMode(target: Element | null): CursorMode {
+  if (target?.matches("input[type='range'], [role='slider'], [data-cursor='precision']")) return "precision";
+  if (target instanceof HTMLTextAreaElement || (target instanceof HTMLElement && target.isContentEditable)) return "text";
+  if (target instanceof HTMLInputElement && ["text", "search", "email", "url", "tel", "password", "number"].includes(target.type)) return "text";
+  return "default";
+}
+
 function rotate(path: readonly Point[], angle: number): Point[] {
   const cosine = Math.cos(angle);
   const sine = Math.sin(angle);
@@ -181,6 +206,9 @@ export function startMorphlingCursor(): void {
   let pointer: Point = { x: 0, y: 0 };
   let visible = false;
   let hovered: Element | null = null;
+  let dragging: Element | null = null;
+  let mode: CursorMode = "default";
+  let centerPath = DOT_PATH;
   let lastBounds: Bounds | null = null;
   let shape = SHAPES[0] ?? { path: resample(polygon(3)), corners: 3 };
   let path = shape.path.map(({ x, y }) => ({ x: x * CURSOR_RADIUS, y: y * CURSOR_RADIUS }));
@@ -200,7 +228,9 @@ export function startMorphlingCursor(): void {
     }));
   }
 
-  function currentRectangle(): Point[] | null {
+  function targetPath(): Point[] | null {
+    if (mode === "text") return TEXT_PATH;
+    if (mode === "precision") return PRECISION_PATH;
     if (hovered?.isConnected) {
       const rect = hovered.getBoundingClientRect();
       if (rect.width && rect.height) {
@@ -212,14 +242,18 @@ export function startMorphlingCursor(): void {
   }
 
   function setHovered(next: Element | null, now: number): void {
-    if (next === hovered) return;
-    if (hovered) currentRectangle();
+    const nextMode = cursorMode(next);
+    if (next === hovered && nextMode === mode) return;
+    if (hovered) targetPath();
     hovered = next;
-    const destination = hovered ? currentRectangle() : freePath(now);
+    mode = nextMode;
+    drawingCanvas.dataset.mode = mode;
+    const destination = hovered ? targetPath() : freePath(now);
     if (!destination) return;
     morph = {
       kind: "hover",
       from: path,
+      fromCenter: centerPath,
       offset: bestOffset(path, destination),
       startedAt: now,
       duration: 210,
@@ -227,6 +261,7 @@ export function startMorphlingCursor(): void {
   }
 
   function findHovered(): Element | null {
+    if (dragging?.isConnected) return dragging;
     const candidate = document.elementFromPoint(pointer.x, pointer.y)?.closest(TARGETS) ?? null;
     return candidate?.hasAttribute("data-cursor-skip") ? null : candidate;
   }
@@ -253,12 +288,13 @@ export function startMorphlingCursor(): void {
           const rotated = blend(morph.from, morph.to, eased);
           path = rotate(rotated, angle(now) - angle(morph.startedAt));
         } else {
-          const destination = hovered ? currentRectangle() : freePath(now);
+          const destination = hovered ? targetPath() : freePath(now);
           path = destination ? blend(morph.from, shift(destination, morph.offset), eased) : freePath(now);
+          centerPath = blend(morph.fromCenter, mode === "text" ? TEXT_CENTER : mode === "precision" ? PRECISION_CENTER : DOT_PATH, eased);
         }
         if (progress === 1) morph = null;
       } else if (hovered) {
-        path = currentRectangle() ?? freePath(now);
+        path = targetPath() ?? freePath(now);
       } else if (now >= nextShapeAt) {
         const choices = SHAPES.filter((candidate) => candidate !== shape);
         const next = choices[Math.floor(Math.random() * choices.length)] ?? shape;
@@ -295,9 +331,15 @@ export function startMorphlingCursor(): void {
       drawingColorFieldContext.putImageData(colorFieldPixels, 0, 0);
       drawingContext.save();
       drawingContext.beginPath();
-      drawingContext.arc(pointer.x, pointer.y, DOT_RADIUS, 0, Math.PI * 2);
+      const centerPoints = translatePath(centerPath, pointer);
+      const centerFirst = centerPoints[0];
+      if (centerFirst) {
+        drawingContext.moveTo(centerFirst.x, centerFirst.y);
+        for (const point of centerPoints.slice(1)) drawingContext.lineTo(point.x, point.y);
+        drawingContext.closePath();
+      }
       drawingContext.clip();
-      // The oversized field lets its waves flow beyond the dot without losing color coverage.
+      // The oversized field lets its waves flow beyond the glyph without losing color coverage.
       drawingContext.drawImage(
         colorField,
         pointer.x - COLOR_FIELD_SIZE_CSS / 2,
@@ -320,13 +362,33 @@ export function startMorphlingCursor(): void {
   function leave(): void {
     visible = false;
     hovered = null;
+    dragging = null;
+    mode = "default";
+    centerPath = DOT_PATH;
+    path = freePath(performance.now());
+    drawingCanvas.dataset.mode = mode;
     lastBounds = null;
     morph = null;
   }
 
   resize();
+  document.documentElement.classList.add("morphling-active");
+  document.addEventListener("astro:after-swap", () => {
+    document.documentElement.classList.add("morphling-active");
+    leave();
+  });
   window.addEventListener("resize", resize, { passive: true });
   window.addEventListener("pointermove", move, { passive: true });
+  window.addEventListener("pointerdown", (event) => {
+    move(event);
+    if (mode === "precision") dragging = hovered;
+  }, { passive: true });
+  const release = () => {
+    dragging = null;
+    if (visible) setHovered(findHovered(), performance.now());
+  };
+  window.addEventListener("pointerup", release, { passive: true });
+  window.addEventListener("pointercancel", release, { passive: true });
   document.addEventListener("pointerleave", leave);
   window.addEventListener("scroll", () => {
     if (visible) setHovered(findHovered(), performance.now());
