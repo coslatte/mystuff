@@ -61,3 +61,21 @@ app:
   soundcloud:
     client-id: ${SOUNDCLOUD_CLIENT_ID:}
     user-url: ${SOUNDCLOUD_USER_URL:https://soundcloud.com/cosmiclattemusic}
+  contact:
+    email-enabled: ${CONTACT_EMAIL_ENABLED:false}
+    telegram-enabled: ${CONTACT_TELEGRAM_ENABLED:false}
+    processing-enabled: ${CONTACT_PROCESSING_ENABLED:false}
+    scheduled-enabled: ${CONTACT_SCHEDULED_ENABLED:false}
+    immediate-enabled: ${CONTACT_IMMEDIATE_ENABLED:true}
+    gmail-client-id: ${GMAIL_CLIENT_ID:}
+    gmail-client-secret: ${GMAIL_CLIENT_SECRET:}
+    gmail-refresh-token: ${GMAIL_REFRESH_TOKEN:}
+    from-email: ${CONTACT_FROM_EMAIL:gabrielpazruiz02@gmail.com}
+    to-email: ${CONTACT_TO_EMAIL:gabrielpazruiz02@gmail.com}
+    runner-token: ${CONTACT_RUNNER_TOKEN:}
+    ip-hash-key: ${CONTACT_IP_HASH_KEY:}
+    trust-forwarded-for: ${CONTACT_TRUST_FORWARDED_FOR:false}
+    ip-limit: ${CONTACT_IP_LIMIT:3}
+    daily-limit: ${CONTACT_DAILY_LIMIT:50}
+    provider-url: ${CONTACT_PROVIDER_URL:https://gmail.googleapis.com/gmail/v1/users/me/messages/send}
+    token-url: ${GMAIL_TOKEN_URL:https://oauth2.googleapis.com/token}

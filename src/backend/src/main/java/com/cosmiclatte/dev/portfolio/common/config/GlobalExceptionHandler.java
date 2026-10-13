@@ -18,6 +18,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.cosmiclatte.dev.portfolio.common.dto.ResponseFormat;
 import com.cosmiclatte.dev.portfolio.common.exception.BadRequestException;
+import com.cosmiclatte.dev.portfolio.common.exception.ContactException;
 import com.cosmiclatte.dev.portfolio.common.exception.ForbiddenException;
 import com.cosmiclatte.dev.portfolio.common.exception.NotFoundException;
 import com.cosmiclatte.dev.portfolio.common.exception.StorageException;
@@ -41,6 +42,13 @@ import java.util.UUID;
 public class GlobalExceptionHandler {
 
     public static final String ERROR_ID_HEADER = "X-Error-Id";
+
+    @ExceptionHandler(ContactException.class)
+    public ResponseEntity<ResponseFormat<Object>> handleContact(ContactException ex) {
+        ResponseEntity.BodyBuilder response = ResponseEntity.status(ex.status());
+        if (ex.retryAfter() > 0) response.header("Retry-After", Long.toString(ex.retryAfter()));
+        return response.body(ResponseFormat.error(ex.getMessage(), null, metaOf(generateErrorId(), ex.status())));
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ResponseFormat<Object>> handleValidation(MethodArgumentNotValidException ex) {
@@ -124,7 +132,7 @@ public class GlobalExceptionHandler {
         if (status.is5xxServerError()) {
             log.error("Unhandled error [{}]: {}", errorId, ex.getMessage(), ex);
         } else {
-            log.warn("Request failed [{}] {} - {}", errorId, status.value(), ex.getMessage());
+            log.warn("Request failed [{}] {} - {}", errorId, status.value(), ex.getClass().getSimpleName());
         }
 
         return ResponseEntity.status(status)

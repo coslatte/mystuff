@@ -15,6 +15,9 @@ public final class ApiPaths {
 
     public static final String API = "/api";
 
+    public static final String CONTACT_MESSAGES = API + "/contact/messages";
+    public static final String CONTACT_RUNNER = API + "/internal/contact/deliveries/process";
+
     // Kept separate from SONGS so the two mappings below can be derived from it.
     // Annotation values must be compile-time constants, so this cannot be a
     // substring() call.

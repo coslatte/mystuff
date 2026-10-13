@@ -21,7 +21,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins(origins)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .exposedHeaders("X-Error-Id")
+                .exposedHeaders("X-Error-Id", "Retry-After")
                 .allowCredentials(true);
         // The UI polls this to tell a cold start apart from a slow request.
         registry.addMapping("/health")

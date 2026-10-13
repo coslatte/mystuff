@@ -3,9 +3,11 @@
 
 $root = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $envFile = Join-Path $root ".env"
+$localEnvFile = Join-Path $root ".env.local"
 
-if (Test-Path $envFile) {
-    Get-Content $envFile | ForEach-Object {
+foreach ($file in @($envFile, $localEnvFile)) {
+if (Test-Path $file) {
+    Get-Content $file | ForEach-Object {
         if ($_ -match '^\s*#' -or $_ -match '^\s*$') { return }
         $kv = $_ -split '=',2
         if ($kv.Count -eq 2) {
@@ -15,9 +17,8 @@ if (Test-Path $envFile) {
             Write-Host "  Loaded $k"
         }
     }
-    Write-Host "Loaded env vars from $envFile" -ForegroundColor Green
-} else {
-    Write-Host "No .env at $root, falling back to the application.yml defaults" -ForegroundColor Yellow
+    Write-Host "Loaded env vars from $file" -ForegroundColor Green
+}
 }
 
 Write-Host "Starting backend..." -ForegroundColor Cyan
