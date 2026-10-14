@@ -12,7 +12,7 @@
  */
 
 import { FluidSolver } from "./fluid";
-import { applyNoiseAndGain, drawHalftone } from "./fluid-filters";
+import { applyGain, createFluidFilter, drawFluidFilter } from "./fluid-filters";
 
 type RGB = readonly [number, number, number];
 
@@ -166,6 +166,7 @@ export function mountFluidPanel(canvas: HTMLCanvasElement): () => void {
   let lastPaint = -Infinity;
   let onScreen = false;
   let elapsed = 0;
+  let filterPattern: CanvasPattern | null = null;
 
   function emit(elapsed: number, dt: number): void {
     for (const source of SOURCES) {
@@ -227,7 +228,7 @@ export function mountFluidPanel(canvas: HTMLCanvasElement): () => void {
 
       const density = total <= 0 ? 0 : (1 - Math.exp(-total * DENSITY)) * veil;
       const share = total <= 0 ? 0 : 1 / total;
-      const gain = applyNoiseAndGain(density, x, y);
+      const gain = applyGain(density);
       for (let c = 0; c < 3; c += 1) {
         pixels[p + c] = mix(paper[c], dye[i + c] * share * EXPOSURE, gain) * 255;
       }
@@ -236,7 +237,7 @@ export function mountFluidPanel(canvas: HTMLCanvasElement): () => void {
     fieldContext.putImageData(image, 0, 0);
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.drawImage(field, 0, 0, WIDTH, HEIGHT, 0, 0, canvas.width, canvas.height);
-    drawHalftone(context, canvas.width, canvas.height);
+    drawFluidFilter(context, filterPattern, canvas.width, canvas.height);
   };
 
   function canRun(): boolean {
@@ -283,6 +284,9 @@ export function mountFluidPanel(canvas: HTMLCanvasElement): () => void {
     if (canvas.width === width && canvas.height === height) return;
     canvas.width = width;
     canvas.height = height;
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    filterPattern = createFluidFilter(context, dpr);
     paint();
   }
 

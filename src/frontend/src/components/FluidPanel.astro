@@ -2,16 +2,13 @@
 /*
  * The ink behind the "a little about myself" panel on `/`.
  *
- * The solver is `lib/sim`, the picture is `lib/sim/fluid-panel`, and nothing here
- * knows either exists. The canvas is larger than the panel on purpose: it paints ink
- * with an alpha channel rather than an opaque paper rectangle, so the part that
- * crosses the border fades into the section instead of laying a cream box over it.
- * That is why the host must be `relative` and must not clip.
+ * The solver and filters live in `lib/sim`; this component only mounts and releases
+ * them. Alpha lets the ink sit over the panel paper without an opaque rectangle.
  */
 ---
 
-<div class="pointer-events-none absolute -inset-5 -bottom-9 -z-10" aria-hidden="true">
-  <canvas data-fluid-panel class="pointer-events-auto block h-full w-full touch-none opacity-85 saturate-75 contrast-90"></canvas>
+<div class="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
+  <canvas data-fluid-panel class="pointer-events-auto block h-full w-full touch-none"></canvas>
 </div>
 
 <script>

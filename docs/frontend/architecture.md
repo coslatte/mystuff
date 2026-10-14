@@ -782,26 +782,19 @@ reachable only from code that nothing reaches.
   [ADR-011](#adr-011--the-camera-crops-and-there-is-no-brush).
 - **No linter.** `bun run check` is the only gate, and it must run before every
   commit, not only in CI.
-- **The `/` about panel runs a solver behind its heading.** It is the one canvas on a
-  prerendered page, so it is gated on `IntersectionObserver` rather than on load, and
-  released on `astro:before-swap` because `ClientRouter` detaches the canvas without
-  stopping the loop. The canvas sits at `z-index: -10` inside the isolated panel so
-  the heading and portrait paint over it while the pointer can still reach the canvas.
-  Reduced motion gets the settled frame rather than an empty panel:
-  it runs its opening steps whether or not animation is welcome. Five things about it
-  are not free choices. The grid is portrait (`112×132`), because `drawImage` stretches
-  the field to the canvas and a band-shaped grid smears every plume vertically. The
-  canvas is *larger* than the panel and the ink is painted on an alpha channel rather
-  than as an opaque paper rectangle, which is the only way it can cross the border
-  without laying a cream box over the neighbouring column; every edge fades out over
-  six cells so a cut of the canvas never reads as a rectangle, and `#about` carries
-  `overflow-x-clip` because at phone widths the panel *is* the section width and the
-  right-hand bleed would otherwise widen the page. The sources sit twenty cells below
-  the bottom edge with a radius that spans the gap: `freeSlipBoundary` cancels velocity
-  crossing each wall, so moving the centre out without growing the radius drops them
-  out of the field entirely, and keeping the peak outside is also what stops the origin
-  from showing as a hard band along the edge. They are placed on a golden-ratio
-  sequence rather than evenly spaced, because evenly spaced reads as a printed pattern.
+- **The `/` about panel runs a solver behind its heading.** It is gated on
+  `IntersectionObserver` and released on `astro:before-swap`. Reduced motion gets the
+  settled frame. The solver stays at `112×132`; its output is scaled into the clipped
+  panel with alpha and a six-cell edge fade. Gain is applied while composing those
+  cells. Noise and halftone are a separate high-resolution layer: a small texture tile
+  is created on resize, then composited with one `fillRect` per paint. Do not draw the
+  dots individually per frame; that made the display layer dominate the solver cost.
+  The grid is portrait because `drawImage` stretches it to the panel, and a band-shaped
+  grid smears every plume vertically. The sources sit twenty cells below the bottom
+  edge with a radius that spans the gap: `freeSlipBoundary` cancels velocity crossing
+  each wall, so moving the centre out without growing the radius drops them out of the
+  field entirely. They are placed on a golden-ratio sequence rather than evenly spaced,
+  because evenly spaced reads as a printed pattern.
 - **A steep display curve and an interactive field are mutually exclusive.** `density`
   is `1 - exp(-total * DENSITY)`, so raising `DENSITY` to rescue a faint picture pins
   most of the panel at full alpha — and a field with no headroom cannot show the
