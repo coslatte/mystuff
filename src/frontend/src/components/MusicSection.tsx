@@ -68,7 +68,7 @@ export default function MusicSection() {
 
         <section className="flex flex-col">
           <h3 className="border-b-2 border-black bg-brut-red text-white p-3 font-display text-lg font-bold laptop:text-xl">
-            tracks
+            wip tracks
           </h3>
           <div className="flex flex-col gap-2 bg-neutral-100 p-3 tablet:p-4 laptop:p-5">
             {songs.map((song) => (

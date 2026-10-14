@@ -2,8 +2,10 @@
 export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
+import InvertLink from "../components/InvertLink.astro";
 import RepoRow from "../components/RepoRow.astro";
 import { fetchContributionSummary, fetchPinnedRepos, fetchRepoMediaImage } from "../services/github";
+import { contributionTip } from "../lib/contribution-tip";
 import type { RepoView } from "../types/github";
 
 const GITHUB_PROFILE = "https://github.com/coslatte";
@@ -28,9 +30,11 @@ const skills = [
   },
 ];
 
-// The pinned repos are the single source of truth for this section. When the
-// GitHub API is unavailable (no token, rate limit, outage) we show an empty
-// state instead of a hardcoded list that would drift from the real profile.
+/**
+ * The pinned repos are the single source of truth for this section. When the
+ * GitHub API is unavailable (no token, rate limit, outage) we show an empty
+ * state instead of a hardcoded list that would drift from the real profile.
+ */
 const [pinned, contributions] = await Promise.all([
   fetchPinnedRepos(GITHUB_HANDLE),
   fetchContributionSummary(GITHUB_HANDLE),
@@ -58,14 +62,44 @@ Astro.response.headers.set(
   <section class="border-b-2 border-black bg-white">
     <div class="grid gap-8 p-6 tablet:p-8 laptop:grid-cols-[1fr_18rem] laptop:items-end laptop:p-10">
       <div>
-        <p class="brut-label">02 / coding</p>
+        <p class="brut-label">01 / intro</p>
         <h1 class="mt-4 font-display text-5xl font-black leading-none tracking-tighter tablet:text-7xl">Work in code.</h1>
         <p class="mt-5 max-w-2xl text-base leading-7">
-          Backend systems, tools, and experimentation software. The projects below come from
-          my pinned GitHub repositories and update with my profile.
+          my main focus is on backend systems, toolings, and experimental & math software.
+          The projects below come from my pinned GitHub repositories and update with my profile.
         </p>
       </div>
       <a class="editorial-link justify-self-start laptop:justify-self-end" href={GITHUB_PROFILE} target="_blank" rel="noopener noreferrer">open GitHub ↗</a>
+    </div>
+  </section>
+
+  <section id="experience" class="border-b-2 border-black bg-white">
+    <div class="grid laptop:grid-cols-[minmax(15rem,0.8fr)_minmax(0,1.6fr)]">
+      <div class="border-b-2 border-black bg-brut-red p-6 text-white tablet:p-8 laptop:border-b-0 laptop:border-r-2 laptop:p-10">
+        <p class="brut-label inline-block bg-white px-2 py-1">Experience</p>
+        <h2 class="mt-8 max-w-lg font-display text-4xl font-black leading-[1.05] tracking-tighter tablet:text-5xl">
+          Real life experience.
+        </h2>
+      </div>
+      <div class="p-6 tablet:p-8 laptop:p-10">
+        <div class="flex flex-col gap-2 tablet:flex-row tablet:items-start tablet:justify-between">
+          <div>
+            <h3 class="font-display text-3xl font-black tracking-tight">
+              Backend Engineer @ <InvertLink href="https://bicotexsoftware.com/" target="_blank" rel="noopener noreferrer">Bicotex Software</InvertLink>
+            </h3>
+          </div>
+          <p class="font-mono text-xs font-bold text-neutral-600">February 2026 – present</p>
+        </div>
+        <p class="mt-6 max-w-3xl text-lg leading-8">
+          I build production software for logistics, warehousing, inventory, transportation, and food
+          retail operations. The work crosses business rules, APIs, data and security (roles, users, etc..).
+        </p>
+        <ul class="mt-6 grid gap-4 border-t-2 border-black pt-6 leading-7 tablet:grid-cols-2 tablet:gap-8">
+          <li>Design REST APIs, DTOs, persistence layers, and PostgreSQL migrations with Java and Spring Boot.</li>
+          <li>Implement multi-tenant and branch-scoped access using Spring Security, JWT, and RBAC.</li>
+          <li>Build workflows for products, inventory management, batches, payments, transfers, reports..</li>
+        </ul>
+      </div>
     </div>
   </section>
 
@@ -78,7 +112,7 @@ Astro.response.headers.set(
       {skills.map((skill, index) => (
         <article class:list={[
           "border-b-2 border-black p-6 tablet:p-8 laptop:p-10",
-          index === 0 ? "tablet:col-span-2" : index === 1 && "tablet:border-r-2",
+          index === 0 ? "tablet:col-span-2" : index !== 2 && "tablet:border-r-2",
         ]}>
           <h3 class="font-display text-2xl font-black tracking-tight">{skill.name}</h3>
           {skill.items.map((item) => (
@@ -119,9 +153,9 @@ Astro.response.headers.set(
             {contributions.totalContributions.toLocaleString("en-US")} contributions
           </p>
           <div class="mt-5 overflow-x-auto pb-2" tabindex="0" role="region" aria-label="Daily GitHub contributions, scroll horizontally to view the full year">
-            <div class="grid min-w-[40rem] grid-cols-[2rem_minmax(0,1fr)] gap-x-2 gap-y-2">
+            <div class="grid min-w-160 grid-cols-[2rem_minmax(0,1fr)] gap-x-2 gap-y-2">
               <div></div>
-              <div class="grid gap-[3px] font-mono text-[10px] text-neutral-600" style={`grid-template-columns: repeat(${contributions.weeks.length}, minmax(0, 1fr))`} aria-hidden="true">
+              <div class="grid gap-0.75 font-mono text-[10px] text-neutral-600" style={`grid-template-columns: repeat(${contributions.weeks.length}, minmax(0, 1fr))`} aria-hidden="true">
                 {contributions.weeks.map((week, index) => {
                   const day = index === 0 ? week.contributionDays[0] : week.contributionDays.find((day) => day.date.endsWith("-01"));
                   return <span class="overflow-visible whitespace-nowrap">{day ? new Date(`${day.date}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }) : ""}</span>;
@@ -130,18 +164,23 @@ Astro.response.headers.set(
               <div class="grid grid-rows-7 items-center font-mono text-[10px] text-neutral-600" aria-hidden="true">
                 <span class="row-start-2">Mon</span><span class="row-start-4">Wed</span><span class="row-start-6">Fri</span>
               </div>
-              <div class="grid gap-[3px]" style={`grid-template-columns: repeat(${contributions.weeks.length}, minmax(0, 1fr))`} role="img" aria-label={`${contributions.totalContributions.toLocaleString("en-US")} GitHub contributions over the last 12 months. Darker squares indicate more contributions.`}>
+              <div class="grid gap-0.75" data-contribution-grid data-cursor="precision" style={`grid-template-columns: repeat(${contributions.weeks.length}, minmax(0, 1fr))`} role="img" aria-label={`${contributions.totalContributions.toLocaleString("en-US")} GitHub contributions over the last 12 months. Darker squares indicate more contributions.`}>
                 {contributions.weeks.map((week) => (
-                  <div class="grid grid-rows-7 gap-[3px]">
+                  <div class="grid grid-rows-7 gap-0.75">
                     {week.contributionDays.map((day) => (
-                      <span class="aspect-square border border-black/10" style={`grid-row: ${day.weekday + 1}; background-color: ${day.color}`} title={`${day.date}: ${day.contributionCount} contributions`} aria-hidden="true"></span>
+                      <span class="aspect-square border border-black/10" style={`grid-row: ${day.weekday + 1}; background-color: ${day.color}`} data-tip={contributionTip(day.contributionCount, day.date)} aria-hidden="true"></span>
                     ))}
                   </div>
                 ))}
               </div>
             </div>
           </div>
-          <p class="mt-2 font-mono text-[10px] text-neutral-600">Each square is one day. Darker squares indicate more contributions.</p>
+          <div
+            data-contribution-tip
+            aria-hidden="true"
+            class="pointer-events-none fixed z-50 hidden border-2 border-black bg-black px-2 py-1 font-mono text-[11px] leading-tight whitespace-nowrap text-white shadow-[4px_4px_0_var(--color-brut-blue)]"
+          ></div>
+          <p class="mt-2 font-mono text-[10px] text-neutral-600">Each square is one day. Hover a square for its count. Darker squares indicate more contributions.</p>
         </>
       ) : (
         <p class="mt-4 font-mono text-sm text-neutral-600">
@@ -170,4 +209,46 @@ Astro.response.headers.set(
         </p>
       )}
   </section>
+
+  <script>
+    import { placeContributionTip } from "../lib/contribution-tip";
+
+    let tip: HTMLElement | null = null;
+
+    function hideTip(): void {
+      tip?.classList.add("hidden");
+    }
+
+    function bindContributionTip(): void {
+      const found = document.querySelector<HTMLElement>("[data-contribution-tip]");
+      const grid = document.querySelector<HTMLElement>("[data-contribution-grid]");
+      if (!found || !grid || grid.dataset.tipBound) return;
+      grid.dataset.tipBound = "true";
+      tip = found;
+
+      grid.addEventListener("pointerover", (event) => {
+        const cell = (event.target as HTMLElement).closest<HTMLElement>("[data-tip]");
+        if (!cell || !tip) return;
+        tip.textContent = cell.dataset.tip ?? "";
+        tip.classList.remove("hidden");
+        const { left, top } = placeContributionTip(
+          cell.getBoundingClientRect(),
+          tip.getBoundingClientRect(),
+          window.innerWidth,
+          window.innerHeight
+        );
+        tip.style.left = `${left}px`;
+        tip.style.top = `${top}px`;
+      });
+      grid.addEventListener("pointerleave", hideTip);
+    }
+
+    bindContributionTip();
+    document.addEventListener("astro:page-load", bindContributionTip);
+    // The chart scrolls under the pointer, and a tap outside the grid has to dismiss the tip.
+    window.addEventListener("scroll", hideTip, true);
+    window.addEventListener("pointerdown", (event) => {
+      if (!(event.target as HTMLElement).closest?.("[data-tip]")) hideTip();
+    });
+  </script>
 </Layout>

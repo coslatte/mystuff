@@ -114,7 +114,11 @@ const TEXT_CENTER = resample([
   { x: -0.75, y: -10 }, { x: 0.75, y: -10 },
   { x: 0.75, y: 10 }, { x: -0.75, y: 10 },
 ]);
-const PRECISION_CENTER = PRECISION_PATH.map(({ x, y }) => ({ x: x * 0.72, y: y * 0.72 }));
+// The colored center drops the arrow's tail: a full arrow inside the arrow already on
+// screen reads as a second cursor, which is what the smaller scale is judged against.
+const PRECISION_CENTER = resample([
+  { x: 0, y: 0 }, { x: 19, y: 18 }, { x: 11, y: 18 }, { x: 6, y: 20 }, { x: 0, y: 26 },
+]).map(({ x, y }) => ({ x: x * 0.72, y: y * 0.72 }));
 
 function cursorMode(target: Element | null): CursorMode {
   if (target?.matches("input[type='range'], [role='slider'], [data-cursor='precision']")) return "precision";

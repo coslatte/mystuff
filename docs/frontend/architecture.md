@@ -276,9 +276,9 @@ The sections are `/`, `/coding`, `/music`, `/contact` and `/experimentation`. Se
 
 | File | Role |
 | --- | --- |
-| `index.astro` | `/`. Profile, education, research, Bicotex experience, creative skills, interests, contact. Prerendered. |
+| `index.astro` | `/`. Profile, education, research, interests, contact, and the ink band. Prerendered. |
 | `contact.astro` | `/contact`. Static shell, mounts `ContactForm` for message submissions. |
-| `coding.astro` | `/coding`. Programming skills, SSR GitHub pinned repos + contribution calendar. |
+| `coding.astro` | `/coding`. Bicotex experience, work skills, SSR GitHub pinned repos + contribution calendar. |
 | `music.astro` | `/music`. Static shell, mounts `MusicSection`. |
 | `experimentation/index.astro` | `/experimentation`. Index of the experiments. |
 | `experimentation/spectral.astro` | Static shell, mounts `PigmentFlow`. |
@@ -300,12 +300,15 @@ The sections are `/`, `/coding`, `/music`, `/contact` and `/experimentation`. Se
 | `RouteCurtain.astro` | Navigation loading overlay. In the layout, persisted across swaps. |
 | `Navbar.astro` | Site navigation. |
 | `Footer.astro` | The now-playing bar and nothing else. Hidden until a source reports something; fixed height, so the widget sizes the spectrum to it. |
-| `Hero.astro` | `/` introduction, centered heading with a scrolling code fragment on the brutalist `code` plate and an FM wave on `soundwaves`, portrait, and route into the biography. |
+| `Hero.astro` | `/` opening: the centered heading with a scrolling code fragment on the brutalist `code` plate and an FM wave on `soundwaves`. Nothing else; the ink band and the portrait belong to the about section in `index.astro`. |
+| `FluidPanel.astro` | One decorative ink band. The solver and the picture are `lib/sim`; the component only mounts and releases it. One canvas per page, because the mount script runs once. |
 | `ExperimentHeader.astro` | Shared heading and back link for individual experiments. |
 | `RepoRow.astro` | One row in the `/coding` repos list. |
+| `InvertLink.astro` | Inline text link that turns blue on hover and focus. For a name inside a heading. |
 | `SocialButton.astro` | One outbound social link. |
 | `NowPlaying.astro` | Defines `<now-playing-el>`; the bridge to `lib/now-playing-element.ts`. |
 | `MorphlingCursor.astro` | Persistent canvas overlay for the fine-pointer cursor treatment. |
+| `FluidPanel.astro` | The ink behind the `/` about panel. A canvas plus a mount call; released on `astro:before-swap`. |
 
 ### `src/components/` — `.tsx`, inside an island
 
@@ -370,6 +373,7 @@ Framework-free unless the name says otherwise.
 | `now-playing-element.ts` | **Browser only.** The `<now-playing-el>` custom element. Flips `data-playing`, which is what shows the bar. |
 | `morphling-cursor.ts` | **Browser only.** Morphs local outline and center paths into an I-beam over editable fields or a tip-anchored arrow over ranges, sliders, and precision surfaces; caps other control outlines at 800 × 600 pixels. |
 | `fm-wave.ts` | Pure geometry and frequency calculation for the hero's modulated sine wave. |
+| `contribution-tip.ts` | Pure label and viewport placement for the `/coding` contribution hover tip. |
 | `route-curtain.ts` | **Browser only.** Immediate navigation loading, readiness and cancellation handling, and the shared 2D partition painter. Also exports `curtainCells`. |
 | `api/schema.ts` | Generated from `openapi.json`. Never hand-edited. |
 | `api/README.md` | How and when to regenerate. |
@@ -378,6 +382,8 @@ Framework-free unless the name says otherwise.
 | `boot/frame.ts` | The splash's opening partition, read by the CSS frame and the scene. |
 | `recursion/subdivide.ts` | The partition itself. Exact tiling, plus its boundary list. |
 | `sim/fluid.ts` | Stable-fluids solver. No canvas, no DOM. |
+| `sim/fluid-panel.ts` | **Browser only.** The `/` ink: what the solver's dye looks like, reduced motion, visibility, pointer stir, teardown. |
+| `sim/fluid-panel.ts` | The home ink band: sources, dye tints and the composite. One canvas per mount. |
 | `sim/pigment-sim.ts` | Velocity + dye fields, layout, `PaintSurface`. |
 | `sim/layouts.ts` | Emitter layouts. Aesthetic, not physics. |
 | `sim/camera.ts` | Zoom and pan as arithmetic on a normalised centre. |
@@ -668,9 +674,11 @@ them; a new section must be added there too, not only to the navbar.
 Contact lives on `/`, not at the bottom of the repos list. It was never about the
 repos, it just happened to sit under them.
 
-Programming languages, frameworks, AI agents, editors, and data and architecture
-tools live on `/coding`, before the GitHub profile. Art, design, and music tools
-stay on `/` with the personal interests.
+Every skill lives on `/coding`, before the GitHub profile: languages, frameworks,
+AI agents, editors, data and architecture tools, and art, design, and music tools.
+`/` keeps the biography and the personal interests, because those are about the
+person rather than the work. The Bicotex experience moved to `/coding` for the same
+reason: it is professional evidence, and `/` is the introduction.
 
 <a id="adr-013"></a>
 ### ADR-013 — Links use stable visual states
@@ -681,6 +689,8 @@ document-wide filter and event listeners for five links.
 **Decision.** Use `editorial-link` for text calls to action and `channel-link`
 for the YouTube channels. Each has a clear focus state and a color change. The
 channels sit beside the paragraph that explains the interests they relate to.
+A link that lives inside a heading is `InvertLink.astro` instead, because the
+other two are line-height and font-size choices for their own row.
 
 **Consequences.** The link filter, timer, and wrapper component are gone. The
 music platform links still use `SocialButton.astro`, where a compact row of
@@ -772,6 +782,41 @@ reachable only from code that nothing reaches.
   [ADR-011](#adr-011--the-camera-crops-and-there-is-no-brush).
 - **No linter.** `bun run check` is the only gate, and it must run before every
   commit, not only in CI.
+- **The `/` about panel runs a solver behind its heading.** It is the one canvas on a
+  prerendered page, so it is gated on `IntersectionObserver` rather than on load, and
+  released on `astro:before-swap` because `ClientRouter` detaches the canvas without
+  stopping the loop. The canvas sits at `z-index: -10` inside the isolated panel so
+  the heading and portrait paint over it while the pointer can still reach the canvas.
+  Reduced motion gets the settled frame rather than an empty panel:
+  it runs its opening steps whether or not animation is welcome. Five things about it
+  are not free choices. The grid is portrait (`112×132`), because `drawImage` stretches
+  the field to the canvas and a band-shaped grid smears every plume vertically. The
+  canvas is *larger* than the panel and the ink is painted on an alpha channel rather
+  than as an opaque paper rectangle, which is the only way it can cross the border
+  without laying a cream box over the neighbouring column; every edge fades out over
+  six cells so a cut of the canvas never reads as a rectangle, and `#about` carries
+  `overflow-x-clip` because at phone widths the panel *is* the section width and the
+  right-hand bleed would otherwise widen the page. The sources sit twenty cells below
+  the bottom edge with a radius that spans the gap: `freeSlipBoundary` cancels velocity
+  crossing each wall, so moving the centre out without growing the radius drops them
+  out of the field entirely, and keeping the peak outside is also what stops the origin
+  from showing as a hard band along the edge. They are placed on a golden-ratio
+  sequence rather than evenly spaced, because evenly spaced reads as a printed pattern.
+- **A steep display curve and an interactive field are mutually exclusive.** `density`
+  is `1 - exp(-total * DENSITY)`, so raising `DENSITY` to rescue a faint picture pins
+  most of the panel at full alpha — and a field with no headroom cannot show the
+  pointer moving dye through it, because swapping saturated ink around renders
+  identically. Visibility has to come from the dose (`DYE_PER_STEP`), not the curve.
+  Keep the saturated fraction low; that number is the headroom the stir has.
+- **Measure `dt` from the last step, not the last animation frame.** The sources inject
+  per step and the damping is per second, so on a 120Hz display a `dt` taken from the
+  previous rAF is a quarter of the step it is supposed to advance: the two drift apart
+  and the panel silts up with dye over a minute. It looks correct in the first few
+  seconds and then fills with colour, so it has to be caught by sampling the panel at
+  two different ages rather than by looking once.
+- **Forcing a source needs `drive`, not `setVelocity`.** `setVelocity` is a four-cell
+  bilinear splat, so a handful of them cannot lift dye against velocity damping, and
+  the failure is two round blobs with no filaments rather than an error.
 - **No path aliases.** See [Dependency direction](#dependency-direction).
 - **Upload limits are duplicated** between `lib/audio-file.ts` and
   `FileStorageService.validate`. They are constants in two languages and the
@@ -806,8 +851,8 @@ Yellow stays excluded from the interface palette.
 
 Blue leads navigation, buttons, and focus. Neutral surfaces occupy most of
 each page; full color belongs to selected planes, not every heading or card.
-The home background panel is paper, the experience panel is red, the Coding
-profile is blue, and the music track heading is red beside a neutral album
+The home background panel is paper, the Coding experience panel is red, the
+Coding profile is blue, and the music track heading is red beside a neutral album
 heading. Green confirms delivery and completed uploads. Red also marks errors
 and destructive actions; text and icons carry the status as well as color.
 
@@ -819,8 +864,12 @@ experiments' generated palettes remain content rather than theme tokens.
 including numbered section labels. Blue and red surfaces use white text; green
 status surfaces use black text. These foreground pairs exceed 4.5:1 contrast.
 
-The home heading centers `i code & shrink soundwaves` across the full page width,
-above the portrait and introduction. `code` keeps its hover plate. Hovering
+The home heading centers `i code & shrink soundwaves` across the full page width and
+is the whole hero. The `01 / background` panel opens the about section with the
+fluid ink band as a full-bleed backdrop, and the portrait sits under the heading.
+There is one canvas per page: the band is mounted once per document, so a second
+copy of `FluidPanel` on the same route would stay blank. `code` keeps its hover
+plate. Hovering
 `code` reveals a smaller, inverted source-code layer after the plate appears.
 Each page load picks a fragment from the frontend or backend; its characters
 rotate to 120 degrees and scroll down slowly. Hovering
@@ -849,6 +898,10 @@ The coding profile displays the daily contribution calendar, not only its total.
 `services/github.ts` validates the calendar before caching it. Partial weeks keep
 GitHub's weekday positions; narrow screens scroll the chart without widening the page.
 Missing data shows a link to GitHub instead of fabricated contribution cells.
+Hovering or tapping a cell shows GitHub's own wording for that day, so the label and
+its placement live in `lib/contribution-tip.ts` instead of in the page; the chart
+declares `data-cursor="precision"` and the cursor morphs into the tip-anchored arrow
+while it is under the pointer.
 
 Music and experiment copy uses descriptive titles, short instructions, and factual
 status messages. Remove rhetorical questions, slogans, and repeated explanations
@@ -883,9 +936,10 @@ column. Hover checks must cover both words separately and leave the ampersand pl
 
 The cursor morphs both its outline and colored center into an I-beam over text
 fields and a tip-anchored arrow over sliders and `data-cursor="precision"`
-surfaces. Precision mode persists through dragging. The native cursor is hidden
-only when the canvas initializes, with native fallbacks for reduced motion and
-coarse pointers. Run `node scripts/responsive-check.mjs --cursor` against the dev
+surfaces. In the arrow the colored center keeps only the head: a full arrow inside
+the outline reads as a second, smaller cursor. Precision mode persists through
+dragging. The native cursor is hidden only when the canvas initializes, with native
+fallbacks for reduced motion and coarse pointers. Run `node scripts/responsive-check.mjs --cursor` against the dev
 server to verify rendered silhouettes, editing, dragging, and route persistence.
 
 Keep the hero, navigation, footer controls, form, and page grids usable from
