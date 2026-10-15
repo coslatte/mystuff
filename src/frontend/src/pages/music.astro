@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import MusicSection from "../components/MusicSection";
 import SocialButton from "../components/SocialButton.astro";
+import MusicJourney from "../components/MusicJourney.astro";
 
 const socials = [
   { name: "soundcloud", url: "https://soundcloud.com/cosmiclattemusic" },
@@ -14,27 +15,80 @@ const socials = [
 ] as const;
 ---
 
-<Layout title="music ][ cosmiclatte.dev">
-  <section class="border-b-2 border-black bg-white">
-    <div class="grid gap-2 p-6 tablet:p-8 laptop:grid-cols-[1fr_18rem] laptop:items-end laptop:p-10">
-      <div>
-        <p class="brut-label">01 / music</p>
-        <h1 class="mt-4 font-display text-5xl font-black leading-none tracking-tighter tablet:text-7xl">sounds i've crafted</h1>
-        <p class="mt-5 max-w-2xl text-base leading-7">
-          Here are my original tracks and releases. Listen, rate or maybe and leave some comments for those work in progress stuff.
-          I've also have some influences and some story telling about my experiencie.
-        </p>
-      </div>
+<Layout
+  title="music ][ cosmiclatte.dev"
+  description="Original music and the influences behind it: an electronic foundation alongside discoveries in R&B, jazz, piano, ambient and experimental music."
+>
+  <section class="music-gateway" aria-label="Music and listening">
+    <div class="music-gateway-track">
+      <section class="music-gateway-panel music-home border-b-2 border-brut-black bg-brut-surface" aria-labelledby="music-title">
+        <div class="music-home-content">
+          <p class="brut-label">01 / music</p>
+          <h1 id="music-title" class="mt-4 font-display text-5xl font-black leading-none tracking-tighter tablet:text-7xl">sounds i've crafted</h1>
+          <p class="mt-5 max-w-2xl text-base leading-7">Listen to my original tracks and releases, leave a rating or a comment, and explore the influences behind my music.</p>
+          <a class="editorial-link mt-5" href="#journey-title">Explore my musical journey ↓</a>
+          <div class="music-platforms" aria-label="Music platforms">
+            <p class="brut-label mb-4">Platforms and links</p>
+            <div class="flex flex-wrap gap-2">
+              {socials.map((social) => <SocialButton name={social.name} url={social.url} />)}
+            </div>
+          </div>
+        </div>
+        <button class="music-gateway-next brut-btn" type="button" data-music-next aria-controls="music-listen">
+          Go to listening <span aria-hidden="true">→</span>
+        </button>
+        <span class="music-gateway-index" aria-hidden="true">01 / 02</span>
+      </section>
+
+      <section class="music-gateway-panel music-listen" id="music-listen" aria-label="Listen to my music" tabindex="-1">
+        <header class="music-listen-header">
+          <p class="brut-label">02 / listen</p>
+          <h2>My music, here.</h2>
+          <button class="brut-btn" type="button" data-music-back aria-controls="music-title"><span aria-hidden="true">←</span> Back to the beginning</button>
+        </header>
+        <MusicSection client:load />
+      </section>
     </div>
   </section>
 
-  <section class="border-b-2 border-black bg-neutral-100 p-6 tablet:p-8 laptop:p-10" aria-label="Music platforms">
-    <p class="brut-label mb-4">Platforms and links</p>
-    <div class="flex flex-wrap gap-2">
-      {socials.map((social) => <SocialButton name={social.name} url={social.url} />)}
-    </div>
-  </section>
-
-  <MusicSection client:load />
+  <MusicJourney />
 
 </Layout>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>("[data-music-next], [data-music-back]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const gateway = button.closest<HTMLElement>(".music-gateway");
+      if (!gateway) return;
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      gateway.scrollTo({ left: button.hasAttribute("data-music-next") ? gateway.clientWidth : 0, behavior: reduceMotion ? "instant" : "smooth" });
+      if (button.hasAttribute("data-music-next")) gateway.querySelector<HTMLElement>("#music-listen")?.focus({ preventScroll: true });
+    });
+  });
+</script>
+
+<style>
+  .music-gateway { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .music-gateway::-webkit-scrollbar { display: none; }
+  .music-gateway-track { display: flex; width: 200%; }
+  .music-gateway-panel { position: relative; flex: 0 0 50%; min-width: 0; width: 50%; scroll-snap-align: start; scroll-snap-stop: always; }
+  .music-home { min-height: min(760px, calc(100svh - 5rem)); display: flex; align-items: center; }
+  .music-home-content { width: 100%; padding: clamp(1.5rem, 5vw, 5rem); padding-right: clamp(9rem, 20vw, 18rem); }
+  .music-platforms { margin-top: clamp(2rem, 5vw, 4rem); padding-top: 1.5rem; border-top: 2px solid var(--color-brut-black); }
+  .music-gateway-next { position: absolute; right: clamp(1.5rem, 5vw, 5rem); top: 50%; display: flex; gap: 1rem; align-items: center; transform: translateY(-50%); min-height: 3.5rem; }
+  .music-gateway-index { position: absolute; right: clamp(1.5rem, 5vw, 5rem); bottom: 1rem; font-size: .65rem; }
+  .music-listen { min-height: min(760px, calc(100svh - 5rem)); background: var(--color-brut-bg); border-left: 2px solid var(--color-brut-black); }
+  .music-listen-header { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; padding: 1rem clamp(1rem, 3vw, 3rem); border-bottom: 2px solid var(--color-brut-black); background: var(--color-brut-surface); }
+  .music-listen-header h2 { flex: 1; margin: 0; font-size: clamp(1.5rem, 3vw, 2.5rem); font-weight: 800; }
+  #music-listen:focus { outline: none; }
+  @media (max-width: 639px) {
+    .music-home { min-height: min(720px, calc(100svh - 4rem)); align-items: flex-start; }
+    .music-home-content { padding: 2rem 1.25rem 7rem; }
+    .music-gateway-next { right: 1.25rem; bottom: 1.25rem; top: auto; transform: none; }
+    .music-gateway-index { left: 1.25rem; right: auto; bottom: 1.75rem; }
+    .music-listen { min-height: 0; }
+    .music-listen-header { gap: .75rem; padding: 1rem; }
+    .music-listen-header h2 { flex-basis: 100%; order: 1; }
+    .music-listen-header button { margin-left: auto; }
+  }
+</style>

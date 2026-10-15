@@ -279,7 +279,7 @@ The sections are `/`, `/coding`, `/music`, `/contact` and `/experimentation`. Se
 | `index.astro` | `/`. Profile, education, research, interests, contact, and the ink band. Prerendered. |
 | `contact.astro` | `/contact`. Static shell, mounts `ContactForm` for message submissions. |
 | `coding.astro` | `/coding`. Bicotex experience, work skills, SSR GitHub pinned repos + contribution calendar. |
-| `music.astro` | `/music`. Static shell, mounts `MusicSection`. |
+| `music.astro` | `/music`. Horizontal intro-to-listening gateway followed by the parallel influence journey. |
 | `experimentation/index.astro` | `/experimentation`. Index of the experiments. |
 | `experimentation/spectral.astro` | Static shell, mounts `PigmentFlow`. |
 | `experimentation/subdivision.astro` | Static shell, mounts `RecursiveSubdivision`. |
