@@ -1,0 +1,106 @@
+[
+  {
+    "id": "skrillex",
+    "name": "Skrillex",
+    "image": "/images/influences/skrillex.jpg",
+    "source": "https://en.wikipedia.org/wiki/Skrillex",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/9/99/From_First_To_Last_-_Emo_Nite_2_-_PH_Carl_Pocket_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "commons": "https://commons.wikimedia.org/wiki/File:From_First_To_Last_-_Emo_Nite_2_-_PH_Carl_Pocket_%28cropped%29.jpg"
+  },
+  {
+    "id": "marshmello",
+    "name": "Marshmello",
+    "image": "/images/influences/marshmello.jpg",
+    "source": "https://en.wikipedia.org/wiki/Marshmello",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/0/09/2016_Open_Beatz_-_Marshmello_-_by_2eight_-DSC_4448.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "commons": "https://commons.wikimedia.org/wiki/File:2016_Open_Beatz_-_Marshmello_-_by_2eight_-DSC_4448.jpg"
+  },
+  {
+    "id": "chime",
+    "name": "Chime (musician)",
+    "image": "/images/influences/chime.jpg",
+    "source": "https://en.wikipedia.org/wiki/Chime_(musician)",
+    "original": "https://upload.wikimedia.org/wikipedia/en/1/15/Chime%28musician%29.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "commons": "https://commons.wikimedia.org/wiki/File:Chime%28musician%29.png"
+  },
+  {
+    "id": "au5",
+    "name": "Au5",
+    "image": "/images/influences/au5.jpg",
+    "source": "https://en.wikipedia.org/wiki/Au5",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Au5_-_Austin_Collins.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "commons": "https://commons.wikimedia.org/wiki/File:Au5_-_Austin_Collins.jpg"
+  },
+  {
+    "id": "post-malone",
+    "name": "Post Malone",
+    "image": "/images/influences/post-malone.jpg",
+    "source": "https://en.wikipedia.org/wiki/Post_Malone",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Post_Malone_July_2021_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "commons": "https://commons.wikimedia.org/wiki/File:Post_Malone_July_2021_%28cropped%29.jpg"
+  },
+  {
+    "id": "bmth",
+    "name": "Bring Me the Horizon",
+    "image": "/images/influences/bmth.jpg",
+    "source": "https://en.wikipedia.org/wiki/Bring_Me_the_Horizon",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/a/ac/Bring_Me_The_Horizon_Tons_of_Rock_2026.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "commons": "https://commons.wikimedia.org/wiki/File:Bring_Me_The_Horizon_Tons_of_Rock_2026.jpg"
+  },
+  {
+    "id": "fujii-kaze",
+    "name": "Fujii Kaze",
+    "image": "/images/influences/fujii-kaze.jpg",
+    "source": "https://en.wikipedia.org/wiki/Fujii_Kaze",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/6/6a/Fujii_Kaze_performing_during_Best_Of_Fujii_Kaze_2020-2024_Asia_Tour_in_Axiata_Arena_Kuala_Lumpur_%28cropped%29_%282%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "commons": "https://commons.wikimedia.org/wiki/File:Fujii_Kaze_performing_during_Best_Of_Fujii_Kaze_2020-2024_Asia_Tour_in_Axiata_Arena_Kuala_Lumpur_%28cropped%29_%282%29.jpg"
+  },
+  {
+    "id": "joji",
+    "name": "Joji (musician)",
+    "image": "/images/influences/joji.jpg",
+    "source": "https://en.wikipedia.org/wiki/Joji_(musician)",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Joji_Performing_Live_in_2018_%28cropped%29_%28better_quality%29.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "commons": "https://commons.wikimedia.org/wiki/File:Joji_Performing_Live_in_2018_%28cropped%29_%28better_quality%29.png"
+  },
+  {
+    "id": "jacob-collier",
+    "name": "Jacob Collier",
+    "image": "/images/influences/jacob-collier.jpg",
+    "source": "https://en.wikipedia.org/wiki/Jacob_Collier",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/0/03/ColdplayWembley160822_%2861_of_81%29_%2852291015083%29_%28cropped_2%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "commons": "https://commons.wikimedia.org/wiki/File:ColdplayWembley160822_%2861_of_81%29_%2852291015083%29_%28cropped_2%29.jpg"
+  },
+  {
+    "id": "keith-jarrett",
+    "name": "Keith Jarrett",
+    "image": "/images/influences/keith-jarrett.jpg",
+    "source": "https://en.wikipedia.org/wiki/Keith_Jarrett",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/4/4d/Keith_Jarrett.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "commons": "https://commons.wikimedia.org/wiki/File:Keith_Jarrett.jpg"
+  },
+  {
+    "id": "bill-evans",
+    "name": "Bill Evans",
+    "image": "/images/influences/bill-evans.jpg",
+    "source": "https://en.wikipedia.org/wiki/Bill_Evans",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/8/81/Bill_Evans_%281961_publicity_photo_by_Steve_Schapiro%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "commons": "https://commons.wikimedia.org/wiki/File:Bill_Evans_%281961_publicity_photo_by_Steve_Schapiro%29.jpg"
+  },
+  {
+    "id": "opn",
+    "name": "Oneohtrix Point Never",
+    "image": "/images/influences/opn.jpg",
+    "source": "https://en.wikipedia.org/wiki/Oneohtrix_Point_Never",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/2/27/ONEOHTRIX_POINT_NEVER_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "commons": "https://commons.wikimedia.org/wiki/File:ONEOHTRIX_POINT_NEVER_%28cropped%29.jpg"
+  },
+  {
+    "id": "sakamoto",
+    "name": "Ryuichi Sakamoto",
+    "image": "/images/influences/sakamoto.jpg",
+    "source": "https://en.wikipedia.org/wiki/Ryuichi_Sakamoto",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/e/e1/Ryuichi_Sakamoto_side.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "commons": "https://commons.wikimedia.org/wiki/File:Ryuichi_Sakamoto_side.jpg"
+  }
+]

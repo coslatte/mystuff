@@ -315,6 +315,7 @@ The sections are `/`, `/coding`, `/music`, `/contact` and `/experimentation`. Se
 | File | Role |
 | --- | --- |
 | `MusicSection.tsx` | `/music` root. Composes PlayerBar, albums, tracks. |
+| `MusicJourney.astro` | `/music` editorial journey through electronic roots and later influences. Photos live in `public/images/influences`; `sources.json` and `credits.html` link to their source pages. |
 | `ContactForm.tsx` | `/contact` form island with validation, stable retry references, and accessible delivery status. |
 | `AdminUpload.tsx` | `/admin` root. Key entry, song list, replace/delete. |
 | `PigmentFlow.tsx` | `/experimentation/spectral` root. Canvas, camera, pointer, keys. |

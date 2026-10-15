@@ -1,0 +1,168 @@
+---
+const roots = [
+  { stage: 'The beginning / at twelve', title: 'Skrillex, where it began.', text: 'At twelve, I discovered how much energy and emotion could live inside a distorted sound. Electronic music became the foundation of how I listen and produce.', artists: [['skrillex', 'Skrillex']], tags: 'Electronic / sound design' },
+  { stage: 'The melodic side', title: 'Energy, with melody.', text: 'Marshmello brought a more melodic and accessible side of electronic music into my listening. The digital sound stayed, with more room for a melody to carry the feeling.', artists: [['marshmello', 'Marshmello']], tags: 'Electronic / melody' },
+  { stage: 'Pandemic to present', title: 'The foundation stays.', text: 'Dubstep, riddim and color bass stayed with me through the pandemic and into the present. Rushdown, the label and community, alongside Chime and Au5, sharpened my ear for texture, contrast and harmony inside bass music.', artists: [['chime', 'Chime'], ['au5', 'Au5']], tags: 'Dubstep / riddim / color bass' },
+];
+const discoveries = [
+  { stage: 'Opening up', title: 'Beyond the drop.', text: 'Post Malone and Bring Me the Horizon pulled me toward songs, voices and alternative textures. Their mix of melody, atmosphere and aggression widened my idea of what a track could be.', artists: [['post-malone', 'Post Malone'], ['bmth', 'Bring Me the Horizon']], tags: 'Pop / alternative' },
+  { stage: 'A different expression', title: 'Voice comes closer.', text: 'Fujii Kaze opened a door to R&B, Japanese music and a more expressive, human approach to performance. Joji took that feeling somewhere intimate: fragile melodies, melancholy and space left around a voice.', artists: [['fujii-kaze', 'Fujii Kaze'], ['joji', 'Joji']], tags: 'R&B / Japanese music / melancholy' },
+  { stage: 'The turning point', title: 'Moon River changed my listening.', text: 'Watching Jacob Collier perform Moon River changed what I wanted to hear in music. I went through his work and found my favorite artist: harmony, creative freedom and emotion could all belong in the same place.', artists: [['jacob-collier', 'Jacob Collier']], tags: 'Harmony / curiosity / my favorite artist', featured: true },
+  { stage: 'Following the piano', title: 'Learning to hear the space.', text: 'Jacob led me to Keith Jarrett, then to Bill Evans. Piano and jazz taught me to listen to phrasing, improvisation and harmonic tension. Silence and subtlety began to matter as much as impact.', artists: [['keith-jarrett', 'Keith Jarrett'], ['bill-evans', 'Bill Evans']], tags: 'Jazz / piano / improvisation' },
+  { stage: 'Further out, further in', title: 'Texture becomes a place.', text: 'Indie and alternative listening led me toward ambient and experimental music. Oneohtrix Point Never, especially Tranquilizer, made that connection feel personal. More recently, Ryuichi Sakamoto brought me closer to delicate piano, contemplation and quiet emotion.', artists: [['opn', 'Oneohtrix Point Never'], ['sakamoto', 'Ryuichi Sakamoto']], tags: 'Ambient / experimental / contemplation' },
+];
+---
+
+<section class="journey" aria-labelledby="journey-title">
+  <header class="journey-intro">
+    <p class="brut-label">02 / musical journey</p>
+    <h2 id="journey-title">One foundation.<br />An expanding ear.</h2>
+    <div class="intro-bottom">
+      <p>I found electronic music through Skrillex at twelve. That became my base. As it continued to grow, new discoveries widened how I listen and feel.</p>
+      <a class="editorial-link" href="#journey-today">Follow the journey <span aria-hidden="true">↓</span></a>
+    </div>
+  </header>
+
+  <div class="route-key" aria-label="Two parallel influences">
+    <span><i class="root-mark" aria-hidden="true"></i>01 / electronic foundation</span>
+    <span><i class="discovery-mark" aria-hidden="true"></i>02 / discoveries</span>
+  </div>
+
+  <div class="journey-paths">
+    {[{ className: 'root-lane', label: '01 / electronic foundation', chapters: roots }, { className: 'discovery-lane', label: '02 / discoveries', chapters: discoveries }].map((lane) => (
+      <div class:list={['route-lane', lane.className]} data-discovery-route={lane.className === 'discovery-lane' ? '' : undefined}>
+        {lane.className === 'discovery-lane' && <svg class="discovery-route" aria-hidden="true" preserveAspectRatio="none"><path /></svg>}
+        <h3 class="lane-title">{lane.label}</h3>
+        {lane.chapters.map((chapter, index) => (
+          <article class:list={['journey-chapter', { featured: chapter.stage === 'The turning point' }]}>
+            <div class="chapter-marker" aria-hidden="true">{String(index + 1).padStart(2, '0')}</div>
+            <div class="chapter-body">
+              <div class="chapter-meta"><span>{chapter.stage}</span></div>
+              <h3>{chapter.title}</h3>
+              <p>{chapter.text}</p>
+              <div class="artist-grid">
+                {chapter.artists.map(([id, name]) => (
+                  <figure>
+                    <div class="portrait"><img src={`/images/influences/${id}.jpg`} alt={name} width="400" height="400" loading="lazy" decoding="async" /></div>
+                    <figcaption translate="no">{name}</figcaption>
+                  </figure>
+                ))}
+              </div>
+              <p class="chapter-tags">{chapter.tags}</p>
+              {chapter.stage === 'The turning point' && <a class="editorial-link" href="https://www.youtube.com/watch?v=VPLCk-FTVvw" target="_blank" rel="noreferrer">Watch Moon River <span aria-hidden="true">↗</span></a>}
+            </div>
+          </article>
+        ))}
+      </div>
+    ))}
+  </div>
+
+  <div class="journey-today" id="journey-today">
+    <p class="brut-label">01 + 02 / the present</p>
+    <h3>What I carry into my music.</h3>
+    <p>The energy and sound design of electronic music. The intimacy of R&B. The harmonic curiosity of jazz. The space of ambient music. These paths keep meeting in what I make today.</p>
+    <a class="editorial-link" href="#music-catalog">Listen to my music <span aria-hidden="true">↓</span></a>
+  </div>
+  <details class="image-credits">
+    <summary>Artist photography / credits</summary>
+    <p>Photographs sourced through Wikipedia. Original files, authors and licenses are linked in the image credits.</p>
+    <a class="editorial-link" href="/images/influences/credits.html">View image credits <span aria-hidden="true">↗</span></a>
+  </details>
+</section>
+
+<style>
+  .journey { border-bottom: 2px solid var(--color-brut-black); background: var(--color-brut-bg); }
+  .journey-intro { padding: clamp(1.5rem, 4vw, 4rem); border-bottom: 2px solid var(--color-brut-black); }
+  h2 { font-size: clamp(2.7rem, 7.7vw, 8rem); line-height: .94; letter-spacing: -.065em; font-weight: 900; margin: 1.5rem 0 2rem; }
+  .intro-bottom { display: flex; justify-content: space-between; gap: 2rem; align-items: end; }
+  .intro-bottom p { max-width: 42rem; line-height: 1.8; }
+  .editorial-link { flex-shrink: 0; }
+  .route-key { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 2px solid var(--color-brut-black); font-size: .75rem; }
+  .route-key > span { padding: 1.25rem; display: flex; align-items: center; gap: .75rem; }
+  .route-key > span + span { border-left: 2px solid var(--color-brut-black); }
+  .route-key i { display: inline-block; width: 12px; height: 12px; flex-shrink: 0; background: var(--color-brut-blue); }
+  .route-key .discovery-mark { background: var(--color-brut-red); transform: rotate(45deg); }
+  .journey-paths { display: grid; grid-template-columns: minmax(15rem, .8fr) minmax(0, 1.2fr); gap: clamp(1.5rem, 4vw, 4rem); padding: 4rem 5%; }
+  .route-lane { position: relative; min-width: 0; padding: 0 0 0 2rem; }
+  .route-lane::before { content: ''; position: absolute; top: 3rem; bottom: 0; left: .5rem; width: 3px; background: var(--color-brut-blue); }
+  .discovery-lane::before { display: none; }
+  .discovery-route { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  .discovery-route path { fill: none; stroke: var(--color-brut-red); stroke-width: 3; vector-effect: non-scaling-stroke; stroke-linejoin: miter; stroke-linecap: square; }
+  .lane-title { min-height: 3rem; font: 700 .7rem var(--font-mono); }
+  .journey-chapter { position: relative; min-width: 0; margin-bottom: 2.5rem; }
+  .journey-chapter:last-child { margin-bottom: 0; }
+  .discovery-lane .journey-chapter { width: calc(100% - 4rem); }
+  .discovery-lane .journey-chapter:nth-of-type(even) { transform: translateX(4rem); }
+  .chapter-marker { position: absolute; top: 0; left: -2.25rem; background: var(--color-brut-blue); color: white; border: 2px solid var(--color-brut-black); padding: .35rem; font-size: .65rem; z-index: 1; }
+  .discovery-lane .chapter-marker { background: var(--color-brut-red); }
+  .discovery-lane .chapter-marker { left: -1rem; }
+  .chapter-body::before { content: ''; position: absolute; top: 1rem; right: 100%; width: 1.25rem; border-top: 2px solid var(--color-brut-blue); }
+  .root-lane .journey-chapter:first-of-type .chapter-body { border-left: 5px solid var(--color-brut-blue); }
+  .chapter-body { position: relative; background: var(--color-brut-surface); border: 2px solid var(--color-brut-black); padding: clamp(1rem, 2vw, 2rem); box-shadow: 6px 6px 0 var(--color-brut-black); }
+  .chapter-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem; font-size: .6rem; line-height: 1.6; }
+  h3 { font-size: clamp(1.8rem, 3vw, 3.3rem); font-weight: 800; line-height: 1.04; letter-spacing: -.045em; margin: 1.3rem 0; }
+  .artist-grid { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.25rem 0; }
+  figure { display: flex; min-width: 0; align-items: center; gap: .6rem; }
+  .portrait { background: var(--color-brut-soft); overflow: hidden; border: 1px solid var(--color-brut-black); }
+  img { width: 4.5rem; height: 4.5rem; aspect-ratio: 1; object-fit: cover; filter: grayscale(1); transition: filter .3s, transform .5s; }
+  figure:hover img { filter: grayscale(0); transform: scale(1.03); }
+  figcaption { max-width: 8rem; font-size: .7rem; font-weight: 700; overflow-wrap: anywhere; }
+  .chapter-body > p { font-size: .85rem; line-height: 1.9; }
+  .chapter-body .chapter-tags { border-top: 1px solid currentColor; margin-top: 1.5rem; padding-top: .75rem; font-size: .65rem; }
+  .featured .chapter-body { background: var(--color-brut-blue); color: white; }
+  .featured h3 { font-size: clamp(2.3rem, 4vw, 4.5rem); }
+  .featured .editorial-link { margin-top: 1.5rem; border-color: white; color: white; }
+  .journey-today { position: relative; padding: clamp(2rem, 5vw, 5rem); border-top: 2px solid var(--color-brut-black); background: var(--color-brut-surface); }
+  .journey-today::before { content: ''; position: absolute; top: -3rem; left: 50%; height: 3rem; border-left: 3px solid var(--color-brut-red); }
+  .journey-today h3 { max-width: 55rem; font-size: clamp(2.5rem, 6vw, 6rem); }
+  .journey-today > p:not(.brut-label) { max-width: 48rem; line-height: 1.9; margin-bottom: 2rem; }
+  .image-credits { padding: 1.5rem; border-top: 2px solid var(--color-brut-black); font-size: .7rem; }
+  summary { cursor: pointer; min-height: 32px; }
+  .image-credits p { margin: 1rem 0; max-width: 50rem; line-height: 1.8; }
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .chapter-body { animation: chapter-arrive linear both; animation-timeline: view(); animation-range: entry 0% entry 90%; }
+      @keyframes chapter-arrive { from { opacity: .35; transform: translateY(50px); box-shadow: 0 0 0 var(--color-brut-black); } to { opacity: 1; transform: translateY(0); box-shadow: 6px 6px 0 var(--color-brut-black); } }
+    }
+  }
+  @media (min-width: 1600px) { .journey-paths { padding-inline: 10%; gap: 5rem; } }
+  @media (max-width: 639px) {
+    .intro-bottom { display: block; } .intro-bottom a { margin-top: 1.5rem; }
+    .route-key { grid-template-columns: 1fr; } .route-key > span { padding: .8rem 1.5rem; } .route-key > span + span { border-left: 0; border-top: 1px solid var(--color-brut-black); }
+    .journey-paths { grid-template-columns: 1fr; padding: 2.5rem 1.25rem; gap: 3rem; }
+    .route-lane { padding-left: 2rem; }
+    .route-lane::before { left: .5rem; }
+    .journey-chapter { margin: 0 0 2rem !important; }
+    .discovery-lane .journey-chapter { width: calc(100% - 1rem); }
+    .discovery-lane .journey-chapter:nth-of-type(even) { transform: translateX(1rem); }
+    .discovery-lane .journey-chapter:nth-of-type(even) .chapter-marker { left: -1rem; }
+    .discovery-route path { stroke-width: 2; }
+    .chapter-body { padding: 1rem; } .artist-grid { gap: .75rem; }
+    .chapter-meta { font-size: .55rem; }
+    .journey-today { padding: 2rem 1.5rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { img { transition: none; } figure:hover img { transform: none; } }
+</style>
+
+<script>
+  function drawDiscoveryRoute() {
+    document.querySelectorAll<HTMLElement>("[data-discovery-route]").forEach((lane) => {
+      const svg = lane.querySelector<SVGSVGElement>(".discovery-route");
+      const path = svg?.querySelector<SVGPathElement>("path");
+      if (!svg || !path) return;
+      const laneBounds = lane.getBoundingClientRect();
+      const markers = [...lane.querySelectorAll<HTMLElement>(".journey-chapter .chapter-marker")];
+      const points = markers.map((marker) => {
+        const bounds = marker.getBoundingClientRect();
+        return [bounds.left + bounds.width / 2 - laneBounds.left, bounds.top + bounds.height / 2 - laneBounds.top];
+      });
+      svg.setAttribute("viewBox", `0 0 ${lane.clientWidth} ${lane.scrollHeight}`);
+      path.setAttribute("d", points.map(([x, y], index) => `${index ? "L" : "M"}${x} ${y}`).join(" "));
+    });
+  }
+
+  drawDiscoveryRoute();
+  document.fonts.ready.then(drawDiscoveryRoute);
+  window.addEventListener("resize", drawDiscoveryRoute);
+  document.addEventListener("astro:page-load", drawDiscoveryRoute);
+</script>
