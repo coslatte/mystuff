@@ -1,10 +1,16 @@
 ---
 import NowPlaying from "./NowPlaying.astro";
+
+interface Props {
+  showContact?: boolean;
+}
+
+const { showContact = true } = Astro.props;
 ---
 
 <footer id="page-bottom" tabindex="-1" aria-label="Contact" class="site-footer mx-auto w-full max-w-7xl border-x-2 border-t-2 border-brut-black bg-brut-surface tv:max-w-[100rem]">
   <p class="font-mono text-xs" translate="no">Gabriel Paz / CosmicLatte</p>
-  <a href="/contact" class="footer-contact brut-up"><span>Contact me <span aria-hidden="true">↗</span></span></a>
+  {showContact && <a href="/contact" class="footer-contact brut-up"><span>Contact me <span aria-hidden="true">↗</span></span></a>}
   <nav class="page-jumps" aria-label="Page shortcuts" data-cursor-target>
     <a class="brut-up" href="#page-top" aria-label="Back to top" title="Back to top"><span aria-hidden="true">↑</span><span class="jump-label">Back to top</span></a>
     <a class="brut-up" href="#page-bottom" aria-label="Go to page end" title="Go to page end"><span aria-hidden="true">↓</span><span class="jump-label">Go to page end</span></a>

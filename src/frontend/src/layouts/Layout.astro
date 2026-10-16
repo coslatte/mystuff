@@ -14,6 +14,7 @@ interface Props {
   noindex?: boolean;
   /** `/loading` replays the splash itself, so the layout's copy stands down. */
   bootReplay?: boolean;
+  showFooterContact?: boolean;
 }
 
 const {
@@ -21,6 +22,7 @@ const {
   description = "Gabriel Paz, software engineer. Portfolio, code, music, and browser experiments.",
   noindex = false,
   bootReplay = false,
+  showFooterContact = true,
 } = Astro.props;
 
 // Scrapers fetch og:image on their own, so a relative path is no image at all.
@@ -87,7 +89,7 @@ const socialImage = new URL("/images/previews/og.png", Astro.site);
     <main class="mx-auto w-full max-w-7xl flex-1 border-x-2 border-brut-black tv:max-w-[100rem]">
       <slot />
     </main>
-    <Footer />
+    <Footer showContact={showFooterContact} />
   </body>
 </html>
 

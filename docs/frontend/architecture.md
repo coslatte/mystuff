@@ -303,7 +303,7 @@ The sections are `/`, `/coding`, `/music`, `/contact` and `/experimentation`. Se
 | `BootScreen.astro` | First-visit splash. In the layout, so one copy covers all routes. |
 | `RouteCurtain.astro` | Navigation loading overlay. In the layout, persisted across swaps. |
 | `Navbar.astro` | Site navigation. |
-| `Footer.astro` | Compact contact footer, native shortcuts to the page's top and bottom, and the independently collapsible now-playing bar on every route. Shortcuts use a side rail on desktop and a labelled bottom dock on mobile; the audio bar sits above that dock. Contact links to `/contact` on every route, `/` included. Its hover fill starts at the pointer entry point. Only the player hides when idle; its fixed height sizes the spectrum. |
+| `Footer.astro` | Compact contact footer, native shortcuts to the page's top and bottom, and the independently collapsible now-playing bar on every route. Shortcuts use a side rail on desktop and a labelled bottom dock on mobile; the audio bar sits above that dock. Contact links to `/contact` on every route except `/`, where the landing page has its own contact callout. Its hover fill starts at the pointer entry point. Only the player hides when idle; its fixed height sizes the spectrum. |
 | `Hero.astro` | `/` opening: the centered heading with a scrolling code fragment on the brutalist `code` plate and an FM wave on `soundwaves`. Nothing else; the ink band and the portrait belong to the about section in `index.astro`. |
 | `FluidPanel.astro` | One decorative ink band. The solver and the picture are `lib/sim`; the component only mounts and releases it. One canvas per page, because the mount script runs once. |
 | `ExperimentHeader.astro` | Shared heading and back link for individual experiments. |
