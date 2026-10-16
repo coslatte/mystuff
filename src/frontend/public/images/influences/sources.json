@@ -3,9 +3,9 @@
     "id": "skrillex",
     "name": "Skrillex",
     "image": "/images/influences/skrillex.jpg",
-    "source": "https://en.wikipedia.org/wiki/Skrillex",
-    "original": "https://upload.wikimedia.org/wikipedia/commons/9/99/From_First_To_Last_-_Emo_Nite_2_-_PH_Carl_Pocket_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
-    "commons": "https://commons.wikimedia.org/wiki/File:From_First_To_Last_-_Emo_Nite_2_-_PH_Carl_Pocket_%28cropped%29.jpg"
+    "source": "https://www.ctm-festival.de/fileadmin/_processed_/b/f/csm_Skrillex_607bb72489.jpg",
+    "original": "https://www.ctm-festival.de/fileadmin/_processed_/b/f/csm_Skrillex_607bb72489.jpg",
+    "credit": "Image reference supplied by the artist. External source retains its rights."
   },
   {
     "id": "marshmello",
@@ -19,17 +19,17 @@
     "id": "chime",
     "name": "Chime (musician)",
     "image": "/images/influences/chime.jpg",
-    "source": "https://en.wikipedia.org/wiki/Chime_(musician)",
-    "original": "https://upload.wikimedia.org/wikipedia/en/1/15/Chime%28musician%29.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
-    "commons": "https://commons.wikimedia.org/wiki/File:Chime%28musician%29.png"
+    "source": "https://i.scdn.co/image/ab6761610000e5eb7622a0af2c09ddd1b187f121",
+    "original": "https://i.scdn.co/image/ab6761610000e5eb7622a0af2c09ddd1b187f121",
+    "credit": "Image reference supplied by the site owner. External source retains its rights."
   },
   {
     "id": "au5",
     "name": "Au5",
     "image": "/images/influences/au5.jpg",
-    "source": "https://en.wikipedia.org/wiki/Au5",
-    "original": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Au5_-_Austin_Collins.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
-    "commons": "https://commons.wikimedia.org/wiki/File:Au5_-_Austin_Collins.jpg"
+    "source": "https://i.scdn.co/image/ab6761610000e5eb62c074bdf30f9177ec0e7b37",
+    "original": "https://i.scdn.co/image/ab6761610000e5eb62c074bdf30f9177ec0e7b37",
+    "credit": "Image reference supplied by the artist. External source retains its rights."
   },
   {
     "id": "post-malone",
@@ -43,9 +43,9 @@
     "id": "bmth",
     "name": "Bring Me the Horizon",
     "image": "/images/influences/bmth.jpg",
-    "source": "https://en.wikipedia.org/wiki/Bring_Me_the_Horizon",
-    "original": "https://upload.wikimedia.org/wikipedia/commons/a/ac/Bring_Me_The_Horizon_Tons_of_Rock_2026.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
-    "commons": "https://commons.wikimedia.org/wiki/File:Bring_Me_The_Horizon_Tons_of_Rock_2026.jpg"
+    "source": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcScnqTMPq2MV6Fx6QRZ3rw_r6TfH1uFSDAREeA_I93-B_K6PSIyaTPW_R-i&s=10",
+    "original": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcScnqTMPq2MV6Fx6QRZ3rw_r6TfH1uFSDAREeA_I93-B_K6PSIyaTPW_R-i&s=10",
+    "credit": "Image reference supplied by the artist. External source retains its rights."
   },
   {
     "id": "fujii-kaze",
@@ -59,17 +59,17 @@
     "id": "joji",
     "name": "Joji (musician)",
     "image": "/images/influences/joji.jpg",
-    "source": "https://en.wikipedia.org/wiki/Joji_(musician)",
-    "original": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Joji_Performing_Live_in_2018_%28cropped%29_%28better_quality%29.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
-    "commons": "https://commons.wikimedia.org/wiki/File:Joji_Performing_Live_in_2018_%28cropped%29_%28better_quality%29.png"
+    "source": "https://i.scdn.co/image/ab67616d0000b2738da6404284573219a9b1e2f4",
+    "original": "https://i.scdn.co/image/ab67616d0000b2738da6404284573219a9b1e2f4",
+    "credit": "Image reference supplied by the artist. External source retains its rights."
   },
   {
     "id": "jacob-collier",
     "name": "Jacob Collier",
     "image": "/images/influences/jacob-collier.jpg",
-    "source": "https://en.wikipedia.org/wiki/Jacob_Collier",
-    "original": "https://upload.wikimedia.org/wikipedia/commons/0/03/ColdplayWembley160822_%2861_of_81%29_%2852291015083%29_%28cropped_2%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
-    "commons": "https://commons.wikimedia.org/wiki/File:ColdplayWembley160822_%2861_of_81%29_%2852291015083%29_%28cropped_2%29.jpg"
+    "source": "https://noctismag.com/wp-content/uploads/2026/07/JacobColler_FILM_@theobatteram-63-1024x791.jpg",
+    "original": "https://noctismag.com/wp-content/uploads/2026/07/JacobColler_FILM_@theobatteram-63-1024x791.jpg",
+    "credit": "Image reference supplied by the site owner. External source retains its rights."
   },
   {
     "id": "keith-jarrett",
@@ -102,5 +102,80 @@
     "source": "https://en.wikipedia.org/wiki/Ryuichi_Sakamoto",
     "original": "https://upload.wikimedia.org/wikipedia/commons/e/e1/Ryuichi_Sakamoto_side.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
     "commons": "https://commons.wikimedia.org/wiki/File:Ryuichi_Sakamoto_side.jpg"
+  },
+  {
+    "id": "zomboy",
+    "name": "Zomboy",
+    "image": "/images/influences/zomboy.jpg",
+    "source": "https://www.billboard.com/wp-content/uploads/media/zomboy-650-430.jpg?w=650&h=430&crop=1",
+    "original": "https://www.billboard.com/wp-content/uploads/media/zomboy-650-430.jpg?w=650&h=430&crop=1",
+    "credit": "Image reference supplied by the artist. External source retains its rights."
+  },
+  {
+    "id": "twenty-one-pilots",
+    "name": "Twenty One Pilots",
+    "image": "/images/influences/twenty-one-pilots.jpg",
+    "source": "https://en.wikipedia.org/wiki/Twenty_One_Pilots",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Twenty_One_Pilots_from_Clancy_Tour_in_Dublin_%28landscape_crop%29.jpg",
+    "commons": "https://commons.wikimedia.org/wiki/File:Twenty_One_Pilots_from_Clancy_Tour_in_Dublin_%28landscape_crop%29.jpg",
+    "download": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/aa/Twenty_One_Pilots_from_Clancy_Tour_in_Dublin_%28landscape_crop%29.jpg/330px-Twenty_One_Pilots_from_Clancy_Tour_in_Dublin_%28landscape_crop%29.jpg"
+  },
+  {
+    "id": "ace-aura",
+    "name": "Ace Aura",
+    "image": "/images/influences/ace-aura.jpg",
+    "source": "https://en.wikipedia.org/wiki/Ace_Aura",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/1/1a/Aceaura2021.jpg",
+    "commons": "https://commons.wikimedia.org/wiki/File:Aceaura2021.jpg",
+    "download": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1a/Aceaura2021.jpg/330px-Aceaura2021.jpg"
+  },
+  {
+    "id": "tyler-the-creator",
+    "name": "Tyler, the Creator",
+    "image": "/images/influences/tyler-the-creator.jpg",
+    "source": "https://en.wikipedia.org/wiki/Tyler,_the_Creator",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Tyler_The_Creator_Toronto_2025_%28cropped%29.jpg",
+    "commons": "https://commons.wikimedia.org/wiki/File:Tyler_The_Creator_Toronto_2025_%28cropped%29.jpg",
+    "download": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fe/Tyler_The_Creator_Toronto_2025_%28cropped%29.jpg/330px-Tyler_The_Creator_Toronto_2025_%28cropped%29.jpg"
+  },
+  {
+    "id": "boards-of-canada",
+    "name": "Boards of Canada",
+    "image": "/images/influences/boards-of-canada.jpg",
+    "source": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMLQNwJTTDnBfuWQHaU530gYQ1DirDN8FySHdvM4n_g7LMwdhyuykz7Ho&s=10",
+    "original": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMLQNwJTTDnBfuWQHaU530gYQ1DirDN8FySHdvM4n_g7LMwdhyuykz7Ho&s=10",
+    "credit": "Image reference supplied by the site owner. External source retains its rights."
+  },
+  {
+    "id": "linkin-park",
+    "name": "Linkin Park",
+    "source": "https://www.billboard.com/wp-content/uploads/2023/04/01-Linkin-Park-cr-James-Minchin-billboard-1548.jpg",
+    "original": "https://www.billboard.com/wp-content/uploads/2023/04/01-Linkin-Park-cr-James-Minchin-billboard-1548.jpg",
+    "image": "/images/influences/linkin-park.jpg",
+    "credit": "Image reference supplied by the artist. External source retains its rights."
+  },
+  {
+    "id": "mr-bill",
+    "name": "Mr. Bill",
+    "source": "https://www.monstercat.com/artist/mr-bill",
+    "original": "https://www.monstercat.com/artist/mr-bill/photo?type=profile&99948f39-44e6-4750-8287-9a78ca5a059e",
+    "credit": "Artist profile photograph published by Monstercat. Local thumbnail resized for web display.",
+    "image": "/images/influences/mr-bill.jpg"
+  },
+  {
+    "id": "cubalibre-exe",
+    "name": "cubalibre.exe",
+    "source": "https://f4.bcbits.com/img/a3424210631_2.jpg",
+    "original": "https://f4.bcbits.com/img/a3424210631_2.jpg",
+    "image": "/images/influences/cubalibre-exe.jpg",
+    "credit": "Image reference supplied by the site owner. External source retains its rights."
+  },
+  {
+    "id": "voltra",
+    "name": "VOLTRA",
+    "image": "/images/influences/voltra.jpg",
+    "source": "https://i.scdn.co/image/ab6761610000517450e7a3c2d3b8580f2f089cd7",
+    "original": "https://i.scdn.co/image/ab6761610000517450e7a3c2d3b8580f2f089cd7",
+    "credit": "Image reference supplied by the artist. External source retains its rights."
   }
 ]

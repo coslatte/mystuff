@@ -1,7 +1,8 @@
 ---
+import LanguageSelector from "./LanguageSelector.astro";
 const pathname = Astro.url.pathname.replace(/\/+$/, "") || "/";
 const links = [
-  { href: "/", label: "about", number: "01" },
+  { href: "/", label: "home", number: "01" },
   { href: "/coding", label: "coding", number: "02" },
   { href: "/music", label: "music", number: "03" },
   { href: "/experimentation", label: "experiments", number: "04" },
@@ -11,26 +12,38 @@ const links = [
 }));
 ---
 
-<header class="border-b-2 border-t-2 border-black bg-white">
+<header class="border-b-2 border-t-2 border-brut-black bg-brut-surface">
   <div class="mx-auto grid w-full max-w-7xl laptop:grid-cols-[auto_1fr] tv:max-w-[100rem]">
-    <a href="/" data-cursor-skip class="flex min-h-16 items-center justify-between border-b-2 border-black bg-black px-6 font-display text-xl font-black tracking-tighter text-white tablet:px-8 tablet:text-2xl laptop:border-b-0 laptop:border-r-2">
+    <div class="flex min-w-0 items-center justify-between border-x-2 border-b-2 border-brut-black bg-brut-inverse text-brut-on-accent laptop:border-b-0 laptop:border-r-2">
+    <a href="/" data-cursor-skip class="flex min-h-16 min-w-0 items-center px-3 font-display text-lg font-black tracking-tighter tablet:px-5 tablet:text-xl">
       <span>cosmiclatte<span class="text-brut-green">.</span>dev</span>
-      <span class="font-mono text-[10px] font-normal uppercase tracking-widest text-neutral-400 laptop:hidden">portfolio</span>
     </a>
-    <nav aria-label="Main navigation" class="grid grid-cols-2 tablet:grid-cols-4">
+    <div class="px-2 py-1 tablet:px-3">
+      <LanguageSelector />
+    </div>
+    </div>
+    <div class="flex min-w-0">
+    <nav aria-label="Main navigation" class="grid min-w-0 flex-1 grid-cols-2 tablet:grid-cols-4">
       {links.map((link) => (
         <a href={link.href} aria-current={link.active ? "page" : undefined}
           class:list={[
-            "group flex min-h-12 items-center justify-between gap-2" +
-            "border border-r-2 border-black px-4 py-2 font-mono text-xs font-bold" +
+            "group flex min-h-12 items-center justify-between gap-2 " +
+            "border-r-2 border-brut-black px-4 py-2 font-mono text-xs font-bold" +
             "transition-colors focus-visible:outline-2 focus-visible:-outline-offset-4 " +
             "focus-visible:outline-brut-blue tablet:min-h-16 tablet:border-b-0 tablet:px-5 tablet:text-sm",
-            link.active ? "bg-brut-blue text-white" : "hover:bg-neutral-100",
+            link.active ? "bg-brut-blue text-brut-on-accent" : "hover:bg-brut-subtle",
           ]}>
           <span>{link.label}</span>
-          <span class:list={["text-[10px]", link.active ? "text-white" : "text-neutral-600"]}>{link.number}</span>
+          <span class:list={["text-[10px]", link.active ? "text-brut-on-accent" : "text-brut-muted"]}>{link.number}</span>
         </a>
       ))}
     </nav>
+    <button type="button" data-theme-toggle aria-label="Dark mode" aria-pressed="false" title="Dark mode"
+      class="hidden w-12 shrink-0 items-center justify-center border-r-2 border-brut-black bg-brut-surface text-brut-black hover:bg-brut-subtle focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-brut-blue tablet:w-16">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20.9 13a9 9 0 0 1-9.9-9.9A9 9 0 1 0 20.9 13Z" />
+      </svg>
+    </button>
+    </div>
   </div>
 </header>

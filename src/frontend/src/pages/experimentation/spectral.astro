@@ -4,14 +4,17 @@ import ExperimentHeader from "../../components/ExperimentHeader.astro";
 import PigmentFlow from "../../components/PigmentFlow";
 ---
 
-<Layout title="spectral | cosmiclatte">
+<Layout
+  title="spectral | cosmiclatte"
+  description="A stable-fluids simulation that mixes pigments with Kubelka-Munk colour theory."
+>
   <ExperimentHeader title="Spectral">
     <p>
       Adjust the flow and pigment palette. Drag on the canvas to stir the fluid.
     </p>
   </ExperimentHeader>
 
-  <section class="border-b-2 border-black">
+  <section class="border-b-2 border-brut-black">
     <div class="p-4 tablet:p-6">
       <PigmentFlow client:load />
     </div>

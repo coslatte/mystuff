@@ -11,12 +11,15 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
+    "check:refactor": "bun scripts/refactor-check.mjs",
+    "check:i18n": "node scripts/i18n-check.mjs",
     "check:responsive": "node scripts/responsive-check.mjs",
     "gen:api": "openapi-typescript openapi.json -o src/lib/api/schema.ts",
     "astro": "astro"
   },
   "dependencies": {
     "@astrojs/react": "^4.0.0",
+    "@astrojs/sitemap": "^3.7.4",
     "@astrojs/vercel": "^8",
     "astro": "^5.0.0",
     "react": "^19.0.0",

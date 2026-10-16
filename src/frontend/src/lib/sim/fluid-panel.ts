@@ -145,7 +145,7 @@ export function mountFluidPanel(canvas: HTMLCanvasElement): () => void {
   });
 
   const styles = getComputedStyle(canvas);
-  const paper = readColor(styles.getPropertyValue("--color-brut-bg"));
+  let paper = readColor(styles.getPropertyValue("--color-brut-bg"));
   const tints: Record<(typeof SOURCES)[number]["tint"], RGB> = {
     blue: simplex(readColor(styles.getPropertyValue("--color-brut-blue"))),
     red: simplex(readColor(styles.getPropertyValue("--color-brut-red"))),
@@ -315,6 +315,11 @@ export function mountFluidPanel(canvas: HTMLCanvasElement): () => void {
   canvas.addEventListener("pointerleave", onUp);
 
   const observer = new ResizeObserver(resize);
+  const themeObserver = new MutationObserver(() => {
+    paper = readColor(getComputedStyle(canvas).getPropertyValue("--color-brut-bg"));
+    paint();
+  });
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   observer.observe(canvas);
   resize();
 
@@ -346,6 +351,7 @@ export function mountFluidPanel(canvas: HTMLCanvasElement): () => void {
     cancelAnimationFrame(raf);
     visibility.disconnect();
     observer.disconnect();
+    themeObserver.disconnect();
     document.removeEventListener("visibilitychange", onVisibility);
     preference.removeEventListener("change", resume);
     canvas.removeEventListener("pointerdown", onDown);

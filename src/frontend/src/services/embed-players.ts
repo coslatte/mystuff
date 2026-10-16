@@ -12,6 +12,7 @@ import { player, type ExternalReport } from "./player";
 
 const SOUNDCLOUD_SCRIPT = "https://w.soundcloud.com/player/api.js";
 const SPOTIFY_SCRIPT = "https://open.spotify.com/embed/iframe-api/v1";
+const scriptLoads = new Map<string, Promise<void>>();
 
 export type EmbedIdentity = {
   /** Stable across renders, so the widget can diff on it instead of on title. */
@@ -25,14 +26,22 @@ export type EmbedTeardown = () => void;
 type EmbedSource = ExternalReport["source"];
 
 function loadScript(src: string): Promise<void> {
-  return new Promise((resolve, reject) => {
+  const existing = scriptLoads.get(src);
+  if (existing) return existing;
+  const loading = new Promise<void>((resolve, reject) => {
     const el = document.createElement("script");
     el.src = src;
     el.async = true;
     el.onload = () => resolve();
-    el.onerror = () => reject(new Error(`could not load ${src}`));
+    el.onerror = () => {
+      scriptLoads.delete(src);
+      el.remove();
+      reject(new Error(`could not load ${src}`));
+    };
     document.head.append(el);
   });
+  scriptLoads.set(src, loading);
+  return loading;
 }
 
 /** A mounted embed the page can no longer hear from: title only, no transport. */
@@ -58,6 +67,9 @@ export function mountSoundCloud(
 ): EmbedTeardown {
   let token: number | null = null;
   let disposed = false;
+  let widget: SoundCloudWidgetApi | null = null;
+  let events: string[] = [];
+  let playbackEvent = 0;
 
   void loadScript(SOUNDCLOUD_SCRIPT).then(
     () => {
@@ -67,11 +79,12 @@ export function mountSoundCloud(
         token = inertToken("soundcloud", identity);
         return;
       }
-      const widget = Widget(iframe);
+      const mounted = Widget(iframe);
+      widget = mounted;
       let current: SoundCloudSound | undefined;
 
       const report = (isPlaying: boolean) => {
-        if (token == null) return;
+        if (disposed || token == null) return;
         player.reportExternal(token, {
           source: "soundcloud",
           key: current?.id != null ? `sc:${current.id}` : identity.key,
@@ -84,17 +97,21 @@ export function mountSoundCloud(
       };
 
       token = player.attachExternal({
-        toggle: () => widget.toggle(),
-        pause: () => widget.pause(),
+        toggle: () => mounted.toggle(),
+        pause: () => mounted.pause(),
       });
-      widget.bind(Widget.Events.PLAY, () => {
-        widget.getCurrentSound((sound) => {
+      events = [Widget.Events.PLAY, Widget.Events.PAUSE, Widget.Events.FINISH];
+      mounted.bind(Widget.Events.PLAY, () => {
+        const generation = ++playbackEvent;
+        mounted.getCurrentSound((sound) => {
+          if (disposed || generation !== playbackEvent) return;
           current = sound;
           report(true);
         });
       });
-      widget.bind(Widget.Events.PAUSE, () => report(false));
-      widget.bind(Widget.Events.FINISH, () => report(false));
+      const paused = () => { playbackEvent++; report(false); };
+      mounted.bind(Widget.Events.PAUSE, paused);
+      mounted.bind(Widget.Events.FINISH, paused);
     },
     () => {
       if (!disposed) token = inertToken("soundcloud", identity);
@@ -102,8 +119,12 @@ export function mountSoundCloud(
   );
 
   return () => {
+    if (disposed) return;
     disposed = true;
     if (token != null) player.releaseExternal(token);
+    for (const event of events) widget?.unbind(event);
+    widget?.pause();
+    widget = null;
   };
 }
 
@@ -122,6 +143,7 @@ export function mountSpotify(
 ): EmbedTeardown {
   let token: number | null = null;
   let disposed = false;
+  let controller: SpotifyEmbedController | null = null;
 
   void spotifyApi().then(
     (api) => {
@@ -135,9 +157,9 @@ export function mountSpotify(
         pause: () => controller?.pause(),
       });
       token = mounted;
-      let controller: SpotifyEmbedController | null = null;
 
       const report = (isPlaying: boolean) => {
+        if (disposed) return;
         player.reportExternal(mounted, {
           source: "spotify",
           key: identity.key,
@@ -166,6 +188,8 @@ export function mountSpotify(
           }
         );
       } catch {
+        player.releaseExternal(mounted);
+        token = null;
         // A container it refuses to adopt leaves the fallback iframe in place,
         // which still plays; it just stops reporting.
       }
@@ -176,8 +200,11 @@ export function mountSpotify(
   );
 
   return () => {
+    if (disposed) return;
     disposed = true;
     if (token != null) player.releaseExternal(token);
+    controller?.destroy();
+    controller = null;
   };
 }
 

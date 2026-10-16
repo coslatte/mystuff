@@ -4,14 +4,17 @@ import ExperimentHeader from "../../components/ExperimentHeader.astro";
 import RecursiveSubdivision from "../../components/RecursiveSubdivision";
 ---
 
-<Layout title="subdivision | cosmiclatte">
+<Layout
+  title="subdivision | cosmiclatte"
+  description="Recursive rectangle partitioning with adjustable geometry and colour, drawn from exact tiling."
+>
   <ExperimentHeader title="Subdivision">
     <p>
       Adjust depth, cut ratio, and palette to generate rectangle partitions.
     </p>
   </ExperimentHeader>
 
-  <section class="border-b-2 border-black">
+  <section class="border-b-2 border-brut-black">
     <div class="p-4 tablet:p-6">
       <RecursiveSubdivision client:load />
     </div>

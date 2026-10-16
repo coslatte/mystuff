@@ -3,17 +3,20 @@ import Layout from "../layouts/Layout.astro";
 import ContactForm from "../components/ContactForm.tsx";
 ---
 
-<Layout title="contact ][ cosmiclatte.dev">
-  <section class="border-b-2 border-black bg-white p-4 tablet:p-8 laptop:p-10">
+<Layout
+  title="contact ][ cosmiclatte.dev"
+  description="Send me a message about a project, music, or a proposal."
+>
+  <section class="border-b-2 border-brut-black bg-brut-surface p-4 tablet:p-8 laptop:p-10">
     <a href="/" class="editorial-link font-mono text-sm">← Back to profile</a>
-    <p class="brut-label mt-8">05 / contact</p>
+    <p class="brut-label mt-8">00 / contact</p>
     <h1 class="mt-4 page-title">Send a message</h1>
-    <p class="mt-5 max-w-2xl leading-7">Write to Gabriel about a project, music, or anything you'd like to discuss.</p>
+    <p class="mt-5 max-w-2xl leading-7">Write to me about a project, music, or anything you'd like to propose.</p>
   </section>
-  <section class="bg-neutral-100 p-4 tablet:p-8 laptop:p-10">
+  <section class="bg-brut-subtle p-4 tablet:p-8 laptop:p-10">
     <ContactForm client:load />
     <noscript>
-      <p class="mt-4 border-2 border-black bg-brut-bg p-4 font-mono text-sm">
+      <p class="mt-4 border-2 border-brut-black bg-brut-bg p-4 font-mono text-sm">
         Enable JavaScript to send this form. You can also copy gabrielpazruiz02@gmail.com into your email service.
       </p>
     </noscript>

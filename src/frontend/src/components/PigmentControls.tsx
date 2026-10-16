@@ -1,3 +1,4 @@
+import { useTranslations } from "../hooks/useTranslations";
 /*
  * Controls for the pigment board.
  *
@@ -49,37 +50,32 @@ export default function PigmentControls({
   onReset,
   onHide,
 }: Props) {
+  const t = useTranslations();
   const set = <K extends keyof PigmentSettings>(field: K, value: PigmentSettings[K]): void =>
     onPatch({ [field]: value } as SettingsPatch);
 
   return (
     <div className="grid flex-1 grid-cols-1 content-start gap-3 tablet:grid-cols-2 laptop:grid-cols-2">
-      <Panel title="board">
+      <Panel title={t("board")}>
         <Toggle label="animate" checked={settings.running} onChange={(value) => set("running", value)} />
         <div className="flex gap-1">
-          <button type="button" onClick={onReset} className="brut-btn flex-1 text-xs">
-            reset
-          </button>
-          <button type="button" onClick={onHide} className="brut-btn flex-1 text-xs">
-            hide
-          </button>
+          <button type="button" onClick={onReset} className="brut-btn flex-1 text-xs">{t("reset")}</button>
+          <button type="button" onClick={onHide} className="brut-btn flex-1 text-xs">{t("hide")}</button>
         </div>
       </Panel>
 
-      <Panel title="presets">
+      <Panel title={t("presets")}>
         <Chips label="load" value="" options={PRESET_NAMES} onChange={(name) => onPreset(name)} />
         <div className="flex items-stretch gap-1">
           {palette.map((hex) => (
-            <div key={hex} className="h-8 flex-1 border-2 border-black" style={{ backgroundColor: hex }} />
+            <div key={hex} className="h-8 flex-1 border-2 border-brut-black" style={{ backgroundColor: hex }} />
           ))}
         </div>
-        <button type="button" onClick={() => set("seed", settings.seed + 1)} className="brut-btn text-xs">
-          reroll
-        </button>
+        <button type="button" onClick={() => set("seed", settings.seed + 1)} className="brut-btn text-xs">{t("reroll")}</button>
       </Panel>
 
-      <Panel title="colour">
-        <SettingSlider field="hue" settings={settings} onChange={set} format={(v) => `${v.toFixed(0)}°`} accent="text-brut-blue" />
+      <Panel title={t("colour")}>
+        <SettingSlider field="hue" settings={settings} onChange={set} format={(v) => `${v.toFixed(0)}°`} accent="text-brut-link" />
         <Chips
           label="harmony"
           value={settings.harmony}
@@ -91,7 +87,7 @@ export default function PigmentControls({
         <SettingSlider field="ramp" settings={settings} onChange={set} />
       </Panel>
 
-      <Panel title="motion">
+      <Panel title={t("motion")}>
         <Chips
           label="flow"
           value={settings.layout}
@@ -103,23 +99,21 @@ export default function PigmentControls({
           settings={settings}
           onChange={set}
           format={(v) => `${v.toFixed(0)}°`}
-          accent="text-brut-red"
+          accent="text-brut-danger"
         />
         <SettingSlider field="turbulence" settings={settings} onChange={set} />
         <SettingSlider field="speed" settings={settings} onChange={set} format={(v) => `${v.toFixed(0)} c/s`} />
         <SettingSlider field="density" settings={settings} onChange={set} />
         <SettingSlider field="sweep" settings={settings} onChange={set} />
-        <SettingSlider field="wash" settings={settings} onChange={set} accent="text-brut-red" />
+        <SettingSlider field="wash" settings={settings} onChange={set} accent="text-brut-danger" />
         <SettingSlider field="velocityDamping" settings={settings} onChange={set} />
         <SettingSlider field="iterations" settings={settings} onChange={set} format={(v) => v.toFixed(0)} />
       </Panel>
 
-      <details className="col-span-full border-2 border-black bg-white">
-        <summary className="cursor-pointer px-3 py-3 font-mono text-xs font-bold focus-visible:outline-2 focus-visible:outline-brut-blue">
-          Advanced controls
-        </summary>
-        <div className="grid gap-3 border-t-2 border-black p-3 tablet:grid-cols-2">
-          <Panel title="pointer">
+      <details className="col-span-full border-2 border-brut-black bg-brut-surface">
+        <summary className="cursor-pointer px-3 py-3 font-mono text-xs font-bold focus-visible:outline-2 focus-visible:outline-brut-blue">{t("Advanced controls")}</summary>
+        <div className="grid gap-3 border-t-2 border-brut-black p-3 tablet:grid-cols-2">
+          <Panel title={t("pointer")}>
             <Toggle label="stir with pointer" checked={settings.pointer} onChange={(value) => set("pointer", value)} />
             <SettingSlider field="pointerForce" settings={settings} onChange={set} format={(v) => `${v.toFixed(0)} c/s`} />
             <SettingSlider field="pointerRadius" settings={settings} onChange={set} />
@@ -137,14 +131,14 @@ export default function PigmentControls({
             />
           </Panel>
 
-          <Panel title="tracers">
+          <Panel title={t("tracers")}>
             <Toggle label="tracers" checked={settings.tracers} onChange={(value) => set("tracers", value)} />
             <SettingSlider field="tracerCount" settings={settings} onChange={set} format={(v) => v.toFixed(0)} />
             <SettingSlider field="tracerTail" settings={settings} onChange={set} />
             <SettingSlider field="tracerLife" settings={settings} onChange={set} />
           </Panel>
 
-          <Panel title="surface">
+          <Panel title={t("surface")}>
             <SettingSlider
               field="relief"
               settings={settings}
@@ -160,7 +154,7 @@ export default function PigmentControls({
             <SettingSlider field="fieldGain" settings={settings} onChange={set} />
           </Panel>
 
-          <Panel title="view">
+          <Panel title={t("view")}>
             <Chips
               label="board"
               value={settings.board}
@@ -182,17 +176,15 @@ export default function PigmentControls({
               format={(v) => `${v.toFixed(2)}x`}
               onChange={(v) => onZoom(v / Math.max(camera.zoom, 0.0001))}
             />
-            <button type="button" onClick={onResetView} className="brut-btn text-xs">
-              reset view
-            </button>
+            <button type="button" onClick={onResetView} className="brut-btn text-xs">{t("reset view")}</button>
           </Panel>
 
-          <Panel title="keys">
+          <Panel title={t("keys")}>
             <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 font-mono text-xs">
               {shortcuts.map((shortcut) => (
                 <div key={shortcut.keys} className="col-span-2 grid grid-cols-subgrid">
-                  <dt className="font-bold">{shortcut.keys}</dt>
-                  <dd className="font-normal normal-case text-gray-600">{shortcut.label}</dd>
+                  <dt className="font-bold">{t(shortcut.keys)}</dt>
+                  <dd className="font-normal normal-case text-brut-muted">{t(shortcut.label)}</dd>
                 </div>
               ))}
             </dl>

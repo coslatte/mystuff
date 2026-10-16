@@ -1,0 +1,25 @@
+---
+import { languages } from "../lib/i18n";
+import "../styles/language-selector.css";
+---
+
+<label class="language-selector" data-language-scope data-cursor-target>
+  <!-- world icon -->
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" />
+    <ellipse cx="12" cy="12" rx="4" ry="9" />
+    <path d="M3 12h18" />
+  </svg>
+  <span class="sr-only">Language</span>
+  <select data-language-select aria-label="Language" disabled>
+    {languages.map(language => <option value={language.code} lang={language.code} translate="no">{language.name}</option>)}
+  </select>
+  <svg class="language-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+</label>
+
+<script>
+  import { initLocalization } from "../lib/i18n-browser";
+  initLocalization();
+</script>

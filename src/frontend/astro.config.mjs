@@ -1,10 +1,21 @@
 import { defineConfig, envField } from "astro/config";
 import react from "@astrojs/react";
+import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import vercel from "@astrojs/vercel";
 
 export default defineConfig({
-  integrations: [react()],
+  // Canonical and og:image are absolute URLs, and Astro only knows the origin
+  // from here.
+  site: "https://cosmiclatte.dev",
+  integrations: [
+    react(),
+    sitemap({
+      // A sitemap that lists a noindex page asks for the opposite of what the
+      // robots tag asks for.
+      filter: (page) => !/\/(admin|loading)\/?$/.test(page),
+    }),
+  ],
   vite: {
     plugins: [tailwindcss()],
   },

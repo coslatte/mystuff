@@ -1,3 +1,4 @@
+import { useTranslations } from "../hooks/useTranslations";
 import { useState } from "react";
 import type { Song } from "../types";
 import { player } from "../services/player";
@@ -12,6 +13,7 @@ type Props = {
 };
 
 export default function TrackBlock({ song, onRate }: Props) {
+  const t = useTranslations();
   const { track } = usePlayer();
   // Comments are fetched when the row is expanded, so a long track list does not
   // fire one request per row on load.
@@ -28,39 +30,39 @@ export default function TrackBlock({ song, onRate }: Props) {
   }
 
   return (
-    <div className={`border-2 bg-white ${active ? "border-brut-blue" : "border-black"}`}>
+    <div className={`border-2 bg-brut-surface ${active ? "border-brut-blue" : "border-brut-black"}`}>
       <div className="flex items-center gap-3 p-3">
         <button
           type="button"
           onClick={handlePlay}
-          aria-label={showPause ? "pause" : "play"}
+          aria-label={t(showPause ? "pause" : "play")}
           className={playPauseClass(
             showPause,
-            "flex h-10 w-10 shrink-0 items-center justify-center border-2 border-black text-sm font-bold"
+            "flex h-10 w-10 shrink-0 items-center justify-center border-2 border-brut-black text-sm font-bold"
           )}
         >
-          {playPauseGlyph(showPause)}
+          {t(playPauseGlyph(showPause))}
         </button>
 
         <div className="min-w-0 flex-1">
           <span className="block truncate font-display text-base font-bold leading-tight">
             {song.title}
           </span>
-          <span className="block truncate font-mono text-xs normal-case text-gray-600">
+          <span className="block truncate font-mono text-xs normal-case text-brut-muted">
             {song.artist}
-            {song.duration ? ` · ${song.duration}` : ""}
+            {t(song.duration ? ` · ${song.duration}` : "")}
           </span>
         </div>
 
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className="font-mono text-[10px] font-bold text-gray-500">★ {ratingLabel}</span>
+          <span className="font-mono text-[10px] font-bold text-brut-muted">{t("★ ")}{t(ratingLabel)}</span>
           <button
             type="button"
             onClick={() => setShowComments((v) => !v)}
             aria-expanded={showComments}
-            className="font-mono text-[10px] text-gray-400 underline hover:text-black"
+            className="font-mono text-[10px] text-brut-muted underline hover:text-brut-black"
           >
-            {showComments ? "hide comments ▲" : "comments ▼"}
+            {t(showComments ? "hide comments ▲" : "comments ▼")}
           </button>
         </div>
       </div>

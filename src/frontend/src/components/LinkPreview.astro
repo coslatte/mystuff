@@ -1,0 +1,48 @@
+---
+interface Props {
+  href: string;
+  note: string;
+}
+
+const { href, note } = Astro.props;
+---
+
+<span class="channel-note"><a class="text-highlight" href={href} target="_blank" rel="noopener noreferrer"><slot /></a><span class="channel-note__tip">{note}</span></span><style>
+  .channel-note {
+    position: relative;
+  }
+
+  /* The note is real text in the document, so it is always read aloud and
+     exposed to assistive tech; only its visual presentation is hover-only. */
+  .channel-note__tip {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 50%;
+    z-index: 20;
+    box-sizing: border-box;
+    width: max-content;
+    max-width: min(18rem, calc(100vw - 2rem));
+    padding: 0.5rem 0.65rem;
+    translate: -50% 0.25rem;
+    background: var(--color-brut-surface);
+    box-shadow: 0 0 0 2px var(--color-brut-black);
+    color: var(--color-brut-black);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 400;
+    line-height: 1.45;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms ease, translate 150ms ease;
+  }
+
+  .channel-note:hover .channel-note__tip,
+  .channel-note:focus-within .channel-note__tip {
+    opacity: 1;
+    translate: -50% 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .channel-note__tip { transition: none; }
+  }
+</style>

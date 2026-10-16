@@ -7,7 +7,17 @@
   --color-brut-black: #000000;
   --color-brut-red: #c6382b;
   --color-brut-blue: #2448c8;
-  --color-brut-green: #398653;
+  --color-brut-green: #317548;
+  --color-brut-danger: #c6382b;
+  --color-brut-surface: #ffffff;
+  --color-brut-subtle: #f5f5f5;
+  --color-brut-muted: #525252;
+  --color-brut-soft: #e5e5e5;
+  --color-brut-line: #a3a3a3;
+  --color-brut-link: #2448c8;
+  --color-brut-inverse: #000000;
+  --color-brut-on-inverse: #ffffff;
+  --color-brut-on-accent: #ffffff;
 
   --font-display: "Space Grotesk", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
@@ -31,15 +41,56 @@
   }
 }
 
+:root {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-brut-bg: #141618;
+  --color-brut-black: #f3f1eb;
+  --color-brut-surface: #1d2024;
+  --color-brut-subtle: #272b30;
+  --color-brut-muted: #b9bec7;
+  --color-brut-soft: #353b43;
+  --color-brut-line: #77818e;
+  --color-brut-link: #a6b8ff;
+  --color-brut-danger: #ff9487;
+}
+
+html[data-theme-ready] [data-theme-toggle] {
+  display: inline-flex;
+}
+
+[data-theme-toggle][aria-pressed="true"] {
+  background: var(--color-brut-black);
+  color: var(--color-brut-surface);
+}
+
+.theme-curtain {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 65;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+html[data-theme-transition] *,
+html[data-theme-transition] *::before,
+html[data-theme-transition] *::after {
+  transition-duration: 0s !important;
+}
+
 @layer base {
   ::selection {
     background-color: var(--color-brut-black);
-    color: #fff;
+    color: var(--color-brut-surface);
   }
 
   ::-moz-selection {
     background-color: var(--color-brut-black);
-    color: #fff;
+    color: var(--color-brut-surface);
   }
 
   html {
@@ -58,6 +109,10 @@
     color: var(--color-brut-black);
     font-family: var(--font-mono);
     text-transform: lowercase;
+  }
+
+  main {
+    overflow-wrap: anywhere;
   }
 
   input[type="range"],
@@ -79,8 +134,8 @@
 
 @layer utilities {
   .brut-btn {
-    @apply border-2 border-black bg-white px-4 py-2 font-bold transition-none
-      hover:bg-brut-blue hover:text-white active:bg-brut-red active:text-white;
+    @apply border-2 border-brut-black bg-brut-surface px-4 py-2 font-bold transition-none
+      hover:bg-brut-blue hover:text-brut-on-accent active:bg-brut-red active:text-brut-on-accent;
   }
 }
 
@@ -95,23 +150,23 @@
  * call site, so a utility never fights a breakpoint variant.
  */
 @utility brut-field {
-  @apply border-2 border-black bg-white font-mono outline-none focus:border-brut-blue;
+  @apply border-2 border-brut-black bg-brut-surface font-mono outline-none focus:border-brut-blue;
 }
 
 @utility brut-field-quiet {
-  @apply border-2 border-black bg-neutral-100 font-mono outline-none focus:border-brut-blue;
+  @apply border-2 border-brut-black bg-brut-subtle font-mono outline-none focus:border-brut-blue;
 }
 
 @utility brut-panel {
-  @apply border-2 border-black bg-white;
+  @apply border-2 border-brut-black bg-brut-surface;
 }
 
 @utility brut-chip {
-  @apply border border-black bg-neutral-100 px-1.5 py-0.5 font-mono text-xs leading-none;
+  @apply border border-brut-black bg-brut-subtle px-1.5 py-0.5 font-mono text-xs leading-none;
 }
 
 @utility brut-label {
-  @apply font-mono text-xs font-bold uppercase text-black;
+  @apply font-mono text-xs font-bold uppercase text-brut-black;
 }
 
 @utility brut-meta {
@@ -119,19 +174,87 @@
 }
 
 @utility editorial-link {
-  @apply inline-flex items-center gap-2 border-b-2 border-black pb-1 font-mono text-sm font-bold no-underline transition-colors;
+  @apply inline-flex items-center gap-2 border-b-2 border-brut-black pb-1 font-mono text-sm font-bold no-underline transition-colors;
 
   &:hover,
   &:focus-visible {
-    @apply border-brut-blue text-brut-blue;
+    @apply border-brut-blue text-brut-link;
   }
 }
 
-@utility channel-link {
-  @apply inline-flex items-center gap-3 border-2 border-black bg-white px-3 py-2 font-mono text-xs font-bold no-underline transition-colors;
+/* `box-decoration-clone` keeps the plate on every wrapped line instead of one
+   box spanning the line break, so the link stays readable inside a paragraph. */
+@utility text-highlight {
+  @apply box-decoration-clone bg-brut-inverse px-1 font-bold text-brut-on-accent no-underline transition-colors;
 
   &:hover,
   &:focus-visible {
-    @apply bg-black text-white;
+    @apply bg-brut-blue;
+  }
+
+  &:focus-visible {
+    @apply outline-2 outline-offset-2 outline-brut-blue;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    main :where(h2, h3, p, figure):not(:where(astro-island *, .experiment-workspace *, [data-no-reveal], [data-no-reveal] *)) {
+      animation: scroll-arrive linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 80%;
+    }
+
+    @keyframes scroll-arrive {
+      from { opacity: .45; translate: 0 20px; }
+      to { opacity: 1; translate: 0 0; }
+    }
+  }
+}
+
+/* Reserve the navbar and page heading before sizing the sticky board; viewport-only
+   sizing keeps the top edge clipped until scrolling catches up. */
+.experiment-workspace {
+  --experiment-preview-gap: 0.5rem;
+  --experiment-preview-inset: 26rem;
+  --experiment-preview-size: min(100%, 42svh, max(9rem, calc(100svh - var(--experiment-preview-inset))));
+  align-items: start;
+}
+
+.experiment-preview {
+  position: sticky;
+  top: var(--experiment-preview-gap);
+  z-index: 20;
+  width: var(--experiment-preview-size);
+  justify-self: center;
+  align-self: center;
+  background: var(--color-brut-bg);
+}
+
+.experiment-preview > p {
+  max-width: calc(100% - 1rem);
+  font-size: clamp(8px, 1.8vw, 10px);
+}
+
+@media (min-width: 64rem) {
+  .experiment-workspace {
+    /* Navbar + ExperimentHeader; keep in sync with responsive-check.mjs. */
+    --experiment-preview-inset: 18rem;
+    --experiment-preview-size: min(100%, calc(100svh - var(--experiment-preview-inset)));
+  }
+
+  .experiment-preview {
+    align-self: start;
+    justify-self: start;
+  }
+}
+
+@media (min-width: 64rem) {
+  .experiment-workspace.flex > .experiment-preview {
+    max-width: calc(100% - 24rem);
   }
 }

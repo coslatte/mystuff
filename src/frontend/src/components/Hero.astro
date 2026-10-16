@@ -2,10 +2,10 @@
 import "../styles/brut-word.css";
 ---
 
-<section class="border-b-2 border-black bg-white">
+<section class="border-b-2 border-brut-black bg-brut-surface">
   <div class="px-6 py-10 text-center tablet:px-8 tablet:py-12 laptop:px-10">
     <p class="brut-label">Gabriel Paz / Cuba</p>
-    <h1 class="mx-auto mt-6 max-w-5xl wrap-break-word font-display text-[clamp(2.75rem,10vw,7.5rem)] font-black leading-[1.05] tracking-[-0.07em]">
+    <h1 class="hero-title mx-auto mt-6 max-w-5xl wrap-break-word font-display text-[clamp(2.75rem,10vw,7.5rem)] font-black leading-[1.05] tracking-[-0.07em]">
       i <span class="brut-word brut-word--code">
         <span class="brut-word__code-clip" aria-hidden="true">
           <pre class="brut-word__code-matrix"></pre>
@@ -33,6 +33,12 @@ import "../styles/brut-word.css";
     </h1>
   </div>
 </section>
+
+<style>
+  .hero-title:lang(es), .hero-title:lang(fr), .hero-title:lang(de) {
+    font-size: clamp(1.75rem, 7vw, 6rem);
+  }
+</style>
 
 <script>
   import { buildFmWavePath, fmWaveOffset } from "../lib/fm-wave";

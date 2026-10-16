@@ -1,3 +1,4 @@
+import { useTranslations } from "../hooks/useTranslations";
 import { Fragment } from "react";
 import ServerPulse, { type Stage } from "./ServerPulse";
 
@@ -52,28 +53,29 @@ function statusFor(serverReady: boolean, elapsed: number): Status {
 }
 
 export default function LoadingTracks({ serverReady, elapsed }: Props) {
+  const t = useTranslations();
   const { chunks, stage, detail } = statusFor(serverReady, elapsed);
   const message = chunks.map((chunk) => chunk.text).join("");
 
   return (
-    <div className="border-b-2 border-black bg-white p-6 tablet:p-8" aria-live="polite" aria-busy="true">
+    <div className="border-b-2 border-brut-black bg-brut-surface p-6 tablet:p-8" aria-live="polite" aria-busy="true">
       <div className="flex items-center gap-3">
         <ServerPulse stage={stage} />
         <span key={message} className="text-morph font-mono text-sm font-bold">
           {chunks.map((chunk, i) =>
             chunk.emphasis ? (
               <em key={i} className="italic">
-                {chunk.text}
+                {t(chunk.text)}
               </em>
             ) : (
-              <Fragment key={i}>{chunk.text}</Fragment>
+              <Fragment key={i}>{t(chunk.text)}</Fragment>
             )
           )}
         </span>
       </div>
       {detail && (
-        <p key={detail} className="text-morph mt-2 font-mono text-xs text-gray-500">
-          {detail}
+        <p key={detail} className="text-morph mt-2 font-mono text-xs text-brut-muted">
+          {t(detail)}
         </p>
       )}
     </div>

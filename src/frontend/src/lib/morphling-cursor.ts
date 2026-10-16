@@ -6,7 +6,7 @@ type Morph =
   | { kind: "shape"; from: Point[]; to: Point[]; startedAt: number; duration: number }
   | { kind: "hover"; from: Point[]; fromCenter: Point[]; offset: number; startedAt: number; duration: number };
 
-const TARGETS = "a, button, input, textarea, select, [contenteditable], [role='button'], [role='slider'], [data-cursor-target], [data-cursor='precision']";
+const TARGETS = "a, button, input, textarea, select, [contenteditable], [role='button'], [role='slider'], [data-cursor='precision']";
 const CURSOR_RADIUS = 30;
 const TARGET_PADDING = 7;
 const MAX_TARGET_WIDTH = 800;
@@ -178,12 +178,34 @@ export function outlineBounds(rect: Bounds, pointer: Point): Bounds {
 function rectanglePath(bounds: Bounds, pointer: Point): Point[] {
   const left = bounds.left - pointer.x;
   const top = bounds.top - pointer.y;
-  return resample([
+  const corners: Point[] = [
     { x: left, y: top },
     { x: left + bounds.width, y: top },
     { x: left + bounds.width, y: top + bounds.height },
     { x: left, y: top + bounds.height },
-  ]);
+  ];
+  const edgeLengths = corners.map((from, index) => {
+    const to = corners[(index + 1) % corners.length] ?? from;
+    return Math.hypot(to.x - from.x, to.y - from.y);
+  });
+  const edgeSamples = SAMPLES - corners.length;
+  const perimeter = edgeLengths.reduce((sum, length) => sum + length, 0);
+  const allocations = edgeLengths.map(length => edgeSamples * length / perimeter);
+  const counts = allocations.map(Math.floor);
+  const remaining = edgeSamples - counts.reduce((sum, count) => sum + count, 0);
+  const byRemainder = allocations.map((share, index) => ({ index, remainder: share - Math.floor(share) }))
+    .sort((a, b) => b.remainder - a.remainder);
+  for (const { index } of byRemainder.slice(0, remaining)) counts[index] = (counts[index] ?? 0) + 1;
+
+  return corners.flatMap((from, index) => {
+    const to = corners[(index + 1) % corners.length] ?? from;
+    const count = counts[index] ?? 0;
+    const edge = Array.from({ length: count }, (_, step) => {
+      const progress = (step + 1) / (count + 1);
+      return { x: mix(from.x, to.x, progress), y: mix(from.y, to.y, progress) };
+    });
+    return [from, ...edge];
+  });
 }
 
 export function translatePath(path: readonly Point[], pointer: Point): Point[] {
@@ -266,7 +288,8 @@ export function startMorphlingCursor(): void {
 
   function findHovered(): Element | null {
     if (dragging?.isConnected) return dragging;
-    const candidate = document.elementFromPoint(pointer.x, pointer.y)?.closest(TARGETS) ?? null;
+    const target = document.elementFromPoint(pointer.x, pointer.y);
+    const candidate = target?.closest("[data-cursor-target]") ?? target?.closest(TARGETS) ?? null;
     return candidate?.hasAttribute("data-cursor-skip") ? null : candidate;
   }
 

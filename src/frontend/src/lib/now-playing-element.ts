@@ -64,6 +64,7 @@ export function defineNowPlaying() {
       this.toggle.append(this.icon);
 
       this.songName.className = TITLE_CLASS;
+      this.songName.translate = false;
       const name = document.createElement("p");
       name.className = "min-w-0";
       name.append(this.songName);

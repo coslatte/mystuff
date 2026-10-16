@@ -9,18 +9,37 @@ import "../styles/global.css";
 
 interface Props {
   title?: string;
+  description?: string;
+  /** The upload console and the dev workbench should never be listed. */
+  noindex?: boolean;
   /** `/loading` replays the splash itself, so the layout's copy stands down. */
   bootReplay?: boolean;
 }
 
-const { title = "CosmicLatte", bootReplay = false } = Astro.props;
+const {
+  title = "CosmicLatte",
+  description = "Gabriel Paz, software engineer. Portfolio, code, music, and browser experiments.",
+  noindex = false,
+  bootReplay = false,
+} = Astro.props;
+
+// Scrapers fetch og:image on their own, so a relative path is no image at all.
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const socialImage = new URL("/images/previews/og.png", Astro.site);
 ---
 
 <!doctype html>
-<html lang="en" data-boot-replay={bootReplay ? "" : undefined}>
+<html lang="en" data-theme="light" data-boot-replay={bootReplay ? "" : undefined}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script is:inline>
+      // Apply the saved palette before the first paint, even before the bundle loads.
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem("clm_theme") === "dark" ? "dark" : "light";
+      } catch {}
+      document.documentElement.setAttribute("data-theme-ready", "");
+    </script>
     <script is:inline>
       if (document.readyState === "loading" && !document.documentElement.hasAttribute("data-boot-replay")) {
         document.documentElement.setAttribute("data-boot-pending", "");
@@ -43,17 +62,66 @@ const { title = "CosmicLatte", bootReplay = false } = Astro.props;
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow"} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="cosmiclatte.dev" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={socialImage} />
+    <meta property="og:image:alt" content="Gabriel Paz. Code, music, and browser experiments." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImage} />
     <title>{title}</title>
     <ClientRouter />
   </head>
-  <body class="flex min-h-screen flex-col">
+  <body id="page-top" tabindex="-1" class="flex min-h-screen flex-col">
     <BootScreen />
     <RouteCurtain />
     <MorphlingCursor />
     <Navbar />
-    <main class="mx-auto w-full max-w-7xl flex-1 border-x-2 border-black tv:max-w-[100rem]">
+    <main class="mx-auto w-full max-w-7xl flex-1 border-x-2 border-brut-black tv:max-w-[100rem]">
       <slot />
     </main>
     <Footer />
   </body>
 </html>
+
+<script>
+  import { writeText } from "../lib/storage";
+  import { transitionTheme } from "../lib/theme-transition";
+
+  let cancelThemeTransition = () => {};
+
+  function syncThemeToggle() {
+    const button = document.querySelector("[data-theme-toggle]");
+    button?.setAttribute("aria-pressed", String(document.documentElement.dataset.theme === "dark"));
+    button?.setAttribute("aria-disabled", String(document.documentElement.hasAttribute("data-theme-transition")));
+  }
+
+  document.addEventListener("click", (event) => {
+    if (!(event.target instanceof Element) || !event.target.closest("[data-theme-toggle]")) return;
+    if (document.documentElement.hasAttribute("data-theme-transition")) return;
+    const theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    cancelThemeTransition = transitionTheme({
+      applyTheme: () => {
+        document.documentElement.dataset.theme = theme;
+        writeText("clm_theme", theme);
+        syncThemeToggle();
+      },
+      onFinish: syncThemeToggle,
+    });
+    syncThemeToggle();
+  });
+
+  document.addEventListener("astro:before-swap", (event) => {
+    cancelThemeTransition();
+    event.newDocument.documentElement.dataset.theme = document.documentElement.dataset.theme;
+    event.newDocument.documentElement.setAttribute("data-theme-ready", "");
+  });
+  document.addEventListener("astro:page-load", syncThemeToggle);
+</script>

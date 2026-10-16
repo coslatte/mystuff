@@ -1,6 +1,7 @@
+import { useTranslations } from "../hooks/useTranslations";
 import { useState } from "react";
 import type { StreamingPlatform } from "../types";
-import { hasLinks, STREAMING_PLATFORMS } from "../data/streaming-albums";
+import { hasLinks, STREAMING_PLATFORMS, type PlayableAlbum } from "../data/streaming-albums";
 import { useAlbums } from "../hooks/useAlbums";
 import { useServerWarmup } from "../hooks/useServerWarmup";
 import { useSongs } from "../hooks/useSongs";
@@ -11,77 +12,114 @@ import ErrorNotice from "./ErrorNotice";
 import LoadingTracks from "./LoadingTracks";
 
 export default function MusicSection() {
-  const { songs, loading, error, reload, rate } = useSongs();
-  const { ready: serverReady, elapsed } = useServerWarmup();
-  const { albums, loading: albumsLoading, error: albumsError, reload: reloadAlbums } = useAlbums();
-  const [openAlbumId, setOpenAlbumId] = useState<string | null>(null);
+  const t = useTranslations();
+  const { albums, loading, error, reload } = useAlbums();
+  const playable = albums.filter(hasLinks);
+  const latest = playable[0];
+  const [selectedAlbumId, setOpenAlbumId] = useState<string | null>();
+  const openAlbumId = selectedAlbumId === undefined ? latest?.id : selectedAlbumId;
   const [platform, setPlatform] = useState<StreamingPlatform>("soundcloud");
 
-  const playable = albums.filter(hasLinks);
-
   return (
-    <div className="border-b-2 border-black">
-      <section className="flex flex-col gap-4 border-b-2 border-black bg-black p-4 tablet:p-6 laptop:p-8">
-        <PlayerBar />
-      </section>
-
-      <div className="grid grid-cols-1 laptop:grid-cols-2">
-        <section className="flex flex-col border-b-2 border-black laptop:border-b-0 laptop:border-r-2">
-          <div className="flex flex-col gap-2 border-b-2 border-black bg-white p-3 tablet:flex-row tablet:flex-wrap tablet:items-center tablet:justify-between">
-            <h3 className="font-display text-lg font-bold laptop:text-xl">albums</h3>
-            <div className="flex items-center gap-1">
-              <span className="shrink-0 font-mono text-[10px] font-bold">listen on</span>
-              {STREAMING_PLATFORMS.map((platformId) => (
-                <button
-                  key={platformId}
-                  type="button"
-                  onClick={() => setPlatform(platformId)}
-                  aria-pressed={platform === platformId}
-                  className={`flex-1 border-2 border-black px-2 py-1.5 font-mono text-[11px] font-bold transition-colors tablet:flex-none tablet:py-1 laptop:text-[10px] ${
-                    platform === platformId
-                      ? "bg-black text-white"
-                      : "bg-white text-black hover:bg-black hover:text-white"
-                  }`}
-                >
-                  {platformId}
-                </button>
-              ))}
+    <div className="flex flex-col">
+      <div className="flex flex-wrap items-center gap-2 border-b-2 border-brut-black bg-brut-surface p-3">
+        <span className="font-mono text-xs">{t("listen on")}</span>
+        {STREAMING_PLATFORMS.map((platformId) => (
+          <button key={platformId} type="button" aria-pressed={platform === platformId} onClick={() => setPlatform(platformId)} className={`border-2 border-brut-black px-3 py-2 font-mono text-xs font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brut-blue ${platform === platformId ? "bg-brut-inverse text-brut-on-accent" : "bg-brut-surface text-brut-black"}`}>
+            {t(platformId)}
+          </button>
+        ))}
+      </div>
+      <section aria-labelledby="latest-title" className="grid min-w-0 grid-cols-1 border-b-2 border-brut-black laptop:grid-cols-[minmax(18rem,.8fr)_minmax(0,1.2fr)]">
+        <div className="relative aspect-square max-h-[42rem] min-w-0 overflow-hidden border-b-2 border-brut-black bg-brut-inverse laptop:border-b-0 laptop:border-r-2">
+          {latest?.artworkUrl ? <img src={latest.artworkUrl} alt={`${latest.title} cover art`} className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center font-display text-8xl font-black text-brut-on-accent" aria-hidden="true">{latest?.title.charAt(0) ?? "♪"}</span>}
+          <span className="absolute bottom-0 left-0 bg-brut-red px-3 py-2 font-mono text-xs font-bold text-brut-on-accent">SELECTED RELEASE</span>
+        </div>
+        <div className="flex min-w-0 flex-col justify-between bg-brut-surface p-5 tablet:p-8 laptop:p-10">
+          <div>
+            <p className="brut-label">Original work{latest?.releaseDate ? ` / ${latest.releaseDate}` : ""}</p>
+            <h3 id="latest-title" className="mt-5 break-words font-display text-4xl font-black leading-none tracking-tighter tablet:text-6xl">{latest?.title ?? (loading ? "Loading releases..." : "Releases")}</h3>
+            <p className="mt-4 max-w-xl text-sm leading-7">Experimental electronic music with a bass music foundation. Listen to a release here, or explore sketches and work in progress below.</p>
+          </div>
+          {latest ? (
+            <div className="mt-8">
+              <AlbumCard album={latest} platform={platform} open={openAlbumId === latest.id} onToggle={() => setOpenAlbumId(openAlbumId === latest.id ? null : latest.id)} />
             </div>
+          ) : loading ? <p role="status" className="mt-8 font-mono text-xs text-brut-muted">Loading releases...</p>
+            : error != null ? <ErrorNotice error={error} onRetry={reload} />
+            : <p className="mt-8 font-mono text-xs text-brut-muted">No releases available.</p>}
+          <div className="mt-6 flex flex-wrap gap-3">
+            <a className="editorial-link" href="#work-catalog">Explore more work ↓</a>
           </div>
-          <div className="flex flex-col gap-2 bg-neutral-100 p-3 tablet:p-4 laptop:p-5">
-            {albumsLoading && <p className="font-mono text-xs">loading albums...</p>}
-            {albumsError != null && <ErrorNotice error={albumsError} onRetry={reloadAlbums} />}
-            {!albumsLoading && !albumsError && !playable.length && (
-              <p className="font-mono text-xs text-gray-500">no albums connected yet.</p>
-            )}
-            {playable.map((album) => (
-              <AlbumCard
-                key={album.id}
-                album={album}
-                platform={platform}
-                open={openAlbumId === album.id}
-                onToggle={() => setOpenAlbumId((current) => (current === album.id ? null : album.id))}
-              />
-            ))}
-          </div>
-        </section>
-
-        <section className="flex flex-col">
-          <h3 className="border-b-2 border-black bg-brut-red text-white p-3 font-display text-lg font-bold laptop:text-xl">
-            wip tracks
-          </h3>
-          <div className="flex flex-col gap-2 bg-neutral-100 p-3 tablet:p-4 laptop:p-5">
-            {songs.map((song) => (
-              <TrackBlock key={song.id} song={song} onRate={rate} />
-            ))}
-            {loading && <LoadingTracks serverReady={serverReady} elapsed={elapsed} />}
-            {!loading && error != null && <ErrorNotice error={error} onRetry={reload} />}
-            {!loading && error == null && !songs.length && (
-              <p className="p-3 font-mono text-xs text-gray-500">No tracks available.</p>
-            )}
-          </div>
-        </section>
+        </div>
+      </section>
+      <div id="work-catalog" className="grid grid-cols-1 laptop:grid-cols-2">
+        <AlbumCatalog albums={playable.filter((album) => album.id !== latest?.id)} loading={loading} error={error} reload={reload} platform={platform} openAlbumId={openAlbumId} setOpenAlbumId={setOpenAlbumId} />
+        <TrackCatalog />
       </div>
     </div>
+  );
+}
+
+type AlbumCatalogProps = {
+  albums: PlayableAlbum[];
+  loading: boolean;
+  error: ReturnType<typeof useAlbums>["error"];
+  reload: () => void;
+  platform: StreamingPlatform;
+  openAlbumId: string | null | undefined;
+  setOpenAlbumId: (id: string | null) => void;
+};
+
+function AlbumCatalog({ albums, loading: albumsLoading, error: albumsError, reload: reloadAlbums, platform, openAlbumId, setOpenAlbumId }: AlbumCatalogProps) {
+  const t = useTranslations();
+
+  return (
+    <section aria-labelledby="albums-title" className="flex min-w-0 flex-col border-b-2 border-brut-black laptop:border-b-0 laptop:border-r-2">
+      <div className="flex flex-col gap-2 border-b-2 border-brut-black bg-brut-surface p-3 tablet:flex-row tablet:flex-wrap tablet:items-center tablet:justify-between">
+        <h3 id="albums-title" className="font-display text-lg font-bold laptop:text-xl">{t("albums")}</h3>
+      </div>
+      <div className="flex flex-col gap-2 bg-brut-subtle p-3 tablet:p-4 laptop:p-5">
+        {albumsLoading && <p className="font-mono text-xs">{t("loading albums...")}</p>}
+        {albumsError != null && <ErrorNotice error={albumsError} onRetry={reloadAlbums} />}
+        {!albumsLoading && !albumsError && !albums.length && (
+          <p className="font-mono text-xs text-brut-muted">No other releases available.</p>
+        )}
+        {albums.map((album) => (
+          <AlbumCard
+            key={album.id}
+            album={album}
+            platform={platform}
+            open={openAlbumId === album.id}
+            onToggle={() => setOpenAlbumId(openAlbumId === album.id ? null : album.id)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function TrackCatalog() {
+  const t = useTranslations();
+  const { songs, loading, error, reload, rate } = useSongs();
+  const { ready: serverReady, elapsed } = useServerWarmup();
+
+  return (
+    <section aria-labelledby="tracks-title" className="flex min-w-0 flex-col">
+      <h3 id="tracks-title" className="border-b-2 border-brut-black bg-brut-red text-brut-on-accent p-3 font-display text-lg font-bold laptop:text-xl">{t("wip tracks")}</h3>
+      <div className="flex flex-col gap-4 border-b-2 border-brut-black bg-brut-inverse p-4 tablet:p-6">
+        <PlayerBar />
+      </div>
+      <div className="flex flex-col gap-2 bg-brut-subtle p-3 tablet:p-4 laptop:p-5">
+        {songs.map((song) => (
+          <TrackBlock key={song.id} song={song} onRate={rate} />
+        ))}
+        {loading && <LoadingTracks serverReady={serverReady} elapsed={elapsed} />}
+        {!loading && error != null && <ErrorNotice error={error} onRetry={reload} />}
+        {!loading && error == null && !songs.length && (
+          <p className="p-3 font-mono text-xs text-brut-muted">{t("No tracks available.")}</p>
+        )}
+      </div>
+    </section>
   );
 }

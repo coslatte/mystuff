@@ -11,11 +11,15 @@ export function mountLoadingPartition(canvas: HTMLCanvasElement, depth = splashD
   const foundContext = canvas.getContext("2d");
   if (!foundContext) return () => {};
   const context: CanvasRenderingContext2D = foundContext;
-  const styles = getComputedStyle(canvas);
-  const paper = styles.getPropertyValue("--color-brut-bg").trim();
-  const ink = styles.getPropertyValue("--color-brut-black").trim();
-  const blue = styles.getPropertyValue("--color-brut-blue").trim();
-  const red = styles.getPropertyValue("--color-brut-red").trim();
+  let paper = "", ink = "", blue = "", red = "";
+  function readTheme(): void {
+    const styles = getComputedStyle(canvas);
+    paper = styles.getPropertyValue("--color-brut-bg").trim();
+    ink = styles.getPropertyValue("--color-brut-black").trim();
+    blue = styles.getPropertyValue("--color-brut-blue").trim();
+    red = styles.getPropertyValue("--color-brut-red").trim();
+    paint();
+  }
   const preference = matchMedia("(prefers-reduced-motion: reduce)");
   let frame = 0;
   let lastPaint = -Infinity;
@@ -65,15 +69,19 @@ export function mountLoadingPartition(canvas: HTMLCanvasElement, depth = splashD
   }
 
   const observer = new ResizeObserver(resize);
+  const themeObserver = new MutationObserver(readTheme);
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   observer.observe(canvas);
   window.addEventListener("resize", resize);
   document.addEventListener("visibilitychange", resume);
   preference.addEventListener("change", resume);
+  readTheme();
   resize();
   resume();
   return () => {
     cancelAnimationFrame(frame);
     observer.disconnect();
+    themeObserver.disconnect();
     window.removeEventListener("resize", resize);
     document.removeEventListener("visibilitychange", resume);
     preference.removeEventListener("change", resume);

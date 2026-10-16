@@ -1,3 +1,4 @@
+import { useTranslations } from "../hooks/useTranslations";
 /*
  * Form primitives.
  *
@@ -24,11 +25,12 @@ type SliderProps = {
 };
 
 export function Slider({ label, value, min, max, step, format, accent, hint, onChange }: SliderProps) {
+  const t = useTranslations();
   return (
     <label className="brut-label block">
       <span className="flex items-baseline justify-between gap-2">
-        {label}
-        <span className={accent ?? "text-brut-blue"}>{format ? format(value) : value.toFixed(2)}</span>
+        {t(label)}
+        <span className={accent ?? "text-brut-link"}>{format ? format(value) : value.toFixed(2)}</span>
       </span>
       <input
         type="range"
@@ -39,7 +41,7 @@ export function Slider({ label, value, min, max, step, format, accent, hint, onC
         onChange={(event) => onChange(Number(event.target.value))}
         className="mt-1 w-full"
       />
-      {hint ? <span className="mt-1 block font-mono text-[10px] font-normal normal-case text-gray-600">{hint}</span> : null}
+      {hint ? <span className="mt-1 block font-mono text-[10px] font-normal normal-case text-brut-muted">{t(hint)}</span> : null}
     </label>
   );
 }
@@ -53,9 +55,10 @@ type ChipsProps<T extends string> = {
 
 /** A segmented choice. Used wherever the set of options is small and fixed. */
 export function Chips<T extends string>({ label, value, options, onChange }: ChipsProps<T>) {
+  const t = useTranslations();
   return (
     <div>
-      <p className="brut-label mb-1">{label}</p>
+      <p className="brut-label mb-1">{t(label)}</p>
       <div className="flex flex-wrap gap-1">
         {options.map((option) => (
           <button
@@ -63,11 +66,11 @@ export function Chips<T extends string>({ label, value, options, onChange }: Chi
             type="button"
             onClick={() => onChange(option)}
             aria-pressed={option === value}
-            className={`border-2 border-black px-2 py-1 font-mono text-xs font-bold ${
-              option === value ? "bg-black text-white" : "bg-white hover:bg-brut-blue hover:text-white"
+            className={`border-2 border-brut-black px-2 py-1 font-mono text-xs font-bold ${
+              option === value ? "bg-brut-inverse text-brut-on-accent" : "bg-brut-surface hover:bg-brut-blue hover:text-brut-on-accent"
             }`}
           >
-            {option}
+            {t(option)}
           </button>
         ))}
       </div>
@@ -82,6 +85,7 @@ type ToggleProps = {
 };
 
 export function Toggle({ label, checked, onChange }: ToggleProps) {
+  const t = useTranslations();
   return (
     <label className="brut-label flex items-center gap-2">
       <input
@@ -90,7 +94,7 @@ export function Toggle({ label, checked, onChange }: ToggleProps) {
         onChange={(event) => onChange(event.target.checked)}
         className="h-4 w-4 accent-brut-blue"
       />
-      {label}
+      {t(label)}
     </label>
   );
 }
@@ -103,10 +107,11 @@ type PanelProps = {
 };
 
 export function Panel({ title, children, aside }: PanelProps) {
+  const t = useTranslations();
   return (
     <section className="brut-panel">
-      <header className="flex items-center justify-between gap-2 border-b-2 border-black bg-black px-3 py-2">
-        <h2 className="font-mono text-xs font-bold uppercase text-white">{title}</h2>
+      <header className="flex items-center justify-between gap-2 border-b-2 border-brut-black bg-brut-inverse px-3 py-2">
+        <h2 className="font-mono text-xs font-bold uppercase text-brut-on-accent">{t(title)}</h2>
         {aside}
       </header>
       <div className="flex flex-col gap-3 p-3">{children}</div>

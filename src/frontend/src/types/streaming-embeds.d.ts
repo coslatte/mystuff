@@ -20,6 +20,7 @@ declare global {
     toggle: () => void;
     getCurrentSound: (callback: (sound: SoundCloudSound) => void) => void;
     bind: (event: string, handler: () => void) => void;
+    unbind: (event: string) => void;
   };
 
   type SpotifyEmbedController = {

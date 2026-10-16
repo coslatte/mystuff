@@ -1,3 +1,4 @@
+import { useTranslations } from "../hooks/useTranslations";
 /*
  * Recursive subdivision.
  *
@@ -50,6 +51,7 @@ type Box = {
 };
 
 export default function RecursiveSubdivision() {
+  const t = useTranslations();
   const [depth, setDepth] = useState(4);
   const [irregularity, setIrregularity] = useState(0.5);
   const [grain, setGrain] = useState(0.3);
@@ -206,8 +208,8 @@ export default function RecursiveSubdivision() {
   const count = cells.length;
 
   return (
-    <div className="grid grid-cols-1 gap-4 laptop:grid-cols-[minmax(0,1fr)_21rem]">
-      <section className="brut-panel relative self-start">
+    <div className="experiment-workspace grid grid-cols-1 gap-4 laptop:grid-cols-[minmax(0,1fr)_21rem]">
+      <section className="experiment-preview brut-panel relative self-start">
         <div ref={attachBoard} className="relative aspect-square w-full overflow-hidden bg-brut-bg">
           {layout
             ? layout.boxes.map((box, index) => (
@@ -229,7 +231,7 @@ export default function RecursiveSubdivision() {
             ? layout.lines.map((box, index) => (
                 <div
                   key={index}
-                  className="absolute bg-black"
+                  className="absolute bg-brut-inverse"
                   style={{
                     left: `${box.left}px`,
                     top: `${box.top}px`,
@@ -240,15 +242,14 @@ export default function RecursiveSubdivision() {
               ))
             : null}
         </div>
-        <p className="brut-meta absolute bottom-2 left-2 bg-white px-2 py-1 normal-case">
-          {count} cells · depth {depth} · every cut splits in two
-        </p>
+        <p className="brut-meta absolute bottom-2 left-2 bg-brut-surface px-2 py-1 normal-case">
+          {count}{t(" cells · depth ")}{depth}{t("· every cut splits in two")}</p>
       </section>
 
       <div className="flex flex-col gap-3">
         <Panel
-          title="partition"
-          aside={<span className="font-mono text-[10px] text-white">{count}</span>}
+          title={t("partition")}
+          aside={<span className="font-mono text-[10px] text-brut-on-accent">{count}</span>}
         >
           <Chips
             label="depth"
@@ -271,7 +272,7 @@ export default function RecursiveSubdivision() {
             min={0}
             max={0.9}
             step={0.02}
-            accent="text-brut-blue"
+            accent="text-brut-link"
             hint="how often a cell inherits its parent's cut direction"
             onChange={setGrain}
           />
@@ -286,7 +287,7 @@ export default function RecursiveSubdivision() {
           />
         </Panel>
 
-        <Panel title="colour">
+        <Panel title={t("colour")}>
           <Slider
             label="base hue"
             value={hue}
@@ -294,7 +295,7 @@ export default function RecursiveSubdivision() {
             max={359}
             step={1}
             format={(value) => `${value.toFixed(0)}°`}
-            accent="text-brut-blue"
+            accent="text-brut-link"
             onChange={setHue}
           />
           <Chips label="harmony" value={harmony} options={HARMONY_NAMES} onChange={setHarmony} />
@@ -320,7 +321,7 @@ export default function RecursiveSubdivision() {
             min={0}
             max={1}
             step={0.02}
-            accent="text-brut-blue"
+            accent="text-brut-link"
             hint="0 uses a position-based gradient; 1 increases random color variation"
             onChange={setColourVariance}
           />
@@ -330,24 +331,20 @@ export default function RecursiveSubdivision() {
             min={0}
             max={0.6}
             step={0.02}
-            accent="text-brut-red"
+            accent="text-brut-danger"
             hint="chance a cell is left unpainted"
             onChange={setBare}
           />
         </Panel>
 
-        <Panel title="output">
+        <Panel title={t("output")}>
           <Toggle label="animate" checked={auto} onChange={setAuto} />
           <button
             type="button"
             onClick={() => setSeed((current) => (current + 1) % 100000)}
             className="brut-btn w-full text-xs"
-          >
-            recut
-          </button>
-          <p className="brut-meta normal-case text-gray-600">
-            Depth {depth} produces {cellCount(depth)} cells. A cut ratio of 0.50 forms a regular grid.
-          </p>
+          >{t("recut")}</button>
+          <p className="brut-meta normal-case text-brut-muted">{t(`Depth ${depth} produces ${cellCount(depth)} cells. A cut ratio of 0.50 forms a regular grid.`)}</p>
         </Panel>
       </div>
     </div>

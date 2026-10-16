@@ -1,3 +1,4 @@
+import { useTranslations } from "../hooks/useTranslations";
 import { useCallback, useEffect, useRef } from "react";
 import {
   activeLink,
@@ -30,6 +31,7 @@ function fallbackEmbed(title: string, src: string, height: number): HTMLIFrameEl
 }
 
 export default function AlbumCard({ album, platform, open, onToggle }: Props) {
+  const t = useTranslations();
   const link = activeLink(album, platform);
   const fallback = link.platform !== platform;
   const soundCloudRef = useRef<HTMLIFrameElement>(null);
@@ -76,9 +78,9 @@ export default function AlbumCard({ album, platform, open, onToggle }: Props) {
           type="button"
           onClick={onToggle}
           aria-expanded={open}
-          className="group flex min-w-0 flex-1 items-center gap-3 text-left transition-colors hover:bg-brut-blue hover:text-white focus-visible:bg-brut-blue focus-visible:text-white"
+          className="group flex min-w-0 flex-1 items-center gap-3 text-left transition-colors hover:bg-brut-blue hover:text-brut-on-accent focus-visible:bg-brut-blue focus-visible:text-brut-on-accent"
         >
-          <span className="block h-14 w-14 shrink-0 overflow-hidden border-2 border-black bg-black laptop:h-16 laptop:w-16">
+          <span className="block h-14 w-14 shrink-0 overflow-hidden border-2 border-brut-black bg-brut-inverse laptop:h-16 laptop:w-16">
             {album.artworkUrl ? (
               <img
                 src={album.artworkUrl}
@@ -87,7 +89,7 @@ export default function AlbumCard({ album, platform, open, onToggle }: Props) {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <span className="flex h-full w-full items-center justify-center font-display text-lg font-black text-neutral-600">
+              <span className="flex h-full w-full items-center justify-center font-display text-lg font-black text-brut-muted">
                 {album.title.charAt(0)}
               </span>
             )}
@@ -96,9 +98,9 @@ export default function AlbumCard({ album, platform, open, onToggle }: Props) {
             <span className="block truncate font-display text-base font-bold leading-tight">
               {album.title}
             </span>
-            <span className="font-mono text-xs text-gray-600 group-hover:text-white group-focus-visible:text-white">
-              {album.setType ?? "album"}
-              {album.trackCount != null ? ` · ${album.trackCount} tracks` : ""}
+            <span className="font-mono text-xs text-brut-muted group-hover:text-brut-on-accent group-focus-visible:text-brut-on-accent">
+              {t(album.setType ?? "album")}
+              {t(album.trackCount != null ? ` · ${album.trackCount} tracks` : "")}
               {album.releaseDate ? ` · ${album.releaseDate}` : ""}
             </span>
           </span>
@@ -107,30 +109,28 @@ export default function AlbumCard({ album, platform, open, onToggle }: Props) {
           href={link.url}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`open ${album.title} on ${link.platform}`}
-          className="shrink-0 border-2 border-black bg-white px-2 py-1 font-mono text-xs hover:bg-brut-blue hover:text-white"
-        >
-          ↗
-        </a>
+          aria-label={t(`open ${album.title} on ${link.platform}`)}
+          className="shrink-0 border-2 border-brut-black bg-brut-surface px-2 py-1 font-mono text-xs hover:bg-brut-blue hover:text-brut-on-accent"
+        >↗</a>
       </div>
 
       {open && (
         <>
-          <div className="flex items-center justify-between gap-2 border-t-2 border-black bg-neutral-100 px-2 py-1">
-            <span className="font-mono text-[10px] text-gray-600">Player: {link.platform}</span>
+          <div className="flex items-center justify-between gap-2 border-t-2 border-brut-black bg-brut-subtle px-2 py-1">
+            <span className="font-mono text-[10px] text-brut-muted">{t(`Player: ${link.platform}`)}</span>
             {fallback && (
-              <span className="font-mono text-[10px] font-bold text-brut-red">Unavailable on {platform}</span>
+              <span className="font-mono text-[10px] font-bold text-brut-danger">{t(`Unavailable on ${platform}`)}</span>
             )}
           </div>
           {link.platform === "spotify" ? (
-            <div ref={setSpotifyHost} className="w-full border-t-2 border-black [&>iframe]:w-full" />
+            <div ref={setSpotifyHost} className="w-full border-t-2 border-brut-black [&>iframe]:w-full" />
           ) : (
             <iframe
               ref={soundCloudRef}
-              title={`${album.title} player`}
+              title={t(`${album.title} player`)}
               allow={EMBED_ALLOW}
               loading="lazy"
-              className="block w-full border-t-2 border-black"
+              className="block w-full border-t-2 border-brut-black"
               style={{ height: `${soundCloudHeight}px` }}
               src={embedSrcFor(link)}
             />

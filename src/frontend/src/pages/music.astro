@@ -17,78 +17,53 @@ const socials = [
 
 <Layout
   title="music ][ cosmiclatte.dev"
-  description="Original music and the influences behind it: an electronic foundation alongside discoveries in R&B, jazz, piano, ambient and experimental music."
+  description="Original releases, sound design, and the musical influences behind an experimental electronic practice."
 >
-  <section class="music-gateway" aria-label="Music and listening">
-    <div class="music-gateway-track">
-      <section class="music-gateway-panel music-home border-b-2 border-brut-black bg-brut-surface" aria-labelledby="music-title">
-        <div class="music-home-content">
-          <p class="brut-label">01 / music</p>
-          <h1 id="music-title" class="mt-4 font-display text-5xl font-black leading-none tracking-tighter tablet:text-7xl">sounds i've crafted</h1>
-          <p class="mt-5 max-w-2xl text-base leading-7">Listen to my original tracks and releases, leave a rating or a comment, and explore the influences behind my music.</p>
-          <a class="editorial-link mt-5" href="#journey-title">Explore my musical journey ↓</a>
-          <div class="music-platforms" aria-label="Music platforms">
-            <p class="brut-label mb-4">Platforms and links</p>
-            <div class="flex flex-wrap gap-2">
-              {socials.map((social) => <SocialButton name={social.name} url={social.url} />)}
-            </div>
-          </div>
+  <div class="music-page">
+    <section class="music-intro" aria-labelledby="music-title">
+      <div>
+        <p class="brut-label">01 / music</p>
+        <h1 id="music-title" class="mt-4 font-display text-5xl font-black leading-none tracking-tighter tablet:text-7xl">sounds i've crafted</h1>
+        <p class="mt-5 max-w-2xl text-base leading-7">I make experimental electronic music rooted in dubstep, with detailed sound design, harmonic color and a pull toward soundscapes. Listen to my releases, explore work in progress, or follow the influences behind the music.</p>
+        <div class="mt-5 flex flex-wrap gap-4">
+          <a class="editorial-link" href="#music-catalog">Listen to my music ↓</a>
+          <a class="editorial-link" href="#journey-title">Explore my musical journey ↓</a>
         </div>
-        <button class="music-gateway-next brut-btn" type="button" data-music-next aria-controls="music-listen">
-          Go to listening <span aria-hidden="true">→</span>
-        </button>
-        <span class="music-gateway-index" aria-hidden="true">01 / 02</span>
-      </section>
+      </div>
+      <nav class="music-platforms" aria-label="Music platforms">
+        <h2 class="brut-label mb-4">Find my music</h2>
+        <div class="music-social-grid">
+          {socials.slice(0, 4).map((social) => <SocialButton name={social.name} url={social.url} />)}
+        </div>
+        <div class="mt-4 flex flex-wrap gap-4 font-mono text-xs">
+          {socials.slice(4).map((social) => <a class="editorial-link" href={social.url} target="_blank" rel="noreferrer">{social.name} ↗</a>)}
+        </div>
+      </nav>
+    </section>
 
-      <section class="music-gateway-panel music-listen" id="music-listen" aria-label="Listen to my music" tabindex="-1">
-        <header class="music-listen-header">
-          <p class="brut-label">02 / listen</p>
-          <h2>My music, here.</h2>
-          <button class="brut-btn" type="button" data-music-back aria-controls="music-title"><span aria-hidden="true">←</span> Back to the beginning</button>
-        </header>
-        <MusicSection client:load />
-      </section>
-    </div>
-  </section>
+    <section id="music-catalog" class="music-catalog" aria-labelledby="catalog-title">
+      <header class="music-catalog-header">
+        <p class="brut-label">02 / releases &amp; work in progress</p>
+        <h2 id="catalog-title">Releases &amp; sketches.</h2>
+      </header>
+      <MusicSection client:load />
+    </section>
 
-  <MusicJourney />
-
+    <MusicJourney />
+  </div>
 </Layout>
 
-<script>
-  document.querySelectorAll<HTMLButtonElement>("[data-music-next], [data-music-back]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const gateway = button.closest<HTMLElement>(".music-gateway");
-      if (!gateway) return;
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      gateway.scrollTo({ left: button.hasAttribute("data-music-next") ? gateway.clientWidth : 0, behavior: reduceMotion ? "instant" : "smooth" });
-      if (button.hasAttribute("data-music-next")) gateway.querySelector<HTMLElement>("#music-listen")?.focus({ preventScroll: true });
-    });
-  });
-</script>
-
 <style>
-  .music-gateway { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; }
-  .music-gateway::-webkit-scrollbar { display: none; }
-  .music-gateway-track { display: flex; width: 200%; }
-  .music-gateway-panel { position: relative; flex: 0 0 50%; min-width: 0; width: 50%; scroll-snap-align: start; scroll-snap-stop: always; }
-  .music-home { min-height: min(760px, calc(100svh - 5rem)); display: flex; align-items: center; }
-  .music-home-content { width: 100%; padding: clamp(1.5rem, 5vw, 5rem); padding-right: clamp(9rem, 20vw, 18rem); }
-  .music-platforms { margin-top: clamp(2rem, 5vw, 4rem); padding-top: 1.5rem; border-top: 2px solid var(--color-brut-black); }
-  .music-gateway-next { position: absolute; right: clamp(1.5rem, 5vw, 5rem); top: 50%; display: flex; gap: 1rem; align-items: center; transform: translateY(-50%); min-height: 3.5rem; }
-  .music-gateway-index { position: absolute; right: clamp(1.5rem, 5vw, 5rem); bottom: 1rem; font-size: .65rem; }
-  .music-listen { min-height: min(760px, calc(100svh - 5rem)); background: var(--color-brut-bg); border-left: 2px solid var(--color-brut-black); }
-  .music-listen-header { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; padding: 1rem clamp(1rem, 3vw, 3rem); border-bottom: 2px solid var(--color-brut-black); background: var(--color-brut-surface); }
-  .music-listen-header h2 { flex: 1; margin: 0; font-size: clamp(1.5rem, 3vw, 2.5rem); font-weight: 800; }
-  #music-listen:focus { outline: none; }
-  @media (max-width: 639px) {
-    .music-home { min-height: min(720px, calc(100svh - 4rem)); align-items: flex-start; }
-    .music-home-content { padding: 2rem 1.25rem 7rem; }
-    .music-gateway-next { right: 1.25rem; bottom: 1.25rem; top: auto; transform: none; }
-    .music-gateway-index { left: 1.25rem; right: auto; bottom: 1.75rem; }
-    .music-listen { min-height: 0; }
-    .music-listen-header { gap: .75rem; padding: 1rem; }
-    .music-listen-header h2 { flex-basis: 100%; order: 1; }
-    .music-listen-header button { margin-left: auto; }
+  .music-intro { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(16rem, .6fr); align-items: end; gap: 3rem; padding: clamp(1.5rem, 3vw, 3rem); border-bottom: 2px solid var(--color-brut-black); background: var(--color-brut-surface); }
+  .music-platforms { padding-left: 2rem; border-left: 2px solid var(--color-brut-black); }
+  .music-social-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: .65rem; }
+  .music-catalog { scroll-margin-top: 1rem; border-bottom: 2px solid var(--color-brut-black); }
+  .music-catalog-header { display: flex; align-items: baseline; gap: 2rem; padding: 1.25rem clamp(1rem, 3vw, 3rem); border-bottom: 2px solid var(--color-brut-black); background: var(--color-brut-surface); }
+  .music-catalog-header h2 { margin: 0; font-size: clamp(1.5rem, 3vw, 2.5rem); font-weight: 800; }
+  @media (max-width: 1023px) {
+    .music-intro { grid-template-columns: 1fr; gap: 2rem; padding: 2rem 1.25rem; }
+    .music-platforms { padding: 1.5rem 0 0; border-top: 2px solid var(--color-brut-black); border-left: 0; }
+    .music-catalog-header { display: block; }
+    .music-catalog-header h2 { margin-top: .5rem; }
   }
 </style>

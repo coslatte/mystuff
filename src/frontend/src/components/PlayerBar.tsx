@@ -1,3 +1,4 @@
+import { useTranslations } from "../hooks/useTranslations";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { computeWaveform, player, type WaveformPeaks } from "../services/player";
 import { usePlayer } from "../hooks/usePlayer";
@@ -50,6 +51,7 @@ function syntheticPeaks(seed: number): WaveformPeaks {
 }
 
 export default function PlayerBar() {
+  const t = useTranslations();
   // The bar owns the audio element, so it reads the track view and leaves the
   // global now-playing to the footer widget.
   const { track } = usePlayer();
@@ -182,28 +184,28 @@ export default function PlayerBar() {
           disabled={!song}
           className={playPauseClass(
             isPlaying,
-            "flex h-11 w-11 shrink-0 items-center justify-center border-2 border-black text-lg font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40 laptop:h-12 laptop:w-12 laptop:text-xl"
+            "flex h-11 w-11 shrink-0 items-center justify-center border-2 border-brut-black text-lg font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40 laptop:h-12 laptop:w-12 laptop:text-xl"
           )}
-          aria-label={isPlaying ? "pause" : "play"}
+          aria-label={t(isPlaying ? "pause" : "play")}
         >
           <span key={isPlaying ? "pause" : "play"} className="icon-morph">
-            {playPauseGlyph(isPlaying)}
+            {t(playPauseGlyph(isPlaying))}
           </span>
         </button>
 
-        <div className="min-w-0 flex-1 border-2 border-black bg-black p-1" aria-hidden="true">
+        <div className="min-w-0 flex-1 border-2 border-brut-black bg-brut-inverse p-1" aria-hidden="true">
           <canvas ref={spectrumRef} className="block h-10 w-full laptop:h-12" />
         </div>
 
-        <div className="shrink-0 border-2 border-black bg-white px-2 py-1 font-mono text-[10px] font-bold text-black laptop:text-xs">
-          {formatClock(currentTime)}
+        <div className="shrink-0 border-2 border-brut-black bg-brut-surface px-2 py-1 font-mono text-[10px] font-bold text-brut-black laptop:text-xs">
+          {t(formatClock(currentTime))}
         </div>
       </div>
 
       <div
         ref={seekBarRef}
         role="slider"
-        aria-label="seek"
+        aria-label={t("seek")}
         aria-valuemin={0}
         aria-valuemax={Math.round(duration) || 0}
         aria-valuenow={Math.round(currentTime)}
@@ -213,15 +215,13 @@ export default function PlayerBar() {
           scrubbingRef.current = true;
           seekFromPointer(e.clientX);
         }}
-        className="relative h-10 cursor-pointer touch-none border-2 border-black bg-black p-1"
+        className="relative h-10 cursor-pointer touch-none border-2 border-brut-black bg-brut-inverse p-1"
       >
         <canvas ref={waveformRef} className="block h-full w-full" />
       </div>
 
       {error && (
-        <p className="font-mono text-[10px] font-bold text-brut-red">
-          playback error: could not stream this track. check your internet connectivity.
-        </p>
+        <p className="font-mono text-[10px] font-bold text-brut-danger">{t("playback error: could not stream this track. check your internet connectivity.")}</p>
       )}
     </div>
   );

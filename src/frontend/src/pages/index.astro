@@ -2,12 +2,29 @@
 import Layout from "../layouts/Layout.astro";
 import Hero from "../components/Hero.astro";
 import FluidPanel from "../components/FluidPanel.astro";
+import LinkPreview from "../components/LinkPreview.astro";
 
 const channels = [
-  { name: "3Blue1Brown", url: "https://www.youtube.com/@3blue1brown", note: "math" },
-  { name: "Veritasium", url: "https://www.youtube.com/@veritasium", note: "science" },
-  { name: "Fireship", url: "https://www.youtube.com/@Fireship", note: "software" },
-  { name: "Juja", url: "https://www.youtube.com/@jujalag", note: "games" },
+  {
+    name: "3Blue1Brown",
+    url: "https://www.youtube.com/@3blue1brown",
+    note: "my favorite channel for math animations and machine learning, with wonderful courses",
+  },
+  {
+    name: "Veritasium",
+    url: "https://www.youtube.com/@veritasium",
+    note: "my trusted channel for learning science with reliable sources",
+  },
+  {
+    name: "Fireship",
+    url: "https://www.youtube.com/@Fireship",
+    note: "my channel for tech news",
+  },
+  {
+    name: "Juja",
+    url: "https://www.youtube.com/@jujalag",
+    note: "my entertainment channel for lunch and dinner",
+  },
 ];
 
 const background = [
@@ -27,19 +44,22 @@ const background = [
 
 ---
 
-<Layout title="gabriel paz ][ cosmiclatte.dev">
+<Layout
+  title="gabriel paz ][ cosmiclatte.dev"
+  description="I'm Gabriel Paz, a software engineer. Explore my background, clinical simulation research, education, and how to reach me."
+>
   <Hero />
 
-  <section id="about" class="overflow-x-clip border-b-2 border-black bg-white">
+  <section id="about" class="overflow-x-clip border-b-2 border-brut-black bg-brut-surface">
     <div class="grid laptop:grid-cols-[minmax(15rem,0.8fr)_minmax(0,1.6fr)]">
-      <div class="relative isolate overflow-hidden border-b-2 border-black bg-brut-bg p-6 tablet:p-8 laptop:border-b-0 laptop:border-r-2 laptop:p-10">
+      <div class="relative isolate overflow-hidden border-b-2 border-brut-black bg-brut-bg p-6 tablet:p-8 laptop:border-b-0 laptop:border-r-2 laptop:p-10">
         <FluidPanel />
         <p class="brut-label relative text-center">01 / who am i (。_。)</p>
         <h2 class="relative mx-auto mt-8 max-w-lg text-center font-display text-4xl font-black leading-[1.05] tracking-tighter tablet:text-5xl">
           A little about myself.
         </h2>
         <img src="https://github.com/coslatte.png?size=800" alt="pfp" width="800" height="800"
-          class="relative mx-auto mt-8 aspect-square w-28 border-2 border-black bg-neutral-200 object-cover tablet:w-36" />
+          class="relative mx-auto mt-8 aspect-square w-28 border-2 border-brut-black bg-brut-soft object-cover tablet:w-36" />
       </div>
       <div class="grid gap-8 p-6 tablet:p-8 laptop:p-10">
         <p class="max-w-3xl text-lg leading-relaxed tablet:text-xl">
@@ -48,7 +68,7 @@ const background = [
           always worried about the client.
         </p>
         {background.map((item) => (
-          <div class="grid gap-3 border-t-2 border-black pt-6 tablet:grid-cols-[8rem_1fr] tablet:gap-6">
+          <div class="grid gap-3 border-t-2 border-brut-black pt-6 tablet:grid-cols-[8rem_1fr] tablet:gap-6">
             <p class="brut-label">{item.label}</p>
             <p class="max-w-2xl leading-7">{item.text}</p>
           </div>
@@ -57,13 +77,13 @@ const background = [
     </div>
   </section>
 
-  <section class="border-b-2 border-black bg-neutral-100">
-    <div class="border-b-2 border-black p-6 tablet:p-8 laptop:p-10">
+  <section class="border-b-2 border-brut-black bg-brut-subtle">
+    <div class="border-b-2 border-brut-black p-6 tablet:p-8 laptop:p-10">
       <p class="brut-label">02 / outside the editor</p>
       <h2 class="mt-3 font-display text-3xl font-black tracking-tighter tablet:text-5xl">What keeps me awake.</h2>
     </div>
     <div class="grid laptop:grid-cols-2">
-      <article class="border-b-2 border-black p-6 tablet:p-8 laptop:border-b-0 laptop:border-r-2 laptop:p-10">
+      <article class="border-b-2 border-brut-black p-6 tablet:p-8 laptop:border-b-0 laptop:border-r-2 laptop:p-10">
         <p class="brut-label">Listening</p>
         <h3 class="mt-3 font-display text-2xl font-bold tracking-tight">Music, from every angle.</h3>
         <p class="mt-4 max-w-xl leading-7">
@@ -80,30 +100,19 @@ const background = [
           like Delta Force, Battlefield VI and other dumb games with my homies.
           I also watch quite a lot of youtube.
         </p>
-        <p class="mt-5 max-w-xl leading-7">These are some of the people I keep coming back to:</p>
-        <ul class="mt-4 grid grid-cols-[repeat(4,minmax(0,1fr))] gap-2" aria-label="Favorite YouTube channels">
-          {channels.map((channel) => (
-            <li class="flex">
-              <a class="channel-link w-full justify-between" href={channel.url} target="_blank" rel="noopener noreferrer"
-                aria-label={`${channel.name}, ${channel.note}, on YouTube`}>
-                <span class="min-w-0">{channel.name}</span><span class="shrink-0" aria-hidden="true">↗</span>
-              </a>
-            </li>
-          ))}
-        </ul>
+        <p class="mt-5 max-w-xl leading-7">Creators I keep coming back to:{" "}{channels.map((channel, index) => <Fragment>{index > 0 ? ", " : ""}<LinkPreview href={channel.url} note={channel.note}>{channel.name}</LinkPreview></Fragment>)}</p>
       </article>
     </div>
   </section>
 
-  <section class="flex flex-col gap-5 bg-black p-6 text-white tablet:flex-row tablet:items-center tablet:justify-between tablet:p-8 laptop:p-10">
+  <section class="flex flex-col gap-5 bg-brut-inverse p-6 text-brut-on-accent tablet:flex-row tablet:items-center tablet:justify-between tablet:p-8 laptop:p-10">
     <div>
-      <p class="brut-label inline-block bg-white px-2 py-1">03 / contact</p>
+      <p class="brut-label inline-block bg-brut-surface px-2 py-1">03 / contact</p>
       <h2 class="mt-2 font-display text-3xl font-black tracking-tighter tablet:text-4xl">Have something in mind?</h2>
       <p class="mt-3 font-mono text-sm text-neutral-300">
         Santa Clara, Villa Clara, Cuba / (+53)58778025
       </p>
     </div>
-    <a class="border-2 border-white px-5 py-3 font-mono font-bold text-white transition-colors hover:bg-brut-blue focus-visible:bg-brut-blue"
-      href="/contact">send me an email ↗</a>
+    <a href="/contact" class="border-2 border-white px-5 py-3 font-mono font-bold text-brut-on-accent transition-colors hover:bg-white hover:text-brut-inverse focus-visible:bg-white focus-visible:text-brut-inverse">Contact me <span aria-hidden="true">↗</span></a>
   </section>
 </Layout>

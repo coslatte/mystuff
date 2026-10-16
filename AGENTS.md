@@ -21,7 +21,7 @@
 - Keep commits atomic, with a subject line of at most 72 characters.
 
 ## Frontend
-- Read `docs/frontend-architecture.md` **before changing anything under
+- Read `docs/frontend/architecture.md` **before changing anything under
   `src/frontend/src/`**. It is the decision record: the rules a change must obey, the
   dependency direction between layers, the file index that says where a change
   belongs, and the reasoning behind decisions that look arbitrary.
