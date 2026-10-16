@@ -18,12 +18,10 @@ bun run gen:api
 
 ## What feeds it
 
-springdoc reflects the **declared** types of the controllers. A
-`ResponseEntity<?>` return type publishes an empty schema, so every controller
-and `@ExceptionHandler` spells out its generic
-(`ResponseEntity<ResponseFormat<SongResponse>>` and friends). Adding a DTO field
-or a new endpoint is enough; changing a wildcard to a concrete type is what
-makes the change visible here.
+JSON controllers return `ResponseFormat<?>`. Their `@ApiResponse` annotations
+specify the envelope and the concrete `data` schema, including array items.
+Update those annotations when an endpoint changes its payload. Audio streaming
+keeps `ResponseEntity<Resource>` because it returns bytes and range headers.
 
 Renaming a Java field without regenerating breaks `bun run check`, because
 `src/types/index.ts` aliases these schemas instead of restating them.

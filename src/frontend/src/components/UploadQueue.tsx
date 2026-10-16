@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { ACCEPT_HINT, FILE_ACCEPT, formatBytes } from "../lib/audio-file";
 import { isRetryable, userMessage } from "../services/errors";
-import type { QueueItem, RejectedFile } from "../hooks/useUploadQueue";
+import type { QueueItem, RejectedFile } from "../lib/upload-queue";
 
 type Props = {
   items: QueueItem[];
@@ -30,6 +30,13 @@ const STATUS_LABEL: Record<QueueItem["status"], string> = {
   failed: "falló",
 };
 
+const STATUS_CLASS: Record<QueueItem["status"], string> = {
+  queued: "bg-brut-surface text-brut-black",
+  uploading: "bg-brut-blue text-brut-on-accent",
+  done: "bg-brut-green text-brut-on-accent",
+  failed: "bg-brut-red text-brut-on-accent",
+};
+
 export default function UploadQueue({
   items,
   rejected,
@@ -51,6 +58,8 @@ export default function UploadQueue({
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
+  const retryable = items.filter(item => item.status === "failed"
+    && item.failure.kind === "request" && isRetryable(item.failure.error)).length;
 
   const takeFiles = (list: FileList | null) => {
     if (!list?.length) return;
@@ -71,7 +80,7 @@ export default function UploadQueue({
           takeFiles(e.dataTransfer.files);
         }}
         className={`border-2 border-dashed p-6 text-center transition-colors ${
-          dragging ? "border-black bg-brut-blue text-white" : "border-neutral-400 bg-neutral-50"
+          dragging ? "border-brut-black bg-brut-blue text-brut-on-accent" : "border-brut-line bg-brut-subtle"
         }`}
       >
         <input
@@ -92,7 +101,7 @@ export default function UploadQueue({
           <span className="block font-display text-lg font-bold">
             {dragging ? "suéltalos aquí" : "arrastra los archivos aquí"}
           </span>
-          <span className="brut-meta mt-1 block text-gray-500">{ACCEPT_HINT}</span>
+          <span className="brut-meta mt-1 block text-brut-muted">{ACCEPT_HINT}</span>
         </label>
       </div>
 
@@ -107,7 +116,7 @@ export default function UploadQueue({
       </label>
 
       {rejected.length > 0 && (
-        <ul className="flex flex-col gap-1 border-2 border-brut-red bg-brut-red p-3 font-mono text-xs text-white">
+        <ul className="flex flex-col gap-1 border-2 border-brut-red bg-brut-red p-3 font-mono text-xs text-brut-on-accent">
           {rejected.map((entry) => (
             <li key={`${entry.name}-${entry.reason}`}>
               <span className="font-bold">{entry.name}</span>: {entry.reason}
@@ -118,7 +127,7 @@ export default function UploadQueue({
 
       {items.length > 0 && (
         <>
-          <div className="flex flex-wrap items-center justify-between gap-2 border-2 border-black bg-white px-3 py-2 font-mono text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-2 border-brut-black bg-brut-surface px-3 py-2 font-mono text-xs">
             <span>
               {uploading > 0 ? `subiendo ${uploading}` : "en cola"} · {done} listo
               {done === 1 ? "" : "s"} · {failed} con error
@@ -134,11 +143,11 @@ export default function UploadQueue({
                   subir {queued}
                 </button>
               )}
-              {failed > 1 && (
+              {retryable > 1 && (
                 <button
                   type="button"
                   onClick={onRetryAll}
-                  className="border-2 border-black bg-white px-2 py-1 font-bold hover:bg-brut-blue hover:text-white"
+                  className="border-2 border-brut-black bg-brut-surface px-2 py-1 font-bold hover:bg-brut-blue hover:text-brut-on-accent"
                 >
                   reintentar todo
                 </button>
@@ -147,7 +156,7 @@ export default function UploadQueue({
                 <button
                   type="button"
                   onClick={onClear}
-                  className="border-2 border-black bg-white px-2 py-1 font-bold hover:bg-brut-red hover:text-white"
+                  className="border-2 border-brut-black bg-brut-surface px-2 py-1 font-bold hover:bg-brut-red hover:text-brut-on-accent"
                 >
                   limpiar
                 </button>
@@ -183,35 +192,29 @@ type RowProps = {
 
 function QueueRow({ item, disabled, onMetaChange, onRemove, onRetry }: RowProps) {
   const locked = item.status === "done" || item.status === "uploading";
-  const message = item.error != null ? userMessage(item.error) : null;
+  const failure = item.status === "failed" ? item.failure : null;
+  const message = failure?.kind === "metadata" ? failure.message
+    : failure?.kind === "request" ? userMessage(failure.error) : null;
 
   return (
-    <li className="flex flex-col gap-2 border-2 border-black bg-white p-3">
+    <li className="flex flex-col gap-2 border-2 border-brut-black bg-brut-surface p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="min-w-0 flex-1 font-mono text-xs">
           <span className="block truncate font-bold">{item.file.name}</span>
-          <span className="text-gray-500">{formatBytes(item.file.size)}</span>
+          <span className="text-brut-muted">{formatBytes(item.file.size)}</span>
         </span>
         <span className="flex shrink-0 items-center gap-2">
           <span
-            className={`border-2 border-black px-2 py-0.5 font-mono text-[10px] font-bold ${
-              item.status === "done"
-                ? "bg-brut-green text-black"
-                : item.status === "failed"
-                  ? "bg-brut-red text-white"
-                  : item.status === "uploading"
-                    ? "bg-brut-blue text-white"
-                    : "bg-white text-black"
-            }`}
+            className={`border-2 border-brut-black px-2 py-0.5 font-mono text-[10px] font-bold ${STATUS_CLASS[item.status]}`}
           >
             {STATUS_LABEL[item.status]}
             {item.status === "uploading" && item.percent != null ? ` ${item.percent}%` : ""}
           </span>
-          {item.status === "failed" && isRetryable(item.error) && (
+          {failure?.kind === "request" && isRetryable(failure.error) && (
             <button
               type="button"
               onClick={() => onRetry(item.id)}
-              className="border-2 border-black bg-white px-2 py-0.5 font-mono text-[10px] font-bold hover:bg-brut-blue hover:text-white"
+              className="border-2 border-brut-black bg-brut-surface px-2 py-0.5 font-mono text-[10px] font-bold hover:bg-brut-blue hover:text-brut-on-accent"
             >
               reintentar
             </button>
@@ -221,7 +224,7 @@ function QueueRow({ item, disabled, onMetaChange, onRemove, onRetry }: RowProps)
               type="button"
               onClick={() => onRemove(item.id)}
               aria-label={`quitar ${item.file.name}`}
-              className="border-2 border-black bg-white px-2 py-0.5 font-mono text-[10px] hover:bg-brut-red hover:text-white"
+              className="border-2 border-brut-black bg-brut-surface px-2 py-0.5 font-mono text-[10px] hover:bg-brut-red hover:text-brut-on-accent"
             >
               quitar
             </button>
@@ -236,7 +239,7 @@ function QueueRow({ item, disabled, onMetaChange, onRemove, onRetry }: RowProps)
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={item.percent ?? undefined}
-          className="h-3 border-2 border-black bg-white"
+          className="h-3 border-2 border-brut-black bg-brut-surface"
         >
           {/*
             No percentage is available when the body length is unknown, so the
@@ -248,7 +251,7 @@ function QueueRow({ item, disabled, onMetaChange, onRemove, onRetry }: RowProps)
         </div>
       )}
 
-      {message && <p className="font-mono text-[10px] text-brut-red">{message}</p>}
+      {message && <p className="font-mono text-[10px] text-brut-danger">{message}</p>}
 
       <div className="flex flex-wrap gap-2">
         <input

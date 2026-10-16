@@ -84,6 +84,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/internal/contact/deliveries/process": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["process"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/contact/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -132,6 +164,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/local-audio/{objectPath}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["read"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/albums/soundcloud": {
         parameters: {
             query?: never;
@@ -152,10 +200,40 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        ResponseFormatSongResponse: {
+        ResponseFormat: {
             success?: boolean;
             message?: string;
-            data?: components["schemas"]["SongResponse"];
+            data?: unknown;
+            meta?: {
+                [key: string]: unknown;
+            };
+            errors?: unknown;
+        };
+        UpdateCommentRequest: {
+            content: string;
+        };
+        CreateRatingRequest: {
+            /** Format: int32 */
+            stars?: number;
+            visitorId?: string;
+        };
+        CreateCommentRequest: {
+            author: string;
+            content: string;
+        };
+        CreateContactMessageRequest: {
+            /** Format: uuid */
+            submissionId: string;
+            name: string;
+            /** Format: email */
+            email: string;
+            message: string;
+            website?: string;
+        };
+        ResponseFormatObject: {
+            success?: boolean;
+            message?: string;
+            data?: unknown;
             meta?: {
                 [key: string]: unknown;
             };
@@ -177,9 +255,6 @@ export interface components {
             /** Format: int32 */
             myRating?: number;
         };
-        UpdateCommentRequest: {
-            content: string;
-        };
         CommentResponse: {
             /** Format: int64 */
             id: number;
@@ -191,43 +266,6 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt?: string;
-        };
-        ResponseFormatCommentResponse: {
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["CommentResponse"];
-            meta?: {
-                [key: string]: unknown;
-            };
-            errors?: unknown;
-        };
-        CreateRatingRequest: {
-            /** Format: int32 */
-            stars?: number;
-            visitorId?: string;
-        };
-        RatingResponse: {
-            /** Format: int64 */
-            id: number;
-            /** Format: int64 */
-            songId: number;
-            /** Format: int32 */
-            stars: number;
-            /** Format: date-time */
-            createdAt: string;
-        };
-        ResponseFormatRatingResponse: {
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["RatingResponse"];
-            meta?: {
-                [key: string]: unknown;
-            };
-            errors?: unknown;
-        };
-        CreateCommentRequest: {
-            author: string;
-            content: string;
         };
         CreatedCommentResponse: {
             /** Format: int64 */
@@ -242,54 +280,15 @@ export interface components {
             updatedAt?: string;
             editToken?: string;
         };
-        ResponseFormatCreatedCommentResponse: {
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["CreatedCommentResponse"];
-            meta?: {
-                [key: string]: unknown;
-            };
-            errors?: unknown;
-        };
-        HealthResponse: {
-            status: string;
-            service: string;
-        };
-        ResponseFormatHealthResponse: {
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["HealthResponse"];
-            meta?: {
-                [key: string]: unknown;
-            };
-            errors?: unknown;
-        };
-        ResponseFormatListSongResponse: {
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["SongResponse"][];
-            meta?: {
-                [key: string]: unknown;
-            };
-            errors?: unknown;
-        };
-        ResponseFormatListCommentResponse: {
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["CommentResponse"][];
-            meta?: {
-                [key: string]: unknown;
-            };
-            errors?: unknown;
-        };
-        ResponseFormatListSoundCloudAlbumDto: {
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["SoundCloudAlbumDto"][];
-            meta?: {
-                [key: string]: unknown;
-            };
-            errors?: unknown;
+        RatingResponse: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            songId: number;
+            /** Format: int32 */
+            stars: number;
+            /** Format: date-time */
+            createdAt: string;
         };
         SoundCloudAlbumDto: {
             id: string;
@@ -303,6 +302,15 @@ export interface components {
             /** Format: int32 */
             embedHeight?: number;
             spotifyUrl?: string;
+        };
+        HealthResponse: {
+            status: string;
+            service: string;
+        };
+        ContactAcceptedResponse: {
+            /** Format: uuid */
+            messageId: string;
+            status: string;
         };
     };
     responses: never;
@@ -339,7 +347,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ResponseFormatSongResponse"];
+                    "*/*": components["schemas"]["ResponseFormat"];
                 };
             };
         };
@@ -370,7 +378,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ResponseFormatCommentResponse"];
+                    "*/*": components["schemas"]["ResponseFormat"];
                 };
             };
         };
@@ -388,12 +396,14 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "*/*": components["schemas"]["ResponseFormatObject"];
+                };
             };
         };
     };
@@ -416,7 +426,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ResponseFormatListSongResponse"];
+                    "*/*": components["schemas"]["ResponseFormat"];
                 };
             };
         };
@@ -441,13 +451,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Created */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ResponseFormatSongResponse"];
+                    "*/*": components["schemas"]["ResponseFormat"];
                 };
             };
         };
@@ -469,13 +479,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Created */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ResponseFormatRatingResponse"];
+                    "*/*": components["schemas"]["ResponseFormat"];
                 };
             };
         };
@@ -497,7 +507,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ResponseFormatListCommentResponse"];
+                    "*/*": components["schemas"]["ResponseFormat"];
                 };
             };
         };
@@ -517,13 +527,59 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ResponseFormat"];
+                };
+            };
+        };
+    };
+    process: {
+        parameters: {
+            query?: never;
+            header?: {
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
             /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ResponseFormatCreatedCommentResponse"];
+                    "*/*": components["schemas"]["ResponseFormat"];
+                };
+            };
+        };
+    };
+    create_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateContactMessageRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ResponseFormat"];
                 };
             };
         };
@@ -543,7 +599,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ResponseFormatHealthResponse"];
+                    "*/*": components["schemas"]["ResponseFormat"];
                 };
             };
         };
@@ -563,7 +619,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ResponseFormatHealthResponse"];
+                    "*/*": components["schemas"]["ResponseFormat"];
                 };
             };
         };
@@ -585,7 +641,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ResponseFormatSongResponse"];
+                    "*/*": components["schemas"]["ResponseFormat"];
                 };
             };
         };
@@ -603,12 +659,38 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ResponseFormatObject"];
+                };
+            };
+        };
+    };
+    read: {
+        parameters: {
+            query?: never;
+            header?: {
+                Range?: string;
+            };
+            path: {
+                objectPath: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
             /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "*/*": string;
+                };
             };
         };
     };
@@ -627,7 +709,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ResponseFormatListSoundCloudAlbumDto"];
+                    "*/*": components["schemas"]["ResponseFormat"];
                 };
             };
         };

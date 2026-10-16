@@ -1,3 +1,4 @@
+import { useTranslations } from "../hooks/useTranslations";
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
 import { runOptimistic } from "../lib/optimistic";
@@ -48,6 +49,7 @@ function withLocalEditTokens(comments: Comment[]): Comment[] {
 }
 
 export default function CommentThread({ songId }: Props) {
+  const t = useTranslations();
   const [author, setAuthor] = useState("");
   const [content, setContent] = useState("");
   const [mutationError, setMutationError] = useState<unknown>(null);
@@ -60,7 +62,7 @@ export default function CommentThread({ songId }: Props) {
     setData: setComments,
     reload,
   } = useResource<Comment[]>(
-    async () => withLocalEditTokens(await api.getComments(songId)),
+    async signal => withLocalEditTokens(await api.getComments(songId, signal)),
     [songId]
   );
   const comments = data ?? [];
@@ -132,13 +134,13 @@ export default function CommentThread({ songId }: Props) {
   }
 
   return (
-    <div className="mt-2 border-t-2 border-black pt-2">
+    <div className="mt-2 border-t-2 border-brut-black pt-2">
       <ul className="flex flex-col">
         {comments.map((comment) => (
-          <li key={comment.id} className="border-b border-neutral-300 py-1.5 pl-4 last:border-b-0">
+          <li key={comment.id} className="border-b border-brut-soft py-1.5 pl-4 last:border-b-0">
             <p className="font-mono text-[11px] font-bold">
               {comment.author}
-              {comment.updatedAt && <span className="ml-2 text-gray-400">(edited)</span>}
+              {comment.updatedAt && <span className="ml-2 text-brut-muted">{t("(edited)")}</span>}
             </p>
             {editingId === comment.id ? (
               <div className="mt-1 flex flex-col gap-1">
@@ -146,56 +148,50 @@ export default function CommentThread({ songId }: Props) {
                   value={editContent}
                   onChange={(e) => setEditContent(e.target.value)}
                   rows={2}
-                  className="border-2 border-black bg-white px-2 py-1 font-mono text-xs outline-none"
+                  className="border-2 border-brut-black bg-brut-surface px-2 py-1 font-mono text-xs outline-none"
                 />
                 <div className="flex gap-1">
                   <button
                     type="button"
                     onClick={() => saveEdit(comment)}
-                    className="border-2 border-black bg-brut-blue text-white px-2 py-0.5 font-mono text-[10px] font-bold"
-                  >
-                    save
-                  </button>
+                    className="border-2 border-brut-black bg-brut-blue text-brut-on-accent px-2 py-0.5 font-mono text-[10px] font-bold"
+                  >{t("save")}</button>
                   <button
                     type="button"
                     onClick={() => setEditingId(null)}
-                    className="border-2 border-black bg-white px-2 py-0.5 font-mono text-[10px]"
-                  >
-                    cancel
-                  </button>
+                    className="border-2 border-brut-black bg-brut-surface px-2 py-0.5 font-mono text-[10px]"
+                  >{t("cancel")}</button>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-gray-700">
+              <p className="text-xs text-brut-muted">
                 {comment.content}
                 {canEdit(comment) && (
                   <button
                     type="button"
                     onClick={() => startEdit(comment)}
-                    className="ml-2 font-mono text-[10px] text-gray-400 underline hover:text-brut-red"
-                  >
-                    edit
-                  </button>
+                    className="ml-2 font-mono text-[10px] text-brut-muted underline hover:text-brut-danger"
+                  >{t("edit")}</button>
                 )}
               </p>
             )}
           </li>
         ))}
-        {!comments.length && <li className="py-1 font-mono text-xs text-gray-500">no comments yet.</li>}
+        {!comments.length && <li className="py-1 font-mono text-xs text-brut-muted">{t("no comments yet.")}</li>}
       </ul>
 
       <form onSubmit={submit} className="mt-2 flex flex-col gap-1">
         <input
           value={author}
           onChange={(e) => setAuthor(e.target.value)}
-          placeholder="your name"
+          placeholder={t("your name")}
           required
           className="brut-field px-2 py-1 text-xs"
         />
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="leave comment"
+          placeholder={t("leave comment")}
           required
           rows={2}
           className="brut-field px-2 py-1 text-xs"
@@ -203,9 +199,7 @@ export default function CommentThread({ songId }: Props) {
         <button
           type="submit"
           className="brut-btn self-start !px-3 !py-1 font-mono text-xs"
-        >
-          publish
-        </button>
+        >{t("publish")}</button>
       </form>
 
       {loadError != null && (

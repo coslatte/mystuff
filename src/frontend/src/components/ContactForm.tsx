@@ -1,3 +1,4 @@
+import { useTranslations } from "../hooks/useTranslations";
 import { useEffect, useRef, useState } from "react";
 import type { SubmitEvent } from "react";
 import { api, ApiError } from "../services/api";
@@ -8,9 +9,10 @@ type FormState =
   | { kind: "accepted"; reference: string }
   | { kind: "error"; message: string; fields: Record<string, string> };
 
-const fieldClass = "mt-2 w-full border-2 border-black bg-white px-4 py-3 font-mono text-base tablet:text-sm outline-offset-4 focus-visible:outline-2 focus-visible:outline-black disabled:opacity-60";
+const fieldClass = "mt-2 w-full border-2 border-brut-black bg-brut-surface px-4 py-3 font-mono text-base tablet:text-sm outline-offset-4 focus-visible:outline-2 focus-visible:outline-brut-black disabled:opacity-60";
 
 export default function ContactForm() {
+  const t = useTranslations();
   const [state, setState] = useState<FormState>({ kind: "editing" });
   const [ready, setReady] = useState(false);
   const form = useRef<HTMLFormElement>(null);
@@ -94,46 +96,43 @@ export default function ContactForm() {
       <fieldset disabled={!ready || busy} className="grid min-w-0 gap-6">
         <div className="grid min-w-0 gap-6 tablet:grid-cols-2">
           <div className="min-w-0">
-            <label htmlFor="contact-name" className="brut-label">Name</label>
+            <label htmlFor="contact-name" className="brut-label">{t("Name")}</label>
             <input id="contact-name" name="name" autoComplete="name" required maxLength={100} className={fieldClass}
               aria-invalid={Boolean(fieldError("name"))} aria-describedby={fieldError("name") ? "contact-name-error" : undefined} />
-            {fieldError("name") && <p id="contact-name-error" className="mt-2 text-sm">{fieldError("name")}</p>}
+            {fieldError("name") && <p id="contact-name-error" className="mt-2 text-sm">{t(fieldError("name"))}</p>}
           </div>
           <div className="min-w-0">
-            <label htmlFor="contact-email" className="brut-label">Email</label>
+            <label htmlFor="contact-email" className="brut-label">{t("Email")}</label>
             <input id="contact-email" name="email" type="email" autoComplete="email" required maxLength={254} className={fieldClass}
               aria-invalid={Boolean(fieldError("email"))} aria-describedby={fieldError("email") ? "contact-email-error" : undefined} />
-            {fieldError("email") && <p id="contact-email-error" className="mt-2 text-sm">{fieldError("email")}</p>}
+            {fieldError("email") && <p id="contact-email-error" className="mt-2 text-sm">{t(fieldError("email"))}</p>}
           </div>
         </div>
         <div className="min-w-0">
-          <label htmlFor="contact-message" className="brut-label">Message</label>
+          <label htmlFor="contact-message" className="brut-label">{t("Message")}</label>
           <textarea id="contact-message" name="message" required minLength={10} maxLength={5000} rows={8} className={fieldClass}
             aria-invalid={Boolean(fieldError("message"))}
             aria-describedby={fieldError("message") ? "contact-message-error contact-message-hint" : "contact-message-hint"} />
-          <p id="contact-message-hint" className="mt-2 font-mono text-xs text-neutral-600">10–5,000 characters.</p>
-          {fieldError("message") && <p id="contact-message-error" className="mt-2 text-sm">{fieldError("message")}</p>}
+          <p id="contact-message-hint" className="mt-2 font-mono text-xs text-brut-muted">{t("10–5,000 characters.")}</p>
+          {fieldError("message") && <p id="contact-message-error" className="mt-2 text-sm">{t(fieldError("message"))}</p>}
         </div>
         <div hidden aria-hidden="true">
-          <label htmlFor="contact-website">Leave this empty</label>
+          <label htmlFor="contact-website">{t("Leave this empty")}</label>
           <input id="contact-website" name="website" tabIndex={-1} autoComplete="off" />
         </div>
-        <p className="text-sm leading-6 text-neutral-700">
-          Your details are used to deliver this message and reply to you. The site removes successfully processed
-          messages after 30 days; failed deliveries remain for review. Email providers, backups, and the recipient's mailbox keep their own copies.
-        </p>
+        <p className="text-sm leading-6 text-brut-muted">{t("Your details are used to deliver this message and reply to you. The site removes successfully processed messages after 30 days; failed deliveries remain for review. Email providers, backups, and the recipient's mailbox keep their own copies.")}</p>
         <button type="submit" className="brut-up min-h-11 w-full disabled:cursor-wait disabled:opacity-60 tablet:w-fit">
-          <span>{busy ? "Sending…" : "Send message ↗"}</span>
+          <span>{t(busy ? "Sending…" : "Send message ↗")}</span>
         </button>
       </fieldset>
       <div ref={status} tabIndex={-1} role="status" aria-live="polite" aria-atomic="true" className="mt-6 outline-offset-4">
-        {state.kind === "submitting" && <p className="font-mono text-sm">{state.slow
+        {state.kind === "submitting" && <p className="font-mono text-sm">{t(state.slow
           ? "The service is taking a little longer to respond. Please keep this page open; your message is still here."
-          : "Submitting your message…"}</p>}
-        {state.kind === "error" && <p className="border-2 border-black bg-white p-4 text-sm">{state.message}</p>}
-        {state.kind === "accepted" && <div className="border-2 border-black bg-brut-green p-4 text-black">
-          <p className="font-bold">Your message has been received for delivery.</p>
-          <p className="mt-2 break-all font-mono text-xs">Reference: {state.reference}</p>
+          : "Submitting your message…")}</p>}
+        {state.kind === "error" && <p className="border-2 border-brut-black bg-brut-surface p-4 text-sm">{t(state.message)}</p>}
+        {state.kind === "accepted" && <div className="border-2 border-brut-black bg-brut-green p-4 text-brut-on-accent">
+          <p className="font-bold">{t("Your message has been received for delivery.")}</p>
+          <p className="mt-2 break-all font-mono text-xs">{t("Reference: ")}{state.reference}</p>
         </div>}
       </div>
     </form>

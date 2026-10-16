@@ -1,52 +1,64 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export type Resource<T> = {
   data: T | undefined;
   loading: boolean;
   error: unknown;
-  /** Patch the loaded value in place, for optimistic updates and rollbacks. */
   setData: (update: (previous: T) => T) => void;
   reload: () => Promise<void>;
 };
 
-/**
- * One loading/error/reload lifecycle for every remote read, replacing the copy
- * that used to live in `useAlbums`, `MusicSection`, `CommentThread` and
- * `AdminUpload`.
- *
- * `load` is deliberately not part of the effect's dependencies: callers pass a
- * fresh closure on every render, so depending on it would loop forever. Pass a
- * fixed-length `deps` array instead, listing whatever the read actually keys
- * off (an id, a visitor id). Changing its length between renders breaks React's
- * dependency bookkeeping, so keep it static at each call site.
- */
+type Scope<T> = {
+  load: (signal: AbortSignal) => Promise<T>;
+  controller: AbortController | null;
+  disposed: boolean;
+};
+
+type ResourceState<T> = {
+  scope: Scope<T>;
+  data: T | undefined;
+  loading: boolean;
+  error: unknown;
+};
+
+// The fixed-length dependency list identifies the resource, not the loader closure.
 export function useResource<T>(
-  load: () => Promise<T>,
+  load: (signal: AbortSignal) => Promise<T>,
   deps: readonly unknown[] = []
 ): Resource<T> {
-  const [data, setData] = useState<T | undefined>(undefined);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<unknown>(null);
+  const scope = useMemo<Scope<T>>(() => ({ load, controller: null, disposed: false }), deps);
+  const [state, setState] = useState<ResourceState<T>>({ scope, data: undefined, loading: true, error: null });
 
-  const patch = useCallback((update: (previous: T) => T) => {
-    setData((previous) => (previous === undefined ? previous : update(previous)));
-  }, []);
+  const setData = useCallback((update: (previous: T) => T) => {
+    if (scope.disposed) return;
+    setState(previous => previous.scope !== scope || previous.data === undefined
+      ? previous : { ...previous, data: update(previous.data) });
+  }, [scope]);
 
   const reload = useCallback(async () => {
-    setError(null);
-    setLoading(true);
+    if (scope.disposed) return;
+    scope.controller?.abort();
+    const controller = new AbortController();
+    scope.controller = controller;
+    const isCurrent = () => !scope.disposed && !controller.signal.aborted && scope.controller === controller;
+    setState(previous => ({ scope, data: previous.scope === scope ? previous.data : undefined, loading: true, error: null }));
     try {
-      setData(await load());
-    } catch (cause) {
-      setError(cause);
-    } finally {
-      setLoading(false);
+      const data = await scope.load(controller.signal);
+      if (isCurrent()) setState({ scope, data, loading: false, error: null });
+    } catch (error) {
+      if (isCurrent()) setState(previous => ({ ...previous, loading: false, error }));
     }
-  }, deps);
+  }, [scope]);
 
   useEffect(() => {
+    scope.disposed = false;
     void reload();
-  }, [reload]);
+    return () => {
+      scope.disposed = true;
+      scope.controller?.abort();
+    };
+  }, [scope, reload]);
 
-  return { data, loading, error, setData: patch, reload };
+  const current = state.scope === scope ? state : { data: undefined, loading: true, error: null };
+  return { data: current.data, loading: current.loading, error: current.error, setData, reload };
 }

@@ -21,7 +21,7 @@ export function useSongs(): SongsResource {
     error,
     setData: setSongs,
     reload,
-  } = useResource<Song[]>(async () => api.getSongs(getVisitorId()), []);
+  } = useResource<Song[]>(signal => api.getSongs(getVisitorId(), signal), []);
 
   const rate = useCallback(
     async (song: Song, stars: number) => {

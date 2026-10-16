@@ -1,6 +1,5 @@
 import { PUBLIC_API_URL } from "astro:env/client";
 import type {
-  ApiEnvelope,
   Comment,
   CreatedComment,
   Health,
@@ -26,45 +25,59 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Turns a response into its payload or throws the matching `ApiError`.
- *
- * Shared by `request` and `upload` so both transports report failures
- * identically. `fetch` cannot observe upload progress, which is the only reason
- * the multipart path exists.
- */
-function unwrap<T>(status: number, text: string, errorIdHeader: string | null): T {
-  let payload: ApiEnvelope<T> | undefined;
-  try {
-    payload = text ? (JSON.parse(text) as ApiEnvelope<T>) : undefined;
-  } catch {
-    payload = undefined;
-  }
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
+function unwrap(status: number, text: string, errorIdHeader: string | null): unknown {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    parsed = undefined;
+  }
+  const payload = isRecord(parsed) ? parsed : undefined;
+  const meta = isRecord(payload?.meta) ? payload.meta : undefined;
+  const errorId = typeof meta?.errorId === "string" ? meta.errorId : errorIdHeader ?? undefined;
   if (status < 200 || status >= 300) {
-    const errorId = payload?.meta?.errorId ?? errorIdHeader ?? undefined;
     throw new ApiError(
-      payload?.message || `Request failed: ${status}`,
+      typeof payload?.message === "string" && payload.message ? payload.message : `Request failed: ${status}`,
       status,
       errorId,
       payload?.errors
     );
   }
-  return payload?.data as T;
+  if (!payload || payload.success !== true || !("data" in payload)) {
+    throw new ApiError("Invalid server response.", status, errorId);
+  }
+  return payload.data;
 }
 
+function requireData<T>(status: number, text: string, errorId: string | null): T {
+  const data = unwrap(status, text, errorId);
+  if (data === null || data === undefined) {
+    throw new ApiError("The server response is missing its data.", status, errorId ?? undefined);
+  }
+  // DTO fields follow the generated OpenAPI contract; the transport validates the envelope.
+  return data as T;
+}
+
+type RequestOptions = RequestInit & { adminKey?: string; editToken?: string };
+
+function request(path: string, init: RequestOptions & { response: "empty" }): Promise<void>;
+function request<T>(path: string, init?: RequestOptions): Promise<T>;
 async function request<T>(
   path: string,
-  init?: RequestInit & { adminKey?: string; editToken?: string }
-): Promise<T> {
-  const { adminKey, editToken, headers, body, ...rest } = init ?? {};
-  const finalHeaders: Record<string, string> = { ...(headers as Record<string, string> | undefined) };
-  if (adminKey) finalHeaders["X-Admin-Key"] = adminKey;
+  init?: RequestOptions & { response?: "empty" }
+): Promise<T | void> {
+  const { adminKey, editToken, headers, body, response, ...rest } = init ?? {};
+  const finalHeaders = new Headers(headers);
+  if (adminKey) finalHeaders.set("X-Admin-Key", adminKey);
   // The edit token is a bearer secret, so it travels in a header instead of the
   // query string where it would land in access logs and Referer headers.
-  if (editToken) finalHeaders["X-Edit-Token"] = editToken;
+  if (editToken) finalHeaders.set("X-Edit-Token", editToken);
   if (body && !(body instanceof FormData)) {
-    finalHeaders["Content-Type"] = "application/json";
+    finalHeaders.set("Content-Type", "application/json");
   }
   const finalInit: RequestInit = {
     ...rest,
@@ -79,8 +92,11 @@ async function request<T>(
     throw new ApiError("Network request failed.", 0, undefined, cause);
   }
 
-  if (res.status === 204) return undefined as T;
-  return unwrap<T>(res.status, await res.text(), res.headers.get("X-Error-Id"));
+  if (response === "empty") {
+    if (res.status !== 204) unwrap(res.status, await res.text(), res.headers.get("X-Error-Id"));
+    return;
+  }
+  return requireData<T>(res.status, await res.text(), res.headers.get("X-Error-Id"));
 }
 
 export type UploadProgress = {
@@ -106,6 +122,10 @@ function upload<T>(
   signal?: AbortSignal
 ): Promise<T> {
   return new Promise<T>((resolve, rejectPromise) => {
+    if (signal?.aborted) {
+      rejectPromise(new ApiError("Upload cancelled.", 0));
+      return;
+    }
     const xhr = new XMLHttpRequest();
     xhr.open(method, `${API_URL}${path}`);
     xhr.setRequestHeader("X-Admin-Key", adminKey);
@@ -129,12 +149,8 @@ function upload<T>(
 
     xhr.onload = () => {
       finish(() => {
-        if (xhr.status === 204) {
-          resolve(undefined as T);
-          return;
-        }
         try {
-          resolve(unwrap<T>(xhr.status, xhr.responseText, xhr.getResponseHeader("X-Error-Id")));
+          resolve(requireData<T>(xhr.status, xhr.responseText, xhr.getResponseHeader("X-Error-Id")));
         } catch (err) {
           rejectPromise(err);
         }
@@ -167,10 +183,10 @@ export const api = {
     return { messageId: receipt.messageId, status: receipt.status };
   },
   health: () => request<Health>("/health"),
-  getSongs: (visitorId?: string) =>
-    request<Song[]>(`/api/songs${visitorId ? `?visitorId=${encodeURIComponent(visitorId)}` : ""}`),
+  getSongs: (visitorId?: string, signal?: AbortSignal) =>
+    request<Song[]>(`/api/songs${visitorId ? `?visitorId=${encodeURIComponent(visitorId)}` : ""}`, { signal }),
   getSong: (songId: number) => request<Song>(`/api/songs/${songId}`),
-  getComments: (songId: number) => request<Comment[]>(`/api/songs/${songId}/comments`),
+  getComments: (songId: number, signal?: AbortSignal) => request<Comment[]>(`/api/songs/${songId}/comments`, { signal }),
   postComment: (songId: number, body: { author: string; content: string }) =>
     request<CreatedComment>(`/api/songs/${songId}/comments`, {
       method: "POST",
@@ -182,7 +198,7 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
-  getSoundCloudAlbums: () => request<SoundCloudAlbum[]>("/api/albums/soundcloud"),
+  getSoundCloudAlbums: (signal?: AbortSignal) => request<SoundCloudAlbum[]>("/api/albums/soundcloud", { signal }),
 
   uploadSong: (
     form: FormData,
@@ -201,7 +217,7 @@ export const api = {
     upload<Song>(`/api/songs/${songId}/audio`, "PUT", form, adminKey, onProgress, signal),
 
   deleteSong: (songId: number, adminKey: string) =>
-    request<void>(`/api/songs/${songId}`, { method: "DELETE", adminKey }),
+    request(`/api/songs/${songId}`, { method: "DELETE", adminKey, response: "empty" }),
 
   // Answers with CommentResponse (no token): the caller keeps the one it
   // already holds locally.

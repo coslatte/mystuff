@@ -21,7 +21,7 @@ export default function AdminUpload() {
   const [busySongId, setBusySongId] = useState<number | null>(null);
 
   const { data, error: loadError, setData: setSongs, reload } = useResource<Song[]>(
-    async () => api.getSongs(),
+    signal => api.getSongs(undefined, signal),
     []
   );
   const songs = data ?? [];
@@ -49,9 +49,7 @@ export default function AdminUpload() {
     try {
       const form = new FormData();
       form.append("file", replacement);
-      await api.replaceSongAudio(song.id, form, adminKey, ({ percent }) => {
-        if (percent === 100) setNotice(`✓ Audio for "${song.title}" replaced.`);
-      });
+      await api.replaceSongAudio(song.id, form, adminKey);
       await reload();
       setNotice(`✓ Audio for "${song.title}" replaced (${formatBytes(replacement.size)}).`);
     } catch (err) {
@@ -64,8 +62,10 @@ export default function AdminUpload() {
   const handleDelete = async (song: Song) => {
     if (!adminKey) return setActionError(new Error("Admin key is required."));
     if (!confirm(`Delete "${song.title}"?`)) return;
+    setNotice("");
+    setActionError(null);
 
-    await runOptimistic({
+    const deleted = await runOptimistic({
       apply: () => setSongs((prev) => prev.filter((s) => s.id !== song.id)),
       async commit() {
         await api.deleteSong(song.id, adminKey);
@@ -73,7 +73,7 @@ export default function AdminUpload() {
       rollback: () => void reload(),
       onError: setActionError,
     });
-    setNotice(`✓ "${song.title}" deleted.`);
+    if (deleted) setNotice(`✓ "${song.title}" deleted.`);
   };
 
   return (
@@ -113,22 +113,23 @@ export default function AdminUpload() {
         />
 
         {!adminKey && (
-          <p className="brut-meta mt-3 text-gray-500">enter the admin key to enable uploading.</p>
+          <p className="brut-meta mt-3 text-brut-muted">enter the admin key to enable uploading.</p>
         )}
 
         {notice && (
-          <p className="mt-4 border-2 border-black bg-black px-3 py-2 font-mono text-sm text-white">
+          <p className="mt-4 border-2 border-brut-black bg-brut-inverse px-3 py-2 font-mono text-sm text-brut-on-accent">
             {notice}
           </p>
         )}
 
         {actionError != null && <ErrorNotice error={actionError} className="mt-4" />}
+        {queue.error != null && <ErrorNotice error={queue.error} className="mt-4" />}
       </div>
 
-      <div className="border-2 border-black bg-neutral-100 p-6">
+      <div className="border-2 border-brut-black bg-brut-subtle p-6">
         <h2 className="mb-4 font-display text-2xl font-bold">songs ({songs.length})</h2>
         {loadError != null && <ErrorNotice error={loadError} onRetry={reload} className="mb-3" />}
-        {songs.length === 0 && <p className="font-mono text-sm text-gray-500">no songs yet.</p>}
+        {songs.length === 0 && <p className="font-mono text-sm text-brut-muted">no songs yet.</p>}
         <ul className="flex flex-col gap-2">
           {songs.map((song) => (
             <SongRow
@@ -159,11 +160,11 @@ function SongRow({ song, busy, onReplace, onDelete }: RowProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <li className="flex flex-wrap items-center justify-between gap-2 border-2 border-black bg-white p-3">
+    <li className="flex flex-wrap items-center justify-between gap-2 border-2 border-brut-black bg-brut-surface p-3">
       <span className="font-mono text-sm">
         <span className="font-bold">{song.title}</span> ·{" "}
         <span className="normal-case">{song.artist}</span>
-        {song.duration && <span className="text-gray-500"> · {song.duration}</span>}
+        {song.duration && <span className="text-brut-muted"> · {song.duration}</span>}
       </span>
       <span className="flex items-center gap-2">
         <input
@@ -178,7 +179,7 @@ function SongRow({ song, busy, onReplace, onDelete }: RowProps) {
           type="button"
           disabled={busy}
           onClick={() => onReplace(song, replacement)}
-          className="border-2 border-black bg-white px-2 py-1 font-mono text-xs hover:bg-brut-blue hover:text-white disabled:opacity-50"
+          className="border-2 border-brut-black bg-brut-surface px-2 py-1 font-mono text-xs hover:bg-brut-blue hover:text-brut-on-accent disabled:opacity-50"
         >
           {busy ? "subiendo..." : "replace"}
         </button>
@@ -186,13 +187,13 @@ function SongRow({ song, busy, onReplace, onDelete }: RowProps) {
           type="button"
           disabled={busy}
           onClick={() => onDelete(song)}
-          className="border-2 border-black bg-black px-2 py-1 font-mono text-xs text-white hover:bg-brut-red disabled:opacity-50"
+          className="border-2 border-brut-black bg-brut-inverse px-2 py-1 font-mono text-xs text-brut-on-accent hover:bg-brut-red disabled:opacity-50"
         >
           delete
         </button>
       </span>
       {replacement && (
-        <p className="brut-meta w-full text-gray-500">
+        <p className="brut-meta w-full text-brut-muted">
           {replacement.name} · {formatBytes(replacement.size)}
         </p>
       )}

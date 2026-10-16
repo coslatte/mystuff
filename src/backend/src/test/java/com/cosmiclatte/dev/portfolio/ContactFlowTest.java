@@ -320,7 +320,7 @@ class ContactFlowTest {
         request.setRemoteAddr("127.0.0.1");
         var receipt = controller.create(new CreateContactMessageRequest(UUID.randomUUID(), "Immediate",
                 "immediate@example.com", "Send this without a scheduler invocation.", ""), request);
-        assertThat(receipt.getStatusCode().value()).isEqualTo(202);
+        assertThat(receipt.success()).isTrue();
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(state()).isEqualTo("PROVIDER_ACCEPTED"));
         assertThat(payloads).hasSize(1);
     }
