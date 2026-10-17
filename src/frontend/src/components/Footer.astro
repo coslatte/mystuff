@@ -1,5 +1,8 @@
 ---
+import { messages } from "../lib/i18n/catalog";
+import LocalizedText from "./LocalizedText.astro";
 import NowPlaying from "./NowPlaying.astro";
+import "../styles/footer.css";
 
 interface Props {
   showContact?: boolean;
@@ -8,71 +11,17 @@ interface Props {
 const { showContact = true } = Astro.props;
 ---
 
-<footer id="page-bottom" tabindex="-1" aria-label="Contact" class="site-footer mx-auto w-full max-w-7xl border-x-2 border-t-2 border-brut-black bg-brut-surface tv:max-w-[100rem]">
+<footer id="page-bottom" tabindex="-1" aria-label="Contact" class="site-footer mx-auto w-full max-w-7xl border-x-2 border-t-2 border-b-2 border-brut-black bg-brut-surface tv:max-w-[100rem]">
   <p class="font-mono text-xs" translate="no">Gabriel Paz / CosmicLatte</p>
-  {showContact && <a href="/contact" class="footer-contact brut-up"><span>Contact me <span aria-hidden="true">↗</span></span></a>}
-  <nav class="page-jumps" aria-label="Page shortcuts" data-cursor-target>
-    <a class="brut-up" href="#page-top" aria-label="Back to top" title="Back to top"><span aria-hidden="true">↑</span><span class="jump-label">Back to top</span></a>
-    <a class="brut-up" href="#page-bottom" aria-label="Go to page end" title="Go to page end"><span aria-hidden="true">↓</span><span class="jump-label">Go to page end</span></a>
+  {showContact && <a href="/contact" class="footer-contact brut-up"><span><span><LocalizedText id={messages.common.contact} /></span> <span aria-hidden="true">↗</span></span></a>}
+  <nav class="page-jumps" aria-label="Page shortcuts" data-i18n-aria-label={messages.navigation.pageShortcuts} data-cursor-target>
+    <a class="brut-up" href="#page-top" aria-label="Back to top" data-i18n-aria-label={messages.navigation.pageTop} title="Back to top" data-i18n-title={messages.navigation.pageTop}><span aria-hidden="true">↑</span><span class="jump-label"><LocalizedText id={messages.navigation.pageTop} /></span></a>
+    <a class="brut-up" href="#page-bottom" aria-label="Go to page end" data-i18n-aria-label={messages.navigation.pageEnd} title="Go to page end" data-i18n-title={messages.navigation.pageEnd}><span aria-hidden="true">↓</span><span class="jump-label"><LocalizedText id={messages.navigation.pageEnd} /></span></a>
   </nav>
 </footer>
 
-<style>
-  .page-jumps { position: fixed; z-index: 30; right: max(.5rem, calc((100vw - 80rem) / 2 - 3.5rem)); bottom: calc(5rem + env(safe-area-inset-bottom)); display: grid; gap: .4rem; }
-  .page-jumps a { width: 2.75rem; height: 2.75rem; justify-content: center; padding: 0; font-size: 1.15rem; box-shadow: 2px 2px 0 var(--color-brut-black); }
-  .jump-label { display: none; }
-  @media (max-width: 767px) {
-    :global(body) { padding-bottom: calc(3.75rem + env(safe-area-inset-bottom)); }
-    :global([data-audio-player]) { bottom: calc(3.75rem + env(safe-area-inset-bottom)); }
-    .page-jumps { z-index: 50; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; padding: .25rem .75rem calc(.25rem + env(safe-area-inset-bottom)); border-top: 2px solid var(--color-brut-black); background: var(--color-brut-surface); }
-    .page-jumps a { width: auto; padding-inline: .65rem; gap: .5rem; font-size: .9rem; box-shadow: none; }
-    .jump-label { display: inline; font-size: .65rem; }
-  }
-  .site-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: clamp(0.75rem, 2vw, 1.25rem) clamp(1rem, 3vw, 2rem); }
-  .site-footer .footer-contact { position: relative; isolation: isolate; overflow: hidden; padding: 0.45rem 0.75rem; font-size: clamp(0.875rem, 1.5vw, 1.125rem); line-height: 1.2; }
-  .site-footer .footer-contact::before { z-index: 0; transform: scale(0); transform-origin: var(--contact-origin, center); transition: transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1); }
-  .site-footer .footer-contact:hover::before,
-  .site-footer .footer-contact:focus-visible::before { transform: scale(1.5); }
-  .site-footer .footer-contact:hover,
-  .site-footer .footer-contact:focus-visible { color: var(--color-brut-on-accent); }
-  @media (max-width: 639px) { .site-footer { flex-direction: column; align-items: flex-start; } }
-  @media (prefers-reduced-motion: reduce) { .site-footer .footer-contact::before { transition: none; } }
-</style>
-
 <script>
-  document.addEventListener("pointerover", (event) => {
-    if (event.pointerType === "touch") return;
-    const target = event.target;
-    if (!(target instanceof Element)) return;
-    const link = target.closest<HTMLElement>(".footer-contact");
-    if (!link || link.contains(event.relatedTarget as Node | null)) return;
-    const rect = link.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    link.style.setProperty("--contact-origin", `${x}% ${y}%`);
-  });
-
-  const syncFooter = () => {
-    document.querySelectorAll<HTMLElement>("footer[data-collapsed]").forEach((footer) => {
-      footer.style.transform = "translateY(calc(100% - 0.5rem))";
-    });
-  };
-
-  document.addEventListener("click", (event) => {
-    const button = (event.target as Element).closest<HTMLButtonElement>("[data-footer-toggle]");
-    if (!button) return;
-
-    const footer = button.closest("footer");
-    if (!footer) return;
-
-    const collapsed = footer.toggleAttribute("data-collapsed");
-    button.setAttribute("aria-expanded", String(!collapsed));
-    button.setAttribute("aria-label", collapsed ? "show player" : "hide player");
-    button.querySelector("span")!.textContent = collapsed ? "↑" : "↓";
-    footer.style.transform = collapsed ? "translateY(calc(100% - 0.5rem))" : "translateY(0)";
-  });
-
-  document.addEventListener("astro:page-load", syncFooter);
+  import "../lib/footer";
 </script>
 
 <footer

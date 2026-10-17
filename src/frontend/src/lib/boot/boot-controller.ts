@@ -1,4 +1,8 @@
+import { messages } from "../i18n/catalog";
 import { mountLoadingPartition } from "../route-curtain";
+import { translate } from "../i18n/translate";
+import { getLocale } from "../i18n/locale";
+import type { PlainMessageKey } from "../i18n/types";
 import {
   creepToward,
   markMilestone,
@@ -22,13 +26,13 @@ export type StartBootScreenOptions = {
   replay?: BootReplay;
 };
 
-const STAGE_COPY: Record<BootMilestone, string> = {
-  painted: "waking up",
-  dom: "reading the page",
-  fonts: "loading fonts",
-  islands: "starting the parts that move",
-  assets: "finishing the pictures",
-};
+const STAGE_COPY = {
+  painted: messages.loading.starting,
+  dom: messages.loading.readingPage,
+  fonts: messages.loading.fonts,
+  islands: messages.loading.interactiveComponents,
+  assets: messages.loading.images,
+} satisfies Record<BootMilestone, PlainMessageKey>;
 
 export function startBootScreen({ replay }: StartBootScreenOptions = {}): () => void {
   const foundRoot = document.querySelector<HTMLElement>("[data-boot-screen]");
@@ -84,8 +88,9 @@ export function startBootScreen({ replay }: StartBootScreenOptions = {}): () => 
     milestones.add(milestone);
     state = markMilestone(state, milestone);
     state = { earned: Math.min(92, state.earned) };
-    stage.textContent = STAGE_COPY[milestone];
-    root.setAttribute("aria-valuetext", STAGE_COPY[milestone]);
+    const copy = translate(STAGE_COPY[milestone], getLocale());
+    stage.textContent = copy;
+    root.setAttribute("aria-valuetext", copy);
     if (milestones.size === 5) beginClosing();
   }
 

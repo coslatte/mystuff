@@ -1,23 +1,26 @@
 ---
+import { messages } from "../lib/i18n/catalog";
+import LocalizedText from "./LocalizedText.astro";
 import "../styles/brut-word.css";
+import "../styles/hero.css";
 ---
 
 <section class="border-b-2 border-brut-black bg-brut-surface">
   <div class="px-6 py-10 text-center tablet:px-8 tablet:py-12 laptop:px-10">
     <p class="brut-label">Gabriel Paz / Cuba</p>
     <h1 class="hero-title mx-auto mt-6 max-w-5xl wrap-break-word font-display text-[clamp(2.75rem,10vw,7.5rem)] font-black leading-[1.05] tracking-[-0.07em]">
-      i <span class="brut-word brut-word--code">
+      <LocalizedText id={messages.home.i} /> <span class="brut-word brut-word--code">
         <span class="brut-word__code-clip" aria-hidden="true">
           <pre class="brut-word__code-matrix"></pre>
-        </span><span class="brut-word__code-label">code</span>
-      </span> & shrink
+        </span><span class="brut-word__code-label"><LocalizedText id={messages.home.code} /></span>
+      </span> <LocalizedText id={messages.home.shrink} />
       <span
         class="brut-word brut-word--soundwaves"
         data-fm-wave
         style="--soundwave-mask: url('#soundwaves-fm-mask')"
       >
-        <span>soundwaves</span>
-        <span class="brut-word__wave-text" aria-hidden="true">soundwaves</span>
+        <span><LocalizedText id={messages.home.soundwaves} /></span>
+        <span class="brut-word__wave-text" aria-hidden="true"><LocalizedText id={messages.home.soundwaves} /></span>
         <svg class="brut-word__mask-defs" viewBox="0 0 1 1" aria-hidden="true" focusable="false">
           <defs>
             <mask id="soundwaves-fm-mask" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox" mask-type="alpha" x="0" y="0" width="1" height="1">
@@ -33,12 +36,6 @@ import "../styles/brut-word.css";
     </h1>
   </div>
 </section>
-
-<style>
-  .hero-title:lang(es), .hero-title:lang(fr), .hero-title:lang(de) {
-    font-size: clamp(1.75rem, 7vw, 6rem);
-  }
-</style>
 
 <script>
   import { buildFmWavePath, fmWaveOffset } from "../lib/fm-wave";

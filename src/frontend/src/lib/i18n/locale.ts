@@ -1,5 +1,5 @@
-import { isLocale, type Locale } from "../lib/i18n";
-import { readText, writeText } from "../lib/storage";
+import { isLocale, type Locale } from "./index";
+import { readText, writeText } from "../storage";
 
 const listeners = new Set<() => void>();
 let locale: Locale = "en";
@@ -24,3 +24,5 @@ export function restoreLocale() {
     : navigator.languages.map(language => language.split("-")[0]).find(isLocale);
   locale = isLocale(stored) ? stored : preferred ?? "en";
 }
+
+

@@ -1,8 +1,11 @@
 ---
+import { messages } from "../lib/i18n/catalog";
 import Layout from "../layouts/Layout.astro";
+import LocalizedText from "../components/LocalizedText.astro";
 import MusicSection from "../components/MusicSection";
 import SocialButton from "../components/SocialButton.astro";
 import MusicJourney from "../components/MusicJourney.astro";
+import "../styles/music-page.css";
 
 const socials = [
   { name: "soundcloud", url: "https://soundcloud.com/cosmiclattemusic" },
@@ -22,16 +25,16 @@ const socials = [
   <div class="music-page">
     <section class="music-intro" aria-labelledby="music-title">
       <div>
-        <p class="brut-label">01 / music</p>
-        <h1 id="music-title" class="mt-4 font-display text-5xl font-black leading-none tracking-tighter tablet:text-7xl">sounds i've crafted</h1>
-        <p class="mt-5 max-w-2xl text-base leading-7">I make experimental electronic music rooted in dubstep, with detailed sound design, harmonic color and a pull toward soundscapes. Listen to my releases, explore work in progress, or follow the influences behind the music.</p>
+        <p class="brut-label"><LocalizedText id={messages.music.section01Music} /></p>
+        <h1 id="music-title" class="mt-4 font-display font-black leading-none tracking-tighter"><LocalizedText id={messages.music.introTitle} /></h1>
+        <p class="mt-5 max-w-2xl text-base leading-7"><LocalizedText id={messages.music.introDescription} /></p>
         <div class="mt-5 flex flex-wrap gap-4">
-          <a class="editorial-link" href="#music-catalog">Listen to my music ↓</a>
-          <a class="editorial-link" href="#journey-title">Explore my musical journey ↓</a>
+          <a class="editorial-link" href="#music-catalog"><LocalizedText id={messages.music.listenReleases} /></a>
+          <a class="editorial-link" href="#journey-title"><LocalizedText id={messages.music.exploreJourney} /></a>
         </div>
       </div>
-      <nav class="music-platforms" aria-label="Music platforms">
-        <h2 class="brut-label mb-4">Find my music</h2>
+      <nav class="music-platforms" aria-label="Music platforms" data-i18n-aria-label={messages.music.musicPlatforms}>
+        <h2 class="brut-label mb-4"><LocalizedText id={messages.music.findMusic} /></h2>
         <div class="music-social-grid">
           {socials.slice(0, 4).map((social) => <SocialButton name={social.name} url={social.url} />)}
         </div>
@@ -44,7 +47,7 @@ const socials = [
     <section id="music-catalog" class="music-catalog" aria-labelledby="catalog-title">
       <header class="music-catalog-header">
         <p class="brut-label">02 / releases &amp; work in progress</p>
-        <h2 id="catalog-title">Releases &amp; sketches.</h2>
+        <h2 id="catalog-title"><LocalizedText id={messages.music.releaseSketches} /></h2>
       </header>
       <MusicSection client:load />
     </section>
@@ -52,18 +55,3 @@ const socials = [
     <MusicJourney />
   </div>
 </Layout>
-
-<style>
-  .music-intro { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(16rem, .6fr); align-items: end; gap: 3rem; padding: clamp(1.5rem, 3vw, 3rem); border-bottom: 2px solid var(--color-brut-black); background: var(--color-brut-surface); }
-  .music-platforms { padding-left: 2rem; border-left: 2px solid var(--color-brut-black); }
-  .music-social-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: .65rem; }
-  .music-catalog { scroll-margin-top: 1rem; border-bottom: 2px solid var(--color-brut-black); }
-  .music-catalog-header { display: flex; align-items: baseline; gap: 2rem; padding: 1.25rem clamp(1rem, 3vw, 3rem); border-bottom: 2px solid var(--color-brut-black); background: var(--color-brut-surface); }
-  .music-catalog-header h2 { margin: 0; font-size: clamp(1.5rem, 3vw, 2.5rem); font-weight: 800; }
-  @media (max-width: 1023px) {
-    .music-intro { grid-template-columns: 1fr; gap: 2rem; padding: 2rem 1.25rem; }
-    .music-platforms { padding: 1.5rem 0 0; border-top: 2px solid var(--color-brut-black); border-left: 0; }
-    .music-catalog-header { display: block; }
-    .music-catalog-header h2 { margin-top: .5rem; }
-  }
-</style>

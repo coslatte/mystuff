@@ -1,4 +1,4 @@
-import { useTranslations } from "../hooks/useTranslations";
+import { useTranslations } from "../lib/i18n/useTranslations";
 /*
  * Form primitives.
  *
@@ -20,7 +20,7 @@ type SliderProps = {
   format?: (value: number) => string;
   /** Overrides the value colour, for the one knob that is a warning and not a choice. */
   accent?: string;
-  hint?: ReactNode;
+  hint?: string;
   onChange: (value: number) => void;
 };
 
@@ -29,7 +29,7 @@ export function Slider({ label, value, min, max, step, format, accent, hint, onC
   return (
     <label className="brut-label block">
       <span className="flex items-baseline justify-between gap-2">
-        {t(label)}
+        {t.text(label)}
         <span className={accent ?? "text-brut-link"}>{format ? format(value) : value.toFixed(2)}</span>
       </span>
       <input
@@ -41,7 +41,7 @@ export function Slider({ label, value, min, max, step, format, accent, hint, onC
         onChange={(event) => onChange(Number(event.target.value))}
         className="mt-1 w-full"
       />
-      {hint ? <span className="mt-1 block font-mono text-[10px] font-normal normal-case text-brut-muted">{t(hint)}</span> : null}
+      {hint ? <span className="mt-1 block font-mono text-[10px] font-normal normal-case text-brut-muted">{t.text(hint)}</span> : null}
     </label>
   );
 }
@@ -58,7 +58,7 @@ export function Chips<T extends string>({ label, value, options, onChange }: Chi
   const t = useTranslations();
   return (
     <div>
-      <p className="brut-label mb-1">{t(label)}</p>
+      <p className="brut-label mb-1">{t.text(label)}</p>
       <div className="flex flex-wrap gap-1">
         {options.map((option) => (
           <button
@@ -70,7 +70,7 @@ export function Chips<T extends string>({ label, value, options, onChange }: Chi
               option === value ? "bg-brut-inverse text-brut-on-accent" : "bg-brut-surface hover:bg-brut-blue hover:text-brut-on-accent"
             }`}
           >
-            {t(option)}
+            {t.text(option)}
           </button>
         ))}
       </div>
@@ -94,7 +94,7 @@ export function Toggle({ label, checked, onChange }: ToggleProps) {
         onChange={(event) => onChange(event.target.checked)}
         className="h-4 w-4 accent-brut-blue"
       />
-      {t(label)}
+      {t.text(label)}
     </label>
   );
 }
@@ -111,7 +111,7 @@ export function Panel({ title, children, aside }: PanelProps) {
   return (
     <section className="brut-panel">
       <header className="flex items-center justify-between gap-2 border-b-2 border-brut-black bg-brut-inverse px-3 py-2">
-        <h2 className="font-mono text-xs font-bold uppercase text-brut-on-accent">{t(title)}</h2>
+        <h2 className="font-mono text-xs font-bold uppercase text-brut-on-accent">{t.text(title)}</h2>
         {aside}
       </header>
       <div className="flex flex-col gap-3 p-3">{children}</div>

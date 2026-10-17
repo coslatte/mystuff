@@ -1,4 +1,4 @@
-import { useTranslations } from "../hooks/useTranslations";
+import { useTranslations } from "../lib/i18n/useTranslations";
 import { useState } from "react";
 import type { Song } from "../types";
 import { player } from "../services/player";
@@ -35,13 +35,13 @@ export default function TrackBlock({ song, onRate }: Props) {
         <button
           type="button"
           onClick={handlePlay}
-          aria-label={t(showPause ? "pause" : "play")}
+          aria-label={t.text(showPause ? "pause" : "play")}
           className={playPauseClass(
             showPause,
             "flex h-10 w-10 shrink-0 items-center justify-center border-2 border-brut-black text-sm font-bold"
           )}
         >
-          {t(playPauseGlyph(showPause))}
+          {t.text(playPauseGlyph(showPause))}
         </button>
 
         <div className="min-w-0 flex-1">
@@ -50,19 +50,19 @@ export default function TrackBlock({ song, onRate }: Props) {
           </span>
           <span className="block truncate font-mono text-xs normal-case text-brut-muted">
             {song.artist}
-            {t(song.duration ? ` · ${song.duration}` : "")}
+            {song.duration && ` · ${song.duration}`}
           </span>
         </div>
 
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className="font-mono text-[10px] font-bold text-brut-muted">{t("★ ")}{t(ratingLabel)}</span>
+          <span className="font-mono text-[10px] font-bold text-brut-muted">★ {t.text(ratingLabel)}</span>
           <button
             type="button"
             onClick={() => setShowComments((v) => !v)}
             aria-expanded={showComments}
             className="font-mono text-[10px] text-brut-muted underline hover:text-brut-black"
           >
-            {t(showComments ? "hide comments ▲" : "comments ▼")}
+            {t.text(showComments ? "hide comments ▲" : "comments ▼")}
           </button>
         </div>
       </div>

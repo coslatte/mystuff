@@ -1,64 +1,105 @@
 ---
-import { musicJourneyCopy } from '../lib/i18n';
-import portraitSources from '../../public/images/influences/sources.json';
+import { messages } from "../lib/i18n/catalog";
+import LocalizedText from "./LocalizedText.astro";
+import { musicJourneyCopy } from "../lib/i18n";
+import portraitSources from "../../public/images/influences/sources.json";
 
 const moments = [
-  { period: 'Shared beginnings', shared: { copy: musicJourneyCopy.chapters[0], artists: [['skrillex', 'Skrillex'], ['zomboy', 'Zomboy'], ['bmth', 'Bring Me the Horizon']] } },
-  { period: 'Adolescence / parallel paths', shared: { copy: musicJourneyCopy.chapters[1], artists: [['linkin-park', 'Linkin Park'], ['marshmello', 'Marshmello'], ['post-malone', 'Post Malone'], ['twenty-one-pilots', 'Twenty One Pilots']] } },
   {
-    period: 'Pandemic, university and after / overlapping discoveries',
-    root: { copy: musicJourneyCopy.chapters[2], artists: [['mr-bill', 'Mr. Bill'], ['chime', 'Chime'], ['ace-aura', 'Ace Aura'], ['au5', 'Au5'], ['voltra', 'VOLTRA']] },
-    discovery: { copy: musicJourneyCopy.chapters[3], artists: [['joji', 'Joji'], ['fujii-kaze', 'Fujii Kaze'], ['tyler-the-creator', 'Tyler, the Creator']] },
+    period: messages.music.sharedBeginnings,
+    shared: {
+      copy: musicJourneyCopy.chapters[0],
+      artists: [["skrillex", "Skrillex"], ["zomboy", "Zomboy"], ["bmth", "Bring Me the Horizon"]],
+    },
   },
-  { period: 'A turning point / the electronic thread continues', discovery: { copy: musicJourneyCopy.chapters[4], artists: [['jacob-collier', 'Jacob Collier']], milestone: true, link: 'https://www.youtube.com/watch?v=VPLCk-FTVvw' } },
-  { period: 'From listening to playing', discovery: { copy: musicJourneyCopy.chapters[5], artists: [['keith-jarrett', 'Keith Jarrett'], ['bill-evans', 'Bill Evans']], milestone: true } },
-  { period: 'Recent discoveries / the paths draw closer', discovery: { copy: musicJourneyCopy.chapters[6], artists: [['opn', 'Oneohtrix Point Never'], ['boards-of-canada', 'Boards of Canada'], ['cubalibre-exe', 'cubalibre.exe'], ['sakamoto', 'Ryuichi Sakamoto']] } },
+  {
+    period: messages.music.adolescenceParallelPaths,
+    shared: {
+      copy: musicJourneyCopy.chapters[1],
+      artists: [["linkin-park", "Linkin Park"], ["marshmello", "Marshmello"], ["post-malone", "Post Malone"], ["twenty-one-pilots", "Twenty One Pilots"]],
+    },
+  },
+  {
+    period: messages.music.overlappingDiscoveries,
+    root: {
+      copy: musicJourneyCopy.chapters[2],
+      artists: [["mr-bill", "Mr. Bill"], ["chime", "Chime"], ["ace-aura", "Ace Aura"], ["au5", "Au5"], ["voltra", "VOLTRA"]],
+    },
+    discovery: {
+      copy: musicJourneyCopy.chapters[3],
+      artists: [["joji", "Joji"], ["fujii-kaze", "Fujii Kaze"], ["tyler-the-creator", "Tyler, the Creator"]],
+    },
+  },
+  {
+    period: messages.music.turningPoint,
+    discovery: {
+      copy: musicJourneyCopy.chapters[4],
+      artists: [["jacob-collier", "Jacob Collier"]],
+      milestone: true,
+      link: "https://www.youtube.com/watch?v=VPLCk-FTVvw",
+    },
+  },
+  {
+    period: messages.music.fromListeningToPlaying,
+    discovery: {
+      copy: musicJourneyCopy.chapters[5],
+      artists: [["keith-jarrett", "Keith Jarrett"], ["bill-evans", "Bill Evans"]],
+      milestone: true,
+    },
+  },
+  {
+    period: messages.music.pathsDrawCloser,
+    discovery: {
+      copy: musicJourneyCopy.chapters[6],
+      artists: [["opn", "Oneohtrix Point Never"], ["boards-of-canada", "Boards of Canada"], ["cubalibre-exe", "cubalibre.exe"], ["sakamoto", "Ryuichi Sakamoto"]],
+    },
+  },
 ];
-const keyArtists = new Set(['skrillex', 'jacob-collier', 'keith-jarrett', 'sakamoto']);
-const groups = new Set(['bmth', 'linkin-park', 'twenty-one-pilots', 'boards-of-canada']);
+const keyArtists = new Set(["skrillex", "jacob-collier", "keith-jarrett", "sakamoto"]);
+const groups = new Set(["bmth", "linkin-park", "twenty-one-pilots", "boards-of-canada"]);
 const portraits = new Map(portraitSources.map(source => [source.id, source.image]));
 ---
 
 <section class="journey" aria-labelledby="journey-title">
   <header class="journey-intro">
-    <p class="brut-label">03 / influences</p>
+    <p class="brut-label"><LocalizedText id={messages.music.influences} /></p>
     <h2 id="journey-title">{musicJourneyCopy.title[0]}</h2>
     <p class="journey-subtitle"><em>{musicJourneyCopy.subtitle[0]}</em></p>
-    {musicJourneyCopy.intro.map(([en]) => <p>{en}</p>)}
+    {musicJourneyCopy.intro.map(([en]) => <p data-i18n-text={en}>{en}</p>)}
   </header>
 
   <div class="route-key">
-    <span><i class="root-mark" aria-hidden="true"></i>Electronic root / continuous</span>
-    <span><i class="discovery-mark" aria-hidden="true"></i>Musical expansion / discoveries</span>
+    <span><i class="root-mark" aria-hidden="true"></i><LocalizedText id={messages.music.electronicRootContinuous} /></span>
+    <span><i class="discovery-mark" aria-hidden="true"></i><LocalizedText id={messages.music.musicalExpansionDiscoveries} /></span>
   </div>
 
   <div class="journey-paths" data-journey-paths>
     <svg class="journey-lines" aria-hidden="true" preserveAspectRatio="none"><path class="root-line" /><path class="discovery-line" /></svg>
     {moments.map((moment) => (
-      <div class:list={['journey-moment', { 'single-discovery': moment.discovery && !moment.root }]}>
-        <p class="moment-period">{moment.period}</p>
-        {(['shared', 'root', 'discovery'] as const).map((lane) => {
+      <div class:list={["journey-moment", { "single-discovery": moment.discovery && !moment.root }]}>
+        <p class="moment-period"><LocalizedText id={moment.period} /></p>
+        {(["shared", "root", "discovery"] as const).map((lane) => {
           const chapter = moment[lane];
           return (
-            <div class:list={['lane-cell', `${lane}-cell`]}>
-              {chapter && <article class:list={['journey-chapter', { milestone: 'milestone' in chapter && chapter.milestone, 'wide-chapter': lane === 'shared' || (lane === 'discovery' && !moment.root) }]}>
-                <span class="chapter-marker" data-journey-node={lane === 'shared' ? 'root' : lane} aria-hidden="true"></span>
-                {lane === 'shared' && <span class="chapter-marker shared-discovery-marker" data-journey-node="discovery" aria-hidden="true"></span>}
+            <div class:list={["lane-cell", `${lane}-cell`]}>
+              {chapter && <article class:list={["journey-chapter", { milestone: "milestone" in chapter && chapter.milestone, "wide-chapter": lane === "shared" || (lane === "discovery" && !moment.root) }]}>
+                <span class="chapter-marker" data-journey-node={lane === "shared" ? "root" : lane} aria-hidden="true"></span>
+                {lane === "shared" && <span class="chapter-marker shared-discovery-marker" data-journey-node="discovery" aria-hidden="true"></span>}
                 <header class="chapter-heading">
-                  {lane !== 'shared' && <p class="chapter-lane">{lane === 'root' ? 'Electronic root' : 'Musical expansion'}</p>}
+                  {lane !== "shared" && <p class="chapter-lane"><LocalizedText id={lane === "root" ? messages.music.electronicRoot : messages.music.musicalExpansion} /></p>}
                   <h3>{chapter.copy.title[0]}</h3>
                 </header>
                 <div class="artist-grid">
                   {chapter.artists.map(([id, name]) => (
-                    <figure class:list={['artist-portrait', { 'artist-key': keyArtists.has(id), 'artist-group': groups.has(id) }]} data-artist-id={id}>
+                    <figure class:list={["artist-portrait", { "artist-key": keyArtists.has(id), "artist-group": groups.has(id) }]} data-artist-id={id}>
                       <img src={portraits.get(id)} alt="" width="640" height="640" loading="lazy" decoding="async" />
                       <figcaption translate="no">{name}</figcaption>
                     </figure>
                   ))}
                 </div>
                 <div class="chapter-prose">
-                  {chapter.copy.paragraphs.map(([en]) => <p>{en}</p>)}
-                  {'link' in chapter && <a class="editorial-link" href={chapter.link} target="_blank" rel="noreferrer">Listen to Moon River ↗</a>}
+                  {chapter.copy.paragraphs.map(([en]) => <p data-i18n-text={en}>{en}</p>)}
+                  {"link" in chapter && <a class="editorial-link" href={chapter.link} target="_blank" rel="noreferrer"><LocalizedText id={messages.music.listenMoonRiver} /></a>}
                 </div>
               </article>}
             </div>
@@ -68,161 +109,16 @@ const portraits = new Map(portraitSources.map(source => [source.id, source.image
     ))}
     <div class="journey-present" id="journey-today">
       <span class="present-marker" data-journey-present aria-hidden="true"></span>
-      <p class="brut-label">Both paths / now</p>
+      <p class="brut-label"><LocalizedText id={messages.music.bothPathsNow} /></p>
       <h3>{musicJourneyCopy.chapters[7].title[0]}</h3>
-      {musicJourneyCopy.chapters[7].paragraphs.map(([en]) => <p>{en}</p>)}
+      {musicJourneyCopy.chapters[7].paragraphs.map(([en]) => <p data-i18n-text={en}>{en}</p>)}
     </div>
   </div>
-  <div class="journey-credits"><a class="editorial-link" href="/images/influences/credits.html">Artist photography credits ↗</a></div>
+  <div class="journey-credits"><a class="editorial-link" href="/images/influences/credits.html"><LocalizedText id={messages.music.artistPhotoCredits} /></a></div>
 </section>
 
-<style>
-  .journey { background: var(--color-brut-bg); text-transform: none; }
-  .journey-intro { padding: clamp(1.5rem, 4vw, 4rem); border-bottom: 2px solid var(--color-brut-black); }
-  h2 { margin: 1.5rem 0 2rem; max-width: 65rem; font-size: clamp(2.5rem, 6vw, 6rem); line-height: 1; letter-spacing: -.055em; font-weight: 900; }
-  .journey-intro > p:not(.brut-label) { max-width: 48rem; margin-top: 1rem; line-height: 1.8; }
-  .journey-intro .journey-subtitle { margin-bottom: 1.5rem; color: var(--color-brut-muted); }
-  h2, h3 { text-transform: none; }
-  .route-key { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding: 1.25rem clamp(1.5rem, 4vw, 4rem); border-bottom: 2px solid var(--color-brut-black); font: 700 .7rem var(--font-mono); }
-  .route-key span { display: flex; align-items: center; gap: .75rem; }
-  .route-key i { width: .75rem; height: .75rem; flex-shrink: 0; border-radius: 50%; background: var(--color-brut-blue); }
-  .route-key .discovery-mark { border-radius: 0; background: var(--color-brut-red); transform: rotate(45deg); }
-  .journey-paths { position: relative; isolation: isolate; padding: 2rem clamp(1rem, 3vw, 3rem) 0; }
-  .journey-lines { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; overflow: hidden; pointer-events: none; opacity: .32; }
-  .journey-lines path { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linecap: round; }
-  .root-line { stroke: var(--color-brut-link); }
-  .discovery-line { stroke: var(--color-brut-danger); }
-  .journey-moment { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem 3rem; padding-bottom: 3rem; }
-  .moment-period { position: relative; grid-column: 1 / -1; padding: .5rem 0; width: fit-content; background: var(--color-brut-bg); font: 700 .65rem var(--font-mono); }
-  .lane-cell { min-width: 0; }
-  .lane-cell:empty { display: none; }
-  .root-cell { grid-column: 1; }
-  .discovery-cell { grid-column: 2; }
-  .shared-cell { grid-column: 1 / -1; }
-  .shared-cell .journey-chapter { padding-right: clamp(1rem, 3vw, 3rem); }
-  .single-discovery .discovery-cell { grid-column: 1 / -1; }
-  .chapter-prose { min-width: 0; }
-  .shared-cell .shared-discovery-marker { left: calc(75% - .25rem); border-color: var(--color-brut-danger); border-radius: 1px; transform: rotate(45deg); }
-  .journey-chapter { position: relative; display: grid; gap: 1.25rem; align-content: start; padding: clamp(1rem, 2vw, 1.75rem); border: 2px solid var(--color-brut-black); background: var(--color-brut-surface); }
-  .chapter-marker { position: absolute; top: -.25rem; left: calc(25% - .25rem); width: .5rem; height: .5rem; border: 1px solid var(--color-brut-link); border-radius: 50%; background: var(--color-brut-surface); opacity: .7; }
-  .root-cell .chapter-marker { left: calc(50% - .25rem); }
-  .discovery-cell .chapter-marker { left: calc(50% - .25rem); border-color: var(--color-brut-danger); border-radius: 1px; transform: rotate(45deg); }
-  .single-discovery .chapter-marker { left: calc(64% - .25rem); }
-  .single-discovery:nth-child(even) .chapter-marker { left: calc(56% - .25rem); }
-  .chapter-lane { margin-bottom: .8rem; font: 700 .6rem var(--font-mono); text-transform: uppercase; }
-  h3 { margin-bottom: 1rem; font: 700 clamp(1.5rem, 2.5vw, 2.5rem)/1.1 var(--font-display); letter-spacing: -.035em; }
-  .chapter-prose > p:not(.chapter-lane) { margin-top: 1rem; font-size: .95rem; line-height: 1.85; }
-  .chapter-prose > p:first-child { margin-top: 0; }
-  .chapter-heading h3 { margin-bottom: 0; }
-  .artist-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; align-items: start; width: 100%; max-width: 28rem; }
-  figure { min-width: 0; }
-  img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; object-position: 50% 30%; border: 1px solid var(--color-brut-black); background: var(--color-brut-soft); }
-  .artist-group img { aspect-ratio: 4 / 3; object-position: center; }
-  .artist-key { grid-column: span 2; }
-  .artist-key img { aspect-ratio: 4 / 3; }
-  .artist-grid:has(figure:only-child) { grid-template-columns: minmax(0, 1fr); max-width: 18rem; }
-  .artist-key:only-child { grid-column: 1; grid-row: auto; }
-  .artist-key:only-child img { max-height: 42svh; aspect-ratio: 4 / 3; }
-  .artist-grid:has(figure:nth-child(2):last-child) { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
-  .artist-grid:has(figure:nth-child(2):last-child) .artist-key { grid-column: auto; grid-row: auto; }
-  .artist-grid:has(figure:nth-child(2):last-child) .artist-key img { aspect-ratio: 4 / 5; }
-  .artist-grid:has([data-artist-id="sakamoto"]) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  [data-artist-id="sakamoto"] { grid-column: 1 / -1; }
-  figcaption { padding-top: .45rem; font-size: .7rem; font-weight: 700; line-height: 1.5; overflow-wrap: anywhere; }
-  .milestone { border-left: 5px solid var(--color-brut-red); }
-  .journey-chapter .editorial-link { margin-top: 1.5rem; }
-  .journey-present { position: relative; max-width: 54rem; margin: 2rem auto 0; padding: 2rem clamp(1rem, 3vw, 3rem); border-top: 2px solid var(--color-brut-black); background: var(--color-brut-surface); }
-  .present-marker { position: absolute; top: -.3rem; left: calc(50% - .3rem); width: .6rem; height: .6rem; border-radius: 50%; background: var(--color-brut-muted); }
-  .journey-present h3 { margin-top: 1rem; }
-  .journey-present > p:not(.brut-label) { margin-top: 1rem; font-size: .95rem; line-height: 1.85; text-align: justify; hyphens: auto; hyphenate-limit-chars: 7 4 3; }
-  .journey-credits { padding: 1.25rem clamp(1.5rem, 4vw, 4rem); text-align: right; font-size: .65rem; }
-  @media (min-width: 1024px) {
-    .artist-grid:has([data-artist-id="linkin-park"]) > .artist-group { grid-column: 1 / -1; }
-    [data-artist-id="linkin-park"] img { aspect-ratio: 2 / 1; }
-    [data-artist-id="twenty-one-pilots"] img { aspect-ratio: 16 / 9; }
-    .wide-chapter { display: flow-root; }
-    .wide-chapter .chapter-heading { margin-bottom: 1.25rem; }
-    .wide-chapter .artist-grid { float: right; width: min(28%, 16rem); margin: 0 0 1.25rem clamp(1.5rem, 3vw, 3rem); grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .wide-chapter .artist-key { grid-column: 1 / -1; grid-row: auto; }
-    .wide-chapter .artist-grid:has(figure:nth-child(2):last-child) { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
-    .wide-chapter .artist-grid:has([data-artist-id="sakamoto"]) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  }
-  @media (max-width: 767px) {
-    .route-key { grid-template-columns: 1fr; }
-    .journey-moment { grid-template-columns: 1fr; gap: 1rem; padding-bottom: 2rem; }
-    .moment-period { grid-column: 1; line-height: 1.8; }
-    .lane-cell { grid-column: 1; }
-    .lane-cell:empty { display: none; }
-    .journey-lines path { stroke-width: 1.5; }
-    .journey-present { margin-top: 2rem; }
-  }
-  @media (max-width: 479px) {
-    .artist-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  }
-</style>
-
 <script>
-  type Point = { x: number; y: number };
-
-  function curveThrough(points: Point[]) {
-    const [first, ...rest] = points;
-    if (!first) return '';
-    let path = `M${first.x} ${first.y}`;
-    let previous = first;
-    for (const point of rest) {
-      const bend = (point.y - previous.y) / 2;
-      path += ` C${previous.x} ${previous.y + bend} ${point.x} ${point.y - bend} ${point.x} ${point.y}`;
-      previous = point;
-    }
-    return path;
-  }
-
-  function mountJourney() {
-    const journey = document.querySelector<HTMLElement>('[data-journey-paths]');
-    if (!journey) return;
-    let frame: number | null = null;
-    let disposed = false;
-    const draw = () => {
-      frame = null;
-      const svg = journey.querySelector('svg');
-      const end = journey.querySelector<HTMLElement>('[data-journey-present]');
-      if (!svg || !end) return;
-      const bounds = journey.getBoundingClientRect();
-      const center = (element: Element): Point => {
-        const box = element.getBoundingClientRect();
-        return { x: box.left + box.width / 2 - bounds.left, y: box.top + box.height / 2 - bounds.top };
-      };
-      const destination = center(end);
-      svg.setAttribute('viewBox', `0 0 ${journey.clientWidth} ${journey.clientHeight}`);
-      const root: Point[] = [];
-      let electronicThread: Point | undefined;
-      for (const moment of journey.querySelectorAll('.journey-moment')) {
-        const anchor = moment.querySelector('[data-journey-node="root"]');
-        const discovery = moment.querySelector('[data-journey-node="discovery"]');
-        if (anchor) {
-          electronicThread = center(anchor);
-          root.push(electronicThread);
-        } else if (electronicThread && discovery) {
-          root.push({ x: electronicThread.x, y: center(discovery).y });
-        }
-      }
-      const discoveries = [...journey.querySelectorAll('[data-journey-node="discovery"]')].map(center);
-      svg.querySelector('.root-line')?.setAttribute('d', curveThrough([...root, destination]));
-      svg.querySelector('.discovery-line')?.setAttribute('d', curveThrough([...discoveries, destination]));
-    };
-    const scheduleDraw = () => {
-      if (!disposed && frame === null) frame = requestAnimationFrame(draw);
-    };
-    const observer = new ResizeObserver(scheduleDraw);
-    observer.observe(journey);
-    journey.querySelectorAll('.journey-chapter, .moment-period, .journey-present').forEach(element => observer.observe(element));
-    scheduleDraw();
-    document.fonts.ready.then(scheduleDraw);
-    document.addEventListener('astro:before-swap', () => {
-      disposed = true;
-      observer.disconnect();
-      if (frame !== null) cancelAnimationFrame(frame);
-    }, { once: true });
-  }
-  document.addEventListener('astro:page-load', mountJourney);
+  import { mountMusicJourney } from "../lib/music-journey";
+  document.addEventListener("astro:page-load", mountMusicJourney);
+  mountMusicJourney();
 </script>

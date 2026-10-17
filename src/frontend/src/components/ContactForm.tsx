@@ -1,4 +1,5 @@
-import { useTranslations } from "../hooks/useTranslations";
+import { messages } from "../lib/i18n/catalog";
+import { useTranslations } from "../lib/i18n/useTranslations";
 import { useEffect, useRef, useState } from "react";
 import type { SubmitEvent } from "react";
 import { api, ApiError } from "../services/api";
@@ -43,9 +44,9 @@ export default function ContactForm() {
     if (controller.current) return;
     const element = event.currentTarget;
     const data = new FormData(element);
-    const name = String(data.get("name") ?? "").trim();
-    const email = String(data.get("email") ?? "").trim();
-    const message = String(data.get("message") ?? "").trim();
+    const name = String(data.get(messages.contact.name) ?? "").trim();
+    const email = String(data.get(messages.contact.email) ?? "").trim();
+    const message = String(data.get(messages.contact.message) ?? "").trim();
     const website = String(data.get("website") ?? "");
     const fields: Record<string, string> = {};
     if (!name) fields.name = "Enter your name.";
@@ -96,43 +97,43 @@ export default function ContactForm() {
       <fieldset disabled={!ready || busy} className="grid min-w-0 gap-6">
         <div className="grid min-w-0 gap-6 tablet:grid-cols-2">
           <div className="min-w-0">
-            <label htmlFor="contact-name" className="brut-label">{t("Name")}</label>
+            <label htmlFor="contact-name" className="brut-label">{t(messages.contact.name)}</label>
             <input id="contact-name" name="name" autoComplete="name" required maxLength={100} className={fieldClass}
               aria-invalid={Boolean(fieldError("name"))} aria-describedby={fieldError("name") ? "contact-name-error" : undefined} />
-            {fieldError("name") && <p id="contact-name-error" className="mt-2 text-sm">{t(fieldError("name"))}</p>}
+            {fieldError("name") && <p id="contact-name-error" className="mt-2 text-sm">{t.text(fieldError("name"))}</p>}
           </div>
           <div className="min-w-0">
-            <label htmlFor="contact-email" className="brut-label">{t("Email")}</label>
+            <label htmlFor="contact-email" className="brut-label">{t(messages.contact.email)}</label>
             <input id="contact-email" name="email" type="email" autoComplete="email" required maxLength={254} className={fieldClass}
               aria-invalid={Boolean(fieldError("email"))} aria-describedby={fieldError("email") ? "contact-email-error" : undefined} />
-            {fieldError("email") && <p id="contact-email-error" className="mt-2 text-sm">{t(fieldError("email"))}</p>}
+            {fieldError("email") && <p id="contact-email-error" className="mt-2 text-sm">{t.text(fieldError("email"))}</p>}
           </div>
         </div>
         <div className="min-w-0">
-          <label htmlFor="contact-message" className="brut-label">{t("Message")}</label>
+          <label htmlFor="contact-message" className="brut-label">{t(messages.contact.message)}</label>
           <textarea id="contact-message" name="message" required minLength={10} maxLength={5000} rows={8} className={fieldClass}
             aria-invalid={Boolean(fieldError("message"))}
             aria-describedby={fieldError("message") ? "contact-message-error contact-message-hint" : "contact-message-hint"} />
-          <p id="contact-message-hint" className="mt-2 font-mono text-xs text-brut-muted">{t("10–5,000 characters.")}</p>
-          {fieldError("message") && <p id="contact-message-error" className="mt-2 text-sm">{t(fieldError("message"))}</p>}
+          <p id="contact-message-hint" className="mt-2 font-mono text-xs text-brut-muted">{t(messages.contact.messageLengthHint)}</p>
+          {fieldError("message") && <p id="contact-message-error" className="mt-2 text-sm">{t.text(fieldError("message"))}</p>}
         </div>
         <div hidden aria-hidden="true">
-          <label htmlFor="contact-website">{t("Leave this empty")}</label>
+          <label htmlFor="contact-website">{t(messages.contact.leaveThisEmpty)}</label>
           <input id="contact-website" name="website" tabIndex={-1} autoComplete="off" />
         </div>
-        <p className="text-sm leading-6 text-brut-muted">{t("Your details are used to deliver this message and reply to you. The site removes successfully processed messages after 30 days; failed deliveries remain for review. Email providers, backups, and the recipient's mailbox keep their own copies.")}</p>
+        <p className="text-sm leading-6 text-brut-muted">{t(messages.contact.privacyDescription)}</p>
         <button type="submit" className="brut-up min-h-11 w-full disabled:cursor-wait disabled:opacity-60 tablet:w-fit">
-          <span>{t(busy ? "Sending…" : "Send message ↗")}</span>
+          <span>{t.text(busy ? "Sending…" : "Send message ↗")}</span>
         </button>
       </fieldset>
       <div ref={status} tabIndex={-1} role="status" aria-live="polite" aria-atomic="true" className="mt-6 outline-offset-4">
-        {state.kind === "submitting" && <p className="font-mono text-sm">{t(state.slow
+        {state.kind === "submitting" && <p className="font-mono text-sm">{t.text(state.slow
           ? "The service is taking a little longer to respond. Please keep this page open; your message is still here."
           : "Submitting your message…")}</p>}
-        {state.kind === "error" && <p className="border-2 border-brut-black bg-brut-surface p-4 text-sm">{t(state.message)}</p>}
+        {state.kind === "error" && <p className="border-2 border-brut-black bg-brut-surface p-4 text-sm">{t.text(state.message)}</p>}
         {state.kind === "accepted" && <div className="border-2 border-brut-black bg-brut-green p-4 text-brut-on-accent">
-          <p className="font-bold">{t("Your message has been received for delivery.")}</p>
-          <p className="mt-2 break-all font-mono text-xs">{t("Reference: ")}{state.reference}</p>
+          <p className="font-bold">{t(messages.contact.deliveryReceipt)}</p>
+          <p className="mt-2 break-all font-mono text-xs">{t(messages.contact.reference)}{state.reference}</p>
         </div>}
       </div>
     </form>

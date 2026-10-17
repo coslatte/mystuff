@@ -1,5 +1,7 @@
 ---
+import { messages } from "../lib/i18n/catalog";
 import "../styles/route-curtain.css";
+import LocalizedText from "./LocalizedText.astro";
 import { curtainCells } from "../lib/route-curtain";
 import { interiorEdges } from "../lib/recursion/subdivide";
 
@@ -10,7 +12,7 @@ const edges = interiorEdges(cells);
 ---
 
 <div class="route-curtain" data-route-curtain role="status" aria-live="polite"
-  aria-label="loading" transition:persist="route-curtain">
+  aria-label="loading" data-i18n-aria-label={messages.loading.status} transition:persist="route-curtain">
   {
     cells.map((cell, index) => (
       <div
@@ -26,7 +28,7 @@ const edges = interiorEdges(cells);
   </svg>
   <canvas class="route-curtain__canvas" aria-hidden="true"></canvas>
   <div class="route-curtain__plate">
-    <span class="route-curtain__caption">loading</span>
+    <span class="route-curtain__caption"><LocalizedText id={messages.loading.status} /></span>
     <span class="route-curtain__target" data-route-curtain-label>&nbsp;</span>
   </div>
 </div>

@@ -1,4 +1,5 @@
-import { useTranslations } from "../hooks/useTranslations";
+import { messages } from "../lib/i18n/catalog";
+import { useTranslations } from "../lib/i18n/useTranslations";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { computeWaveform, player, type WaveformPeaks } from "../services/player";
 import { usePlayer } from "../hooks/usePlayer";
@@ -186,10 +187,10 @@ export default function PlayerBar() {
             isPlaying,
             "flex h-11 w-11 shrink-0 items-center justify-center border-2 border-brut-black text-lg font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40 laptop:h-12 laptop:w-12 laptop:text-xl"
           )}
-          aria-label={t(isPlaying ? "pause" : "play")}
+          aria-label={t.text(isPlaying ? "pause" : "play")}
         >
           <span key={isPlaying ? "pause" : "play"} className="icon-morph">
-            {t(playPauseGlyph(isPlaying))}
+            {t.text(playPauseGlyph(isPlaying))}
           </span>
         </button>
 
@@ -198,14 +199,14 @@ export default function PlayerBar() {
         </div>
 
         <div className="shrink-0 border-2 border-brut-black bg-brut-surface px-2 py-1 font-mono text-[10px] font-bold text-brut-black laptop:text-xs">
-          {t(formatClock(currentTime))}
+          {t.text(formatClock(currentTime))}
         </div>
       </div>
 
       <div
         ref={seekBarRef}
         role="slider"
-        aria-label={t("seek")}
+        aria-label={t(messages.music.seek)}
         aria-valuemin={0}
         aria-valuemax={Math.round(duration) || 0}
         aria-valuenow={Math.round(currentTime)}
@@ -221,7 +222,7 @@ export default function PlayerBar() {
       </div>
 
       {error && (
-        <p className="font-mono text-[10px] font-bold text-brut-danger">{t("playback error: could not stream this track. check your internet connectivity.")}</p>
+        <p className="font-mono text-[10px] font-bold text-brut-danger">{t(messages.music.playbackError)}</p>
       )}
     </div>
   );

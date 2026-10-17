@@ -1,16 +1,20 @@
 ---
+import { messages } from "../../lib/i18n/catalog";
+import LocalizedText from "../../components/LocalizedText.astro";
 import Layout from "../../layouts/Layout.astro";
 
 const experiments = [
   {
     slug: "spectral",
     title: "Spectral",
-    description: "Fluid simulation with pigment mixing.",
+    titleKey: messages.experiments.spectral,
+    descriptionKey: messages.experiments.spectralDescription,
   },
   {
     slug: "subdivision",
     title: "Subdivision",
-    description: "Recursive rectangle partitioning with adjustable geometry and color.",
+    titleKey: messages.experiments.subdivision,
+    descriptionKey: messages.experiments.subdivisionDescription,
   },
 ];
 ---
@@ -20,10 +24,10 @@ const experiments = [
   description="Interactive studies in simulation, geometry, and color, running in the browser."
 >
   <section class="border-b-2 border-brut-black bg-brut-surface p-6 tablet:p-8 laptop:p-10">
-    <p class="brut-label">04 / experiments</p>
-    <h1 class="mt-4 font-display text-5xl font-black leading-none tracking-tighter tablet:text-7xl">Experiments</h1>
+    <p class="brut-label"><LocalizedText id={messages.experiments.section04Experiments} /></p>
+    <h1 class="mt-4 font-display font-black leading-none tracking-tighter"><LocalizedText id={messages.experiments.experiments2} /></h1>
     <p class="mt-5 max-w-2xl text-base leading-7">
-      Interactive studies in simulation, geometry, and color.
+      <LocalizedText id={messages.experiments.introDescription} />
     </p>
   </section>
   <section class="grid laptop:grid-cols-2">
@@ -38,8 +42,8 @@ const experiments = [
           <span aria-hidden="true" class="text-2xl transition-transform group-hover:translate-x-1">↗</span>
         </div>
         <div>
-          <h2 class="font-display text-3xl font-black tracking-tighter tablet:text-4xl">{experiment.title}</h2>
-          <p class="mt-3 max-w-md leading-7 text-brut-muted group-hover:text-brut-on-accent group-focus-visible:text-brut-on-accent">{experiment.description}</p>
+          <h2 class="font-display font-black tracking-tighter"><LocalizedText id={experiment.titleKey} /></h2>
+          <p class="mt-3 max-w-md leading-7 text-brut-muted group-hover:text-brut-on-accent group-focus-visible:text-brut-on-accent"><LocalizedText id={experiment.descriptionKey} /></p>
         </div>
       </a>
     ))}

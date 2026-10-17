@@ -1,4 +1,5 @@
-import { useTranslations } from "../hooks/useTranslations";
+import { messages } from "../lib/i18n/catalog";
+import { useTranslations } from "../lib/i18n/useTranslations";
 /*
  * Recursive subdivision.
  *
@@ -243,12 +244,12 @@ export default function RecursiveSubdivision() {
             : null}
         </div>
         <p className="brut-meta absolute bottom-2 left-2 bg-brut-surface px-2 py-1 normal-case">
-          {count}{t(" cells · depth ")}{depth}{t("· every cut splits in two")}</p>
+          {count}{t.text(" cells · depth ")}{depth}{t(messages.experiments.everyCutSplitsInTwo)}</p>
       </section>
 
       <div className="flex flex-col gap-3">
         <Panel
-          title={t("partition")}
+          title={t(messages.experiments.partition)}
           aside={<span className="font-mono text-[10px] text-brut-on-accent">{count}</span>}
         >
           <Chips
@@ -287,7 +288,7 @@ export default function RecursiveSubdivision() {
           />
         </Panel>
 
-        <Panel title={t("colour")}>
+        <Panel title={t(messages.experiments.colour)}>
           <Slider
             label="base hue"
             value={hue}
@@ -337,14 +338,14 @@ export default function RecursiveSubdivision() {
           />
         </Panel>
 
-        <Panel title={t("output")}>
+        <Panel title={t(messages.experiments.output)}>
           <Toggle label="animate" checked={auto} onChange={setAuto} />
           <button
             type="button"
             onClick={() => setSeed((current) => (current + 1) % 100000)}
             className="brut-btn w-full text-xs"
-          >{t("recut")}</button>
-          <p className="brut-meta normal-case text-brut-muted">{t(`Depth ${depth} produces ${cellCount(depth)} cells. A cut ratio of 0.50 forms a regular grid.`)}</p>
+          >{t(messages.experiments.recut)}</button>
+          <p className="brut-meta normal-case text-brut-muted">{t(messages.experiments.partitionSummary, { depth, count: cellCount(depth) })}</p>
         </Panel>
       </div>
     </div>

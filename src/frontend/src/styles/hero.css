@@ -1,0 +1,9 @@
+.hero-title {
+  font-size: clamp(2.75rem, 10vw, 7.5rem);
+}
+
+.hero-title:lang(es),
+.hero-title:lang(fr),
+.hero-title:lang(de) {
+  font-size: clamp(1.75rem, 7vw, 6rem);
+}

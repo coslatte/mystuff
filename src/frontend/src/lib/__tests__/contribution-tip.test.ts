@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { contributionTip, placeContributionTip } from "./contribution-tip";
+import { contributionTip, placeContributionTip } from "../contribution-tip";
 
 test("the label states the day's count and date", () => {
   assert.equal(contributionTip(7, "2025-12-01"), "7 contributions on December 1, 2025");

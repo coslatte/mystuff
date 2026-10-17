@@ -1,4 +1,7 @@
 ---
+import { messages } from "../lib/i18n/catalog";
+import LocalizedText from "./LocalizedText.astro";
+
 interface Props {
   index: string;
   title: string;
@@ -24,7 +27,7 @@ const { index, title, category, description, tags, imageSrc, githubUrl } = Astro
       </ul>
     )}
     {githubUrl && (
-      <a class="editorial-link mt-6" href={githubUrl} target="_blank" rel="noopener noreferrer">view code ↗</a>
+      <a class="editorial-link mt-6" href={githubUrl} target="_blank" rel="noopener noreferrer"><LocalizedText id={messages.coding.viewCode} /></a>
     )}
   </div>
   {imageSrc && (

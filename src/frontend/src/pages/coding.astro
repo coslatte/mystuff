@@ -1,9 +1,11 @@
 ---
+import { messages } from "../lib/i18n/catalog";
 export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
-import InvertLink from "../components/InvertLink.astro";
+import LinkPreview from "../components/LinkPreview.astro";
 import RepoRow from "../components/RepoRow.astro";
+import LocalizedText from "../components/LocalizedText.astro";
 import { fetchContributionSummary, fetchPinnedRepos, fetchRepoMediaImage } from "../services/github";
 import { contributionTip } from "../lib/contribution-tip";
 import type { RepoView } from "../types/github";
@@ -65,51 +67,46 @@ Astro.response.headers.set(
   <section class="border-b-2 border-brut-black bg-brut-surface">
     <div class="grid gap-8 p-6 tablet:p-8 laptop:grid-cols-[1fr_18rem] laptop:items-end laptop:p-10">
       <div>
-        <p class="brut-label">01 / intro</p>
-        <h1 class="mt-4 font-display text-5xl font-black leading-none tracking-tighter tablet:text-7xl">Work in code.</h1>
-        <p class="mt-5 max-w-2xl text-base leading-7">
-          my main focus is on backend systems, toolings, and experimental & math software.
-          The projects below come from my pinned GitHub repositories and update with my profile.
-        </p>
+        <p class="brut-label"><LocalizedText id={messages.coding.introSection} /></p>
+        <h1 class="mt-4 font-display font-black leading-none tracking-tighter"><LocalizedText id={messages.coding.introTitle} /></h1>
+        <p class="mt-5 max-w-2xl text-base leading-7"><LocalizedText id={messages.coding.introDescription} /></p>
       </div>
-      <a class="editorial-link justify-self-start laptop:justify-self-end" href={GITHUB_PROFILE} target="_blank" rel="noopener noreferrer">open GitHub ↗</a>
+      <a class="editorial-link justify-self-start laptop:justify-self-end" href={GITHUB_PROFILE} target="_blank" rel="noopener noreferrer"><LocalizedText id={messages.coding.openGithub} /></a>
     </div>
   </section>
 
   <section id="experience" class="border-b-2 border-brut-black bg-brut-surface">
     <div class="grid laptop:grid-cols-[minmax(15rem,0.8fr)_minmax(0,1.6fr)]">
       <div class="border-b-2 border-brut-black bg-brut-red p-6 text-brut-on-accent tablet:p-8 laptop:border-b-0 laptop:border-r-2 laptop:p-10">
-        <p class="brut-label inline-block bg-brut-surface px-2 py-1">Experience</p>
+        <p class="brut-label inline-block bg-brut-surface px-2 py-1"><LocalizedText id={messages.coding.experience} /></p>
         <h2 class="mt-8 max-w-lg font-display text-4xl font-black leading-[1.05] tracking-tighter tablet:text-5xl">
-          Real life experience.
+          <LocalizedText id={messages.coding.experienceTitle} />
         </h2>
       </div>
       <div class="p-6 tablet:p-8 laptop:p-10">
         <div class="flex flex-col gap-2 tablet:flex-row tablet:items-start tablet:justify-between">
           <div>
             <h3 class="font-display text-3xl font-black tracking-tight">
-              Backend Engineer @ <InvertLink href="https://bicotexsoftware.com/" target="_blank" rel="noopener noreferrer">Bicotex Software</InvertLink>
+              <LocalizedText id={messages.coding.backendEngineer} /> <LinkPreview href="https://bicotexsoftware.com/" note={messages.coding.employerDescription}>Bicotex Software</LinkPreview>
             </h3>
           </div>
-          <p class="font-mono text-xs font-bold text-brut-muted">February 2026 – present</p>
+
         </div>
-        <p class="mt-6 max-w-3xl text-lg leading-8">
-          I build production software for logistics, warehousing, inventory, transportation, and food
-          retail operations. The work crosses business rules, APIs, data and security (roles, users, etc..).
-        </p>
+        <p class="font-mono text-xs font-bold text-brut-muted"><LocalizedText id={messages.coding.february2026Present} /></p>
+        <p class="mt-6 max-w-3xl text-lg leading-8"><LocalizedText id={messages.coding.experienceDescription} /></p>
         <ul class="mt-6 grid gap-4 border-t-2 border-brut-black pt-6 leading-7 tablet:grid-cols-2 tablet:gap-8">
-          <li>Design REST APIs, DTOs, persistence layers, and PostgreSQL migrations with Java and Spring Boot.</li>
-          <li>Implement multi-tenant and branch-scoped access using Spring Security, JWT, and RBAC.</li>
-          <li>Build workflows for products, inventory management, batches, payments, transfers, reports..</li>
+          <li><LocalizedText id={messages.coding.apiResponsibilities} /></li>
+          <li><LocalizedText id={messages.coding.securityResponsibilities} /></li>
+          <li><LocalizedText id={messages.coding.workflowResponsibilities} /></li>
         </ul>
       </div>
     </div>
   </section>
 
   <section id="skills" class="bg-brut-surface">
-    <div class="border-b-2 border-brut-black p-6 tablet:p-8 laptop:p-10">
-      <p class="brut-label">Skills</p>
-      <h2 class="mt-3 font-display text-3xl font-black tracking-tighter tablet:text-5xl">What I work with.</h2>
+    <div class="p-6 tablet:p-8 laptop:p-10">
+      <p class="brut-label"><LocalizedText id={messages.coding.skills} /></p>
+      <h2 class="font-display text-3xl font-black tracking-tighter tablet:text-5xl"><LocalizedText id={messages.coding.whatIWorkWith} /></h2>
     </div>
     <div class="grid tablet:grid-cols-2">
       {skills.map((skill, index) => (
@@ -136,7 +133,7 @@ Astro.response.headers.set(
         />
       </div>
       <div class="min-w-0">
-        <p class="brut-label inline-block bg-brut-surface px-2 py-1">GitHub profile</p>
+        <p class="brut-label inline-block bg-brut-surface px-2 py-1"><LocalizedText id={messages.coding.githubProfile} /></p>
         <a
           href={GITHUB_PROFILE}
           target="_blank"
@@ -149,11 +146,11 @@ Astro.response.headers.set(
     </div>
 
     <div class="min-w-0 bg-brut-surface p-6 tablet:p-8">
-      <h2 class="brut-label">Contributions / last 12 months</h2>
+      <h2 class="brut-label"><LocalizedText id={messages.coding.contributionsLast12Months} /></h2>
       {contributions ? (
         <>
           <p class="mt-3 font-display text-3xl font-black tracking-tighter">
-            {contributions.totalContributions.toLocaleString("en-US")} contributions
+            {contributions.totalContributions.toLocaleString("en-US")} <LocalizedText id={messages.coding.contributions} />
           </p>
           <div class="mt-5 overflow-x-auto pb-2" tabindex="0" role="region" aria-label="Daily GitHub contributions, scroll horizontally to view the full year">
             <div class="grid min-w-160 grid-cols-[2rem_minmax(0,1fr)] gap-x-2 gap-y-2">
@@ -164,8 +161,8 @@ Astro.response.headers.set(
                   return <span class="overflow-visible whitespace-nowrap">{day ? new Date(`${day.date}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }) : ""}</span>;
                 })}
               </div>
-              <div class="grid grid-rows-7 items-center font-mono text-[10px] text-brut-muted" aria-hidden="true">
-                <span class="row-start-2">Mon</span><span class="row-start-4">Wed</span><span class="row-start-6">Fri</span>
+      <div class="grid grid-rows-7 items-center font-mono text-[10px] text-brut-muted" aria-hidden="true">
+                <span class="row-start-2"><LocalizedText id={messages.coding.mon} /></span><span class="row-start-4"><LocalizedText id={messages.coding.wed} /></span><span class="row-start-6"><LocalizedText id={messages.coding.fri} /></span>
               </div>
               <div class="grid gap-0.75" data-contribution-grid data-cursor="precision" style={`grid-template-columns: repeat(${contributions.weeks.length}, minmax(0, 1fr))`} role="img" aria-label={`${contributions.totalContributions.toLocaleString("en-US")} GitHub contributions over the last 12 months. Darker squares indicate more contributions.`}>
                 {contributions.weeks.map((week) => (
@@ -183,11 +180,11 @@ Astro.response.headers.set(
             aria-hidden="true"
             class="pointer-events-none fixed z-50 hidden border-2 border-brut-black bg-brut-inverse px-2 py-1 font-mono text-[11px] leading-tight whitespace-nowrap text-brut-on-accent shadow-[4px_4px_0_var(--color-brut-blue)]"
           ></div>
-          <p class="mt-2 font-mono text-[10px] text-brut-muted">Each square is one day. Hover a square for its count. Darker squares indicate more contributions.</p>
+          <p class="mt-2 font-mono text-[10px] text-brut-muted"><LocalizedText id={messages.coding.contributionChartHelp} /></p>
         </>
       ) : (
         <p class="mt-4 font-mono text-sm text-brut-muted">
-          Contribution data is unavailable. <a class="underline" href={`${GITHUB_PROFILE}?tab=overview`} target="_blank" rel="noopener noreferrer">View activity on GitHub ↗</a>
+          <LocalizedText id={messages.coding.contributionDataIsUnavailable} /> <a class="underline" href={`${GITHUB_PROFILE}?tab=overview`} target="_blank" rel="noopener noreferrer"><LocalizedText id={messages.coding.viewActivityOnGithub} /></a>
         </p>
       )}
     </div>
@@ -195,20 +192,20 @@ Astro.response.headers.set(
 
   <section id="repos" class="bg-brut-surface">
     <div class="flex items-center justify-between gap-4 border-b-2 border-brut-black bg-brut-subtle px-6 py-4 tablet:px-8">
-      <h2 class="font-display text-xl font-bold">Pinned repositories</h2>
-      <span class="brut-label">{repos.length} projects</span>
+      <h2 class="font-display text-xl font-bold"><LocalizedText id={messages.coding.pinnedRepositories} /></h2>
+      <span class="brut-label">{repos.length} <LocalizedText id={messages.coding.projects} /></span>
     </div>
 
     {repos.length > 0
       ? repos.map((repo) => <RepoRow {...repo} />)
       : (
         <p class="border-b-2 border-brut-black bg-brut-surface p-8 text-center font-mono text-sm">
-          Repositories are unavailable right now.{" "}
+          <LocalizedText id={messages.coding.repositoriesAreUnavailableRightNow} />{" "}
           <a
             href="https://github.com/coslatte?tab=repositories"
             target="_blank"
             rel="noopener noreferrer"
-            class="editorial-link">See them on GitHub ↗</a>
+            class="editorial-link"><LocalizedText id={messages.coding.seeThemOnGithub} /></a>
         </p>
       )}
   </section>

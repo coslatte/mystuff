@@ -1,4 +1,5 @@
-import { useTranslations } from "../hooks/useTranslations";
+import { messages } from "../lib/i18n/catalog";
+import { useTranslations } from "../lib/i18n/useTranslations";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildPalette, colorFor } from "../lib/color-theory";
 import { makePigment } from "../lib/pigment-math";
@@ -155,11 +156,11 @@ export default function PigmentFlow() {
           ref={canvasRef}
           className={`block aspect-square w-full touch-none active:cursor-grabbing ${cursor}`}
           data-cursor={settings.pointer ? "precision" : undefined}
-          aria-label={t("pigment board. move the pointer to stir the flow, scroll to zoom, shift and drag to pan.")}
+          aria-label={t(messages.experiments.boardInstructions)}
         />
         <p className="brut-meta absolute bottom-2 left-2 bg-brut-surface px-2 py-1 normal-case">
-          {stats.cells}{t(" cells · ")}{stats.fps}{t(" fps · ")}{stats.mixes}{t(" mixes · ")}{stats.traces}{t(" traces ·")}{" "}
-          {camera.zoom.toFixed(2)}{t("x")}</p>
+          {stats.cells}{t(messages.experiments.cells)}{stats.fps}{t(messages.experiments.fps)}{stats.mixes}{t(messages.experiments.mixes)}{stats.traces}{t(messages.experiments.traces)}{" "}
+          {camera.zoom.toFixed(2)}{t.text("x")}</p>
       </section>
 
       {controlsVisible ? (
@@ -176,7 +177,7 @@ export default function PigmentFlow() {
           shortcuts={SHORTCUTS}
         />
       ) : (
-        <button type="button" className="brut-btn self-start text-xs" onClick={() => setControlsVisible(true)}>{t("show controls")}</button>
+        <button type="button" className="brut-btn self-start text-xs" onClick={() => setControlsVisible(true)}>{t(messages.experiments.showControls)}</button>
       )}
     </div>
   );

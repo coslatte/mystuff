@@ -8,7 +8,7 @@ export const prerender = true;
 <Layout title="loading ][ cosmiclatte.dev" noindex bootReplay>
   <section class="border-b-2 border-brut-black">
     <div class="flex flex-col gap-3 p-6 tablet:p-8">
-      <h1 class="font-display text-3xl font-black tracking-tighter tablet:text-5xl">loading, on repeat.</h1>
+      <h1 class="font-display font-black tracking-tighter">loading, on repeat.</h1>
       <p class="max-w-xl font-mono text-xs text-brut-muted">
         dev page, nothing links here. the splash replays above on a scripted cold start and the
         ribbon below walks every stage. no api calls, so the api can be down.
@@ -38,49 +38,6 @@ export const prerender = true;
   </p>
 
   <script>
-    import { startBootScreen, type BootReplay } from "../lib/boot/boot-controller";
-
-    /**
-     * A cold start on the clock a cold start actually takes: the same five
-     * milestones, in the same order, spread out so each phase is visible. Every
-     * other part of the run is the shipping lifecycle. Slower than a real 30-60s
-     * cold start on purpose, because the point here is to watch each phase rather
-     * than to be patient through it.
-     */
-    const SCHEDULE: BootReplay["milestones"] = [
-      ["painted", 0],
-      ["dom", 500],
-      ["fonts", 1900],
-      ["islands", 3800],
-      ["assets", 6200],
-    ];
-
-    /** Page visible between runs, so a cycle boundary is something you can see. */
-    const GAP_MS = 1400;
-
-    const counter = document.querySelector("[data-replay-cycle]");
-    let cycles = 0;
-    let restart = 0;
-
-    function run(): void {
-      startBootScreen({
-        replay: {
-          milestones: SCHEDULE,
-          onExit: () => {
-            cycles += 1;
-            if (counter) counter.textContent = String(cycles);
-            restart = window.setTimeout(run, GAP_MS);
-          },
-        },
-      });
-    }
-
-    // A pending restart that survived the swap would find this route again on the
-    // way back and put a second controller on one overlay.
-    document.addEventListener("astro:before-swap", () => window.clearTimeout(restart), {
-      once: true,
-    });
-
-    run();
+    import "../lib/boot/replay";
   </script>
 </Layout>

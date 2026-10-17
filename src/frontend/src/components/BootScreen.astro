@@ -1,5 +1,7 @@
 ---
+import { messages } from "../lib/i18n/catalog";
 import "../styles/boot-screen.css";
+import LocalizedText from "./LocalizedText.astro";
 import { splashFrame } from "../lib/boot/frame";
 import { interiorEdges } from "../lib/recursion/subdivide";
 
@@ -13,11 +15,11 @@ const edges = interiorEdges(cells);
   class="boot-screen"
   data-boot-screen
   role="progressbar"
-  aria-label="loading cosmiclatte"
+  aria-label="loading cosmiclatte" data-i18n-aria-label={messages.loading.application}
   aria-valuemin="0"
   aria-valuemax="100"
   aria-valuenow="0"
-  aria-valuetext="waking up"
+  aria-valuetext="waking up" data-i18n-aria-valuetext={messages.loading.starting} data-i18n-aria-label={messages.loading.application}
 >
   <span class="boot-screen__mark" aria-hidden="true">cosmiclatte</span>
 
@@ -45,7 +47,7 @@ const edges = interiorEdges(cells);
       separately would double up every time the value changes.
     -->
     <span class="boot-percent" data-boot-percent aria-hidden="true">0%</span>
-    <span class="boot-stage-label" data-boot-stage aria-hidden="true">waking up</span>
+  <span class="boot-stage-label" data-boot-stage aria-hidden="true"><LocalizedText id={messages.loading.starting} /></span>
   </div>
 
   <div class="boot-bar" aria-hidden="true">

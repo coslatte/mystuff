@@ -1,4 +1,6 @@
 ---
+import { messages } from "../lib/i18n/catalog";
+import LocalizedText from "./LocalizedText.astro";
 import { languages } from "../lib/i18n";
 import "../styles/language-selector.css";
 ---
@@ -10,8 +12,8 @@ import "../styles/language-selector.css";
     <ellipse cx="12" cy="12" rx="4" ry="9" />
     <path d="M3 12h18" />
   </svg>
-  <span class="sr-only">Language</span>
-  <select data-language-select aria-label="Language" disabled>
+  <span class="sr-only"><LocalizedText id={messages.common.language} /></span>
+  <select data-language-select aria-label="Language" data-i18n-aria-label={messages.common.language} disabled>
     {languages.map(language => <option value={language.code} lang={language.code} translate="no">{language.name}</option>)}
   </select>
   <svg class="language-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
@@ -20,6 +22,7 @@ import "../styles/language-selector.css";
 </label>
 
 <script>
-  import { initLocalization } from "../lib/i18n-browser";
+  import { initLocalization } from "../lib/i18n/browser";
   initLocalization();
 </script>
+

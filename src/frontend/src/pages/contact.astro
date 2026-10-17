@@ -1,6 +1,8 @@
 ---
+import { messages } from "../lib/i18n/catalog";
 import Layout from "../layouts/Layout.astro";
 import ContactForm from "../components/ContactForm.tsx";
+import LocalizedText from "../components/LocalizedText.astro";
 ---
 
 <Layout
@@ -8,10 +10,10 @@ import ContactForm from "../components/ContactForm.tsx";
   description="Send me a message about a project, music, or a proposal."
 >
   <section class="border-b-2 border-brut-black bg-brut-surface p-4 tablet:p-8 laptop:p-10">
-    <a href="/" class="editorial-link font-mono text-sm">← Back to profile</a>
-    <p class="brut-label mt-8">00 / contact</p>
-    <h1 class="mt-4 page-title">Send a message</h1>
-    <p class="mt-5 max-w-2xl leading-7">Write to me about a project, music, or anything you'd like to propose.</p>
+    <a href="/" class="editorial-link font-mono text-sm"><LocalizedText id={messages.contact.backToProfile} /></a>
+    <p class="brut-label mt-8"><LocalizedText id={messages.contact.section00Contact} /></p>
+    <h1 class="mt-4 page-title"><LocalizedText id={messages.contact.sendAMessage} /></h1>
+    <p class="mt-5 max-w-2xl leading-7"><LocalizedText id={messages.contact.introDescription} /></p>
   </section>
   <section class="bg-brut-subtle p-4 tablet:p-8 laptop:p-10">
     <ContactForm client:load />

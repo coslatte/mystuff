@@ -1,4 +1,5 @@
-import { useTranslations } from "../hooks/useTranslations";
+import { messages } from "../lib/i18n/catalog";
+import { useTranslations } from "../lib/i18n/useTranslations";
 import { useCallback, useEffect, useRef } from "react";
 import {
   activeLink,
@@ -99,8 +100,8 @@ export default function AlbumCard({ album, platform, open, onToggle }: Props) {
               {album.title}
             </span>
             <span className="font-mono text-xs text-brut-muted group-hover:text-brut-on-accent group-focus-visible:text-brut-on-accent">
-              {t(album.setType ?? "album")}
-              {t(album.trackCount != null ? ` · ${album.trackCount} tracks` : "")}
+              {t.text(album.setType ?? "album")}
+              {album.trackCount != null && t(messages.music.trackCount, { count: album.trackCount })}
               {album.releaseDate ? ` · ${album.releaseDate}` : ""}
             </span>
           </span>
@@ -109,7 +110,7 @@ export default function AlbumCard({ album, platform, open, onToggle }: Props) {
           href={link.url}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={t(`open ${album.title} on ${link.platform}`)}
+          aria-label={t(messages.music.openPlatformTitle, { title: album.title, platform: link.platform })}
           className="shrink-0 border-2 border-brut-black bg-brut-surface px-2 py-1 font-mono text-xs hover:bg-brut-blue hover:text-brut-on-accent"
         >↗</a>
       </div>
@@ -117,9 +118,9 @@ export default function AlbumCard({ album, platform, open, onToggle }: Props) {
       {open && (
         <>
           <div className="flex items-center justify-between gap-2 border-t-2 border-brut-black bg-brut-subtle px-2 py-1">
-            <span className="font-mono text-[10px] text-brut-muted">{t(`Player: ${link.platform}`)}</span>
+            <span className="font-mono text-[10px] text-brut-muted">{t(messages.music.playerPlatform, { platform: link.platform })}</span>
             {fallback && (
-              <span className="font-mono text-[10px] font-bold text-brut-danger">{t(`Unavailable on ${platform}`)}</span>
+              <span className="font-mono text-[10px] font-bold text-brut-danger">{t(messages.music.unavailablePlatform, { platform })}</span>
             )}
           </div>
           {link.platform === "spotify" ? (
@@ -127,7 +128,7 @@ export default function AlbumCard({ album, platform, open, onToggle }: Props) {
           ) : (
             <iframe
               ref={soundCloudRef}
-              title={t(`${album.title} player`)}
+              title={t(messages.music.playerTitle, { title: album.title })}
               allow={EMBED_ALLOW}
               loading="lazy"
               className="block w-full border-t-2 border-brut-black"

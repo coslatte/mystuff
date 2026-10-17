@@ -10,7 +10,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check",
+    "check": "astro check && bun scripts/i18n-source-copy.mjs",
     "check:refactor": "bun scripts/refactor-check.mjs",
     "check:i18n": "node scripts/i18n-check.mjs",
     "check:responsive": "node scripts/responsive-check.mjs",

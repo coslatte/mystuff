@@ -1,4 +1,5 @@
-import { useTranslations } from "../hooks/useTranslations";
+import { messages } from "../lib/i18n/catalog";
+import { useTranslations } from "../lib/i18n/useTranslations";
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
 import { runOptimistic } from "../lib/optimistic";
@@ -140,7 +141,7 @@ export default function CommentThread({ songId }: Props) {
           <li key={comment.id} className="border-b border-brut-soft py-1.5 pl-4 last:border-b-0">
             <p className="font-mono text-[11px] font-bold">
               {comment.author}
-              {comment.updatedAt && <span className="ml-2 text-brut-muted">{t("(edited)")}</span>}
+              {comment.updatedAt && <span className="ml-2 text-brut-muted">{t(messages.comments.edited)}</span>}
             </p>
             {editingId === comment.id ? (
               <div className="mt-1 flex flex-col gap-1">
@@ -155,12 +156,12 @@ export default function CommentThread({ songId }: Props) {
                     type="button"
                     onClick={() => saveEdit(comment)}
                     className="border-2 border-brut-black bg-brut-blue text-brut-on-accent px-2 py-0.5 font-mono text-[10px] font-bold"
-                  >{t("save")}</button>
+                  >{t(messages.comments.save)}</button>
                   <button
                     type="button"
                     onClick={() => setEditingId(null)}
                     className="border-2 border-brut-black bg-brut-surface px-2 py-0.5 font-mono text-[10px]"
-                  >{t("cancel")}</button>
+                  >{t(messages.comments.cancel)}</button>
                 </div>
               </div>
             ) : (
@@ -171,27 +172,27 @@ export default function CommentThread({ songId }: Props) {
                     type="button"
                     onClick={() => startEdit(comment)}
                     className="ml-2 font-mono text-[10px] text-brut-muted underline hover:text-brut-danger"
-                  >{t("edit")}</button>
+                  >{t(messages.comments.edit)}</button>
                 )}
               </p>
             )}
           </li>
         ))}
-        {!comments.length && <li className="py-1 font-mono text-xs text-brut-muted">{t("no comments yet.")}</li>}
+        {!comments.length && <li className="py-1 font-mono text-xs text-brut-muted">{t(messages.comments.noCommentsYet)}</li>}
       </ul>
 
       <form onSubmit={submit} className="mt-2 flex flex-col gap-1">
         <input
           value={author}
           onChange={(e) => setAuthor(e.target.value)}
-          placeholder={t("your name")}
+          placeholder={t(messages.comments.yourName)}
           required
           className="brut-field px-2 py-1 text-xs"
         />
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder={t("leave comment")}
+          placeholder={t(messages.comments.leaveComment)}
           required
           rows={2}
           className="brut-field px-2 py-1 text-xs"
@@ -199,7 +200,7 @@ export default function CommentThread({ songId }: Props) {
         <button
           type="submit"
           className="brut-btn self-start !px-3 !py-1 font-mono text-xs"
-        >{t("publish")}</button>
+        >{t(messages.comments.publish)}</button>
       </form>
 
       {loadError != null && (

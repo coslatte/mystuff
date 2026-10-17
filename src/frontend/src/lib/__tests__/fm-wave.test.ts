@@ -7,7 +7,7 @@ import {
   fmWaveOffset,
   fmWaveY,
   modulatorFrequency,
-} from "./fm-wave";
+} from "../fm-wave";
 
 const close = (left: number, right: number): void => {
   assert.ok(Math.abs(left - right) < 1e-9, `${left} is not ${right}`);

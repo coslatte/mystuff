@@ -1,7 +1,7 @@
 type Point = { x: number; y: number };
 type Bounds = { left: number; top: number; width: number; height: number };
 type Shape = { path: Point[]; corners: number };
-type CursorMode = "default" | "text" | "precision";
+type CursorMode = "default" | "text" | "precision" | "panel";
 type Morph =
   | { kind: "shape"; from: Point[]; to: Point[]; startedAt: number; duration: number }
   | { kind: "hover"; from: Point[]; fromCenter: Point[]; offset: number; startedAt: number; duration: number };
@@ -15,10 +15,13 @@ const SAMPLES = 72;
 const ROTATION_CYCLE_MS = 25_000;
 const DOT_RADIUS = 8;
 const GRADIENT_CYCLE_MS = 6_000;
+const PANEL_DITHER_SCALE = 2;
+const PANEL_DITHER_FRAME_MS = 1_000 / 24;
 const COLOR_FIELD_SIZE = 64;
 const COLOR_FIELD_SIZE_CSS = DOT_RADIUS * 6;
 const COLOR_WAVE_STRENGTH = 0.9;
 const RGB = [[255, 0, 0], [0, 255, 0], [0, 0, 255]] as const;
+const BAYER_4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5] as const;
 
 function clamp(value: number, low: number, high: number): number {
   return Math.min(Math.max(value, low), high);
@@ -26,6 +29,15 @@ function clamp(value: number, low: number, high: number): number {
 
 function mix(start: number, end: number, progress: number): number {
   return start + (end - start) * progress;
+}
+
+function waveAt(u: number, v: number, time: number): number {
+  const warpedX = u + Math.sin(v * 2.8 + time * 0.32) * 0.28
+    + Math.sin((u + v) * 2.1 - time * 0.18) * 0.13;
+  const warpedY = v + Math.cos(u * 2.5 - time * 0.27) * 0.26
+    + Math.sin((v - u) * 2.4 + time * 0.21) * 0.14;
+  return Math.sin(warpedX * 2.3 + warpedY * 1.7 + time * 0.22)
+    + Math.cos(warpedY * 3.5 - warpedX * 1.2 - time * 0.16) * 0.5;
 }
 
 function paintColorField(pixels: Uint8ClampedArray, now: number): void {
@@ -36,12 +48,7 @@ function paintColorField(pixels: Uint8ClampedArray, now: number): void {
     const v = (y / (COLOR_FIELD_SIZE - 1) - 0.5) * 2.6;
     for (let x = 0; x < COLOR_FIELD_SIZE; x += 1) {
       const u = (x / (COLOR_FIELD_SIZE - 1) - 0.5) * 2.6;
-      const warpedX = u + Math.sin(v * 2.8 + time * 0.32) * 0.28
-        + Math.sin((u + v) * 2.1 - time * 0.18) * 0.13;
-      const warpedY = v + Math.cos(u * 2.5 - time * 0.27) * 0.26
-        + Math.sin((v - u) * 2.4 + time * 0.21) * 0.14;
-      const wave = Math.sin(warpedX * 2.3 + warpedY * 1.7 + time * 0.22)
-        + Math.cos(warpedY * 3.5 - warpedX * 1.2 - time * 0.16) * 0.5;
+      const wave = waveAt(u, v, time);
       const phase = ((colorOffset + wave * COLOR_WAVE_STRENGTH) % RGB.length + RGB.length) % RGB.length;
       const segment = Math.floor(phase);
       const progress = (1 - Math.cos((phase - segment) * Math.PI)) / 2;
@@ -52,6 +59,25 @@ function paintColorField(pixels: Uint8ClampedArray, now: number): void {
       pixels[pixel] = mix(from[0], to[0], progress);
       pixels[pixel + 1] = mix(from[1], to[1], progress);
       pixels[pixel + 2] = mix(from[2], to[2], progress);
+      pixels[pixel + 3] = 255;
+    }
+  }
+}
+
+function paintDuotoneDither(pixels: Uint8ClampedArray, width: number, height: number, now: number): void {
+  const time = now / 1_500;
+  for (let y = 0; y < height; y += 1) {
+    const v = (y / Math.max(1, height - 1) - 0.5) * 2.6;
+    for (let x = 0; x < width; x += 1) {
+      const u = (x / Math.max(1, width - 1) - 0.5) * 2.6;
+      const redCoverage = clamp(0.2 + waveAt(u, v, time) * 0.12, 0, 1);
+      const threshold = ((BAYER_4[(y % 4) * 4 + (x % 4)] ?? 0) + 0.5) / 16;
+      const red = redCoverage > threshold;
+      const pixel = (y * width + x) * 4;
+
+      pixels[pixel] = red ? 198 : 36;
+      pixels[pixel + 1] = red ? 56 : 72;
+      pixels[pixel + 2] = red ? 43 : 200;
       pixels[pixel + 3] = 255;
     }
   }
@@ -121,6 +147,7 @@ const PRECISION_CENTER = resample([
 ]).map(({ x, y }) => ({ x: x * 0.72, y: y * 0.72 }));
 
 function cursorMode(target: Element | null): CursorMode {
+  if (target?.closest("[data-cursor-region]")) return "panel";
   if (target?.matches("input[type='range'], [role='slider'], [data-cursor='precision']")) return "precision";
   if (target instanceof HTMLTextAreaElement || (target instanceof HTMLElement && target.isContentEditable)) return "text";
   if (target instanceof HTMLInputElement && ["text", "search", "email", "url", "tel", "password", "number"].includes(target.type)) return "text";
@@ -221,6 +248,12 @@ export function startMorphlingCursor(): void {
   const colorField = document.createElement("canvas");
   colorField.width = COLOR_FIELD_SIZE;
   colorField.height = COLOR_FIELD_SIZE;
+  const panelField = document.createElement("canvas");
+  const panelFieldContext = panelField.getContext("2d");
+  if (!panelFieldContext) return;
+  let panelFieldPixels = panelFieldContext.createImageData(1, 1);
+  let panelFieldSize = { width: 1, height: 1 };
+  let panelFieldUpdatedAt = 0;
   const colorFieldContext = colorField.getContext("2d");
   if (!colorFieldContext) return;
   const drawingColorFieldContext = colorFieldContext;
@@ -258,7 +291,24 @@ export function startMorphlingCursor(): void {
     if (mode === "text") return TEXT_PATH;
     if (mode === "precision") return PRECISION_PATH;
     if (hovered?.isConnected) {
-      const rect = hovered.getBoundingClientRect();
+      const owner = hovered.closest<HTMLElement>("[data-cursor-region]");
+      const region = owner?.dataset.cursorRegion && owner.querySelector<HTMLElement>(owner.dataset.cursorRegion);
+      const target = region ?? hovered;
+      let rect = target.getBoundingClientRect();
+      if (region && rect.width && rect.height) {
+        const linkRect = owner.getBoundingClientRect();
+        const left = Math.min(linkRect.left, rect.left);
+        const top = Math.min(linkRect.top, rect.top);
+        rect = {
+          left,
+          top,
+          width: Math.max(linkRect.right, rect.right) - left,
+          height: Math.max(linkRect.bottom, rect.bottom) - top,
+        };
+        lastBounds = { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+        return rectanglePath(lastBounds, pointer);
+      }
+
       if (rect.width && rect.height) {
         lastBounds = outlineBounds(rect, pointer);
         return rectanglePath(lastBounds, pointer);
@@ -344,37 +394,67 @@ export function startMorphlingCursor(): void {
 
       const points = translatePath(path, pointer);
       const first = points[0];
+      const panelTarget = mode === "panel" && hovered?.isConnected;
+      if (panelTarget && lastBounds) {
+        const width = Math.max(1, Math.ceil(lastBounds.width * PANEL_DITHER_SCALE));
+        const height = Math.max(1, Math.ceil(lastBounds.height * PANEL_DITHER_SCALE));
+        const resized = width !== panelFieldSize.width || height !== panelFieldSize.height;
+        if (resized) {
+          panelField.width = width;
+          panelField.height = height;
+          panelFieldPixels = panelFieldContext.createImageData(width, height);
+          panelFieldSize = { width, height };
+        }
+        if (resized || now - panelFieldUpdatedAt >= PANEL_DITHER_FRAME_MS) {
+          paintDuotoneDither(panelFieldPixels.data, width, height, now);
+          panelFieldContext.putImageData(panelFieldPixels, 0, 0);
+          panelFieldUpdatedAt = now;
+        }
+      } else {
+        paintColorField(colorFieldPixels.data, now);
+        drawingColorFieldContext.putImageData(colorFieldPixels, 0, 0);
+      }
       if (first) {
         drawingContext.beginPath();
         drawingContext.moveTo(first.x, first.y);
         for (const point of points.slice(1)) drawingContext.lineTo(point.x, point.y);
         drawingContext.closePath();
+        if (panelTarget) {
+          drawingContext.fillStyle = "#2448c8";
+          drawingContext.fill();
+          drawingContext.save();
+          drawingContext.clip();
+          drawingContext.globalAlpha = 0.28;
+          if (lastBounds) {
+            drawingContext.drawImage(panelField, lastBounds.left, lastBounds.top, lastBounds.width, lastBounds.height);
+          }
+          drawingContext.restore();
+        }
         drawingContext.lineWidth = 1.2;
         drawingContext.strokeStyle = "#fff";
         drawingContext.stroke();
       }
 
-      paintColorField(colorFieldPixels.data, now);
-      drawingColorFieldContext.putImageData(colorFieldPixels, 0, 0);
-      drawingContext.save();
-      drawingContext.beginPath();
-      const centerPoints = translatePath(centerPath, pointer);
-      const centerFirst = centerPoints[0];
-      if (centerFirst) {
-        drawingContext.moveTo(centerFirst.x, centerFirst.y);
-        for (const point of centerPoints.slice(1)) drawingContext.lineTo(point.x, point.y);
-        drawingContext.closePath();
+      if (!panelTarget) {
+        drawingContext.save();
+        drawingContext.beginPath();
+        const centerPoints = translatePath(centerPath, pointer);
+        const centerFirst = centerPoints[0];
+        if (centerFirst) {
+          drawingContext.moveTo(centerFirst.x, centerFirst.y);
+          for (const point of centerPoints.slice(1)) drawingContext.lineTo(point.x, point.y);
+          drawingContext.closePath();
+        }
+        drawingContext.clip();
+        drawingContext.drawImage(
+          colorField,
+          pointer.x - COLOR_FIELD_SIZE_CSS / 2,
+          pointer.y - COLOR_FIELD_SIZE_CSS / 2,
+          COLOR_FIELD_SIZE_CSS,
+          COLOR_FIELD_SIZE_CSS
+        );
+        drawingContext.restore();
       }
-      drawingContext.clip();
-      // The oversized field lets its waves flow beyond the glyph without losing color coverage.
-      drawingContext.drawImage(
-        colorField,
-        pointer.x - COLOR_FIELD_SIZE_CSS / 2,
-        pointer.y - COLOR_FIELD_SIZE_CSS / 2,
-        COLOR_FIELD_SIZE_CSS,
-        COLOR_FIELD_SIZE_CSS
-      );
-      drawingContext.restore();
     }
     requestAnimationFrame(paint);
   }

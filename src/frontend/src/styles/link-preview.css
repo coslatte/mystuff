@@ -1,0 +1,50 @@
+.channel-note {
+  position: relative;
+  display: inline-block;
+}
+
+/* Keep the note available to assistive tech while hiding only its visual form. */
+.channel-note__tip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(18rem, calc(100vw - 2rem));
+  padding: .5rem .65rem;
+  background: var(--color-brut-surface);
+  box-shadow: 0 0 0 2px var(--color-brut-black);
+  color: var(--color-brut-black);
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  font-weight: 400;
+  line-height: 1.45;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms ease, visibility 150ms;
+}
+
+.channel-note:hover .channel-note__tip,
+.channel-note:focus-within .channel-note__tip {
+  opacity: 1;
+  visibility: visible;
+}
+
+html.morphling-active .channel-note:hover .channel-note__tip {
+  box-shadow: none;
+}
+
+html.morphling-active .channel-note:hover {
+  z-index: 71;
+}
+
+html.morphling-active .channel-note:hover .text-highlight,
+html.morphling-active .channel-note:hover .channel-note__tip {
+  background: transparent;
+  color: var(--color-brut-on-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .channel-note__tip { transition: none; }
+}

@@ -79,7 +79,7 @@ export default function AdminUpload() {
   return (
     <div className="flex flex-col gap-8">
       <div className="brut-panel p-6">
-        <h2 className="mb-4 font-display text-2xl font-bold">upload songs</h2>
+        <h2 className="mb-4 font-display font-bold">upload songs</h2>
 
         <label className="brut-label mb-4 block">
           admin key
@@ -127,7 +127,7 @@ export default function AdminUpload() {
       </div>
 
       <div className="border-2 border-brut-black bg-brut-subtle p-6">
-        <h2 className="mb-4 font-display text-2xl font-bold">songs ({songs.length})</h2>
+        <h2 className="mb-4 font-display font-bold">songs ({songs.length})</h2>
         {loadError != null && <ErrorNotice error={loadError} onRetry={reload} className="mb-3" />}
         {songs.length === 0 && <p className="font-mono text-sm text-brut-muted">no songs yet.</p>}
         <ul className="flex flex-col gap-2">

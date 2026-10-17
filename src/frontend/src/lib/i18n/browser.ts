@@ -1,10 +1,11 @@
-import { isLocale, translate } from "./i18n";
-import { getLocale, restoreLocale, setLocale, subscribeLocale } from "../services/locale";
+import { isLocale, translateText } from "./index";
+import { getLocale, restoreLocale, setLocale, subscribeLocale } from "./locale";
 
 const originals = new WeakMap<Node, { source: string; rendered: string }>();
 const attributes = new WeakMap<Element, Map<string, { source: string; rendered: string }>>();
 const ignored = 'astro-island, script, style, pre, code, textarea, [translate="no"], [contenteditable]';
 const localizedAttributes = ["aria-label", "aria-valuetext", "title", "placeholder", "alt", "data-tip"];
+const translationAttributes = ["data-i18n-text", ...localizedAttributes.map(name => `data-i18n-${name}`)];
 let initialized = false;
 
 function localize(root: Node) {
@@ -14,7 +15,10 @@ function localize(root: Node) {
     const current = root.data;
     const previous = originals.get(root);
     const source = previous?.rendered === current ? previous.source : current;
-    const rendered = translate(source, getLocale());
+    const key = root.parentElement?.closest<HTMLElement>("[data-i18n-text]")?.dataset.i18nText;
+    const paramValues = root.parentElement?.closest<HTMLElement>("[data-i18n-param-values]")?.dataset.i18nParamValues;
+    const params = paramValues ? JSON.parse(paramValues) as Record<string, string | number> : undefined;
+    const rendered = translateText(key ?? source, getLocale(), params);
     originals.set(root, { source, rendered });
     if (current !== rendered) root.data = rendered;
     return;
@@ -26,7 +30,8 @@ function localize(root: Node) {
       if (current === null) continue;
       const previous = stored.get(name);
       const source = previous?.rendered === current ? previous.source : current;
-      const rendered = translate(source, getLocale());
+      const key = root.getAttribute(`data-i18n-${name}`);
+      const rendered = translateText(key ?? source, getLocale());
       stored.set(name, { source, rendered });
       if (current !== rendered) root.setAttribute(name, rendered);
     }
@@ -56,7 +61,7 @@ export function initLocalization() {
     });
     observer.observe(document.body, {
       subtree: true, childList: true, characterData: true,
-      attributes: true, attributeFilter: localizedAttributes,
+      attributes: true, attributeFilter: [...localizedAttributes, ...translationAttributes],
     });
   }
   subscribeLocale(render);
@@ -70,3 +75,7 @@ export function initLocalization() {
   document.addEventListener("astro:page-load", render);
   render();
 }
+
+
+
+

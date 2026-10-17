@@ -1,0 +1,84 @@
+.page-jumps {
+  position: fixed;
+  z-index: 30;
+  right: max(.5rem, calc((100vw - 80rem) / 2 - 3.5rem));
+  bottom: calc(5rem + env(safe-area-inset-bottom));
+  display: grid;
+  gap: .4rem;
+}
+
+.page-jumps a {
+  width: 2.75rem;
+  height: 2.75rem;
+  justify-content: center;
+  padding: 0;
+  font-size: 1.15rem;
+  box-shadow: 2px 2px 0 var(--color-brut-black);
+}
+
+.jump-label { display: none; }
+
+.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(.75rem, 2vw, 1.25rem) clamp(1rem, 3vw, 2rem);
+}
+
+.site-footer .footer-contact {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: .45rem .75rem;
+  font-size: clamp(.875rem, 1.5vw, 1.125rem);
+  line-height: 1.2;
+}
+
+.site-footer .footer-contact::before {
+  z-index: 0;
+  transform: scale(0);
+  transform-origin: var(--contact-origin, center);
+  transition: transform 220ms cubic-bezier(.2, .7, .2, 1);
+}
+
+.site-footer .footer-contact:hover::before,
+.site-footer .footer-contact:focus-visible::before { transform: scale(1.5); }
+
+.site-footer .footer-contact:hover,
+.site-footer .footer-contact:focus-visible { color: var(--color-brut-on-accent); }
+
+@media (max-width: 767px) {
+  body { padding-bottom: calc(3.75rem + env(safe-area-inset-bottom)); }
+  [data-audio-player] { bottom: calc(3.75rem + env(safe-area-inset-bottom)); }
+
+  .page-jumps {
+    z-index: 50;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: .25rem .75rem calc(.25rem + env(safe-area-inset-bottom));
+    border-top: 2px solid var(--color-brut-black);
+    background: var(--color-brut-surface);
+  }
+
+  .page-jumps a {
+    width: auto;
+    padding-inline: .65rem;
+    gap: .5rem;
+    font-size: .9rem;
+    box-shadow: none;
+  }
+
+  .jump-label { display: inline; font-size: .65rem; }
+}
+
+@media (max-width: 639px) {
+  .site-footer { flex-direction: column; align-items: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-footer .footer-contact::before { transition: none; }
+}

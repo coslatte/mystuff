@@ -1,4 +1,5 @@
-import { useTranslations } from "../hooks/useTranslations";
+import { messages } from "../lib/i18n/catalog";
+import { useTranslations } from "../lib/i18n/useTranslations";
 import { useState } from "react";
 import type { StreamingPlatform } from "../types";
 import { hasLinks, STREAMING_PLATFORMS, type PlayableAlbum } from "../data/streaming-albums";
@@ -23,10 +24,10 @@ export default function MusicSection() {
   return (
     <div className="flex flex-col">
       <div className="flex flex-wrap items-center gap-2 border-b-2 border-brut-black bg-brut-surface p-3">
-        <span className="font-mono text-xs">{t("listen on")}</span>
+        <span className="font-mono text-xs">{t(messages.music.listenOn)}</span>
         {STREAMING_PLATFORMS.map((platformId) => (
           <button key={platformId} type="button" aria-pressed={platform === platformId} onClick={() => setPlatform(platformId)} className={`border-2 border-brut-black px-3 py-2 font-mono text-xs font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brut-blue ${platform === platformId ? "bg-brut-inverse text-brut-on-accent" : "bg-brut-surface text-brut-black"}`}>
-            {t(platformId)}
+            {t.text(platformId)}
           </button>
         ))}
       </div>
@@ -38,7 +39,7 @@ export default function MusicSection() {
         <div className="flex min-w-0 flex-col justify-between bg-brut-surface p-5 tablet:p-8 laptop:p-10">
           <div>
             <p className="brut-label">Original work{latest?.releaseDate ? ` / ${latest.releaseDate}` : ""}</p>
-            <h3 id="latest-title" className="mt-5 break-words font-display text-4xl font-black leading-none tracking-tighter tablet:text-6xl">{latest?.title ?? (loading ? "Loading releases..." : "Releases")}</h3>
+            <h3 id="latest-title" className="mt-5 break-words font-display font-black leading-none tracking-tighter">{latest?.title ?? (loading ? "Loading releases..." : "Releases")}</h3>
             <p className="mt-4 max-w-xl text-sm leading-7">Experimental electronic music with a bass music foundation. Listen to a release here, or explore sketches and work in progress below.</p>
           </div>
           {latest ? (
@@ -77,10 +78,10 @@ function AlbumCatalog({ albums, loading: albumsLoading, error: albumsError, relo
   return (
     <section aria-labelledby="albums-title" className="flex min-w-0 flex-col border-b-2 border-brut-black laptop:border-b-0 laptop:border-r-2">
       <div className="flex flex-col gap-2 border-b-2 border-brut-black bg-brut-surface p-3 tablet:flex-row tablet:flex-wrap tablet:items-center tablet:justify-between">
-        <h3 id="albums-title" className="font-display text-lg font-bold laptop:text-xl">{t("albums")}</h3>
+        <h3 id="albums-title" className="font-display font-bold">{t(messages.music.albums)}</h3>
       </div>
       <div className="flex flex-col gap-2 bg-brut-subtle p-3 tablet:p-4 laptop:p-5">
-        {albumsLoading && <p className="font-mono text-xs">{t("loading albums...")}</p>}
+        {albumsLoading && <p className="font-mono text-xs">{t(messages.music.loadingAlbums)}</p>}
         {albumsError != null && <ErrorNotice error={albumsError} onRetry={reloadAlbums} />}
         {!albumsLoading && !albumsError && !albums.length && (
           <p className="font-mono text-xs text-brut-muted">No other releases available.</p>
@@ -106,7 +107,7 @@ function TrackCatalog() {
 
   return (
     <section aria-labelledby="tracks-title" className="flex min-w-0 flex-col">
-      <h3 id="tracks-title" className="border-b-2 border-brut-black bg-brut-red text-brut-on-accent p-3 font-display text-lg font-bold laptop:text-xl">{t("wip tracks")}</h3>
+      <h3 id="tracks-title" className="border-b-2 border-brut-black bg-brut-red text-brut-on-accent p-3 font-display font-bold">{t(messages.music.wipTracks)}</h3>
       <div className="flex flex-col gap-4 border-b-2 border-brut-black bg-brut-inverse p-4 tablet:p-6">
         <PlayerBar />
       </div>
@@ -117,7 +118,7 @@ function TrackCatalog() {
         {loading && <LoadingTracks serverReady={serverReady} elapsed={elapsed} />}
         {!loading && error != null && <ErrorNotice error={error} onRetry={reload} />}
         {!loading && error == null && !songs.length && (
-          <p className="p-3 font-mono text-xs text-brut-muted">{t("No tracks available.")}</p>
+          <p className="p-3 font-mono text-xs text-brut-muted">{t(messages.music.noTracksAvailable)}</p>
         )}
       </div>
     </section>

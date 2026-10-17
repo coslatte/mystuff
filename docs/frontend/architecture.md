@@ -251,7 +251,8 @@ The two questions that come up constantly.
 | an embed (SoundCloud/Spotify) | `services/embed-players.ts` | `lib/playback-ui.ts` for its labels |
 | loading / error / retry UI | `hooks/useResource.ts` | `components/ErrorNotice.tsx` |
 | an optimistic mutation | `lib/optimistic.ts` | the caller's `apply`/`rollback` |
-| a visual surface | `styles/global.css` `@utility` block | the call site for size and colour |
+| a visual surface | `styles/global.css` `@utility` block | the call site for colour and layout |
+| heading size | `styles/global.css` base heading scale | heading level (`h1`–`h6`), with `.hero-title` as the display exception |
 | a colour choice | `lib/color-theory.ts` | never a raw hex in a scene |
 | the splash | `lib/boot/` | `lib/boot/frame.ts` for the frame both renderers open on |
 | navigation loading feedback | `lib/route-curtain.ts` | `styles/route-curtain.css` for the surfaces |
@@ -303,19 +304,34 @@ The sections are `/`, `/coding`, `/music`, `/contact` and `/experimentation`. Se
 | `BootScreen.astro` | First-visit splash. In the layout, so one copy covers all routes. |
 | `RouteCurtain.astro` | Navigation loading overlay. In the layout, persisted across swaps. |
 | `Navbar.astro` | Site navigation. |
-| `Footer.astro` | Compact contact footer, native shortcuts to the page's top and bottom, and the independently collapsible now-playing bar on every route. Shortcuts use a side rail on desktop and a labelled bottom dock on mobile; the audio bar sits above that dock. Contact links to `/contact` on every route except `/`, where the landing page has its own contact callout. Its hover fill starts at the pointer entry point. Only the player hides when idle; its fixed height sizes the spectrum. |
-| `Hero.astro` | `/` opening: the centered heading with a scrolling code fragment on the brutalist `code` plate and an FM wave on `soundwaves`. Nothing else; the ink band and the portrait belong to the about section in `index.astro`. |
+| `Footer.astro` | Compact contact footer, native shortcuts to the page's top and bottom, and the independently collapsible now-playing bar on every route. Shortcuts use a side rail on desktop and a labelled bottom dock on mobile; the audio bar sits above that dock. Contact links to `/contact` on every route except `/`, where the landing page has its own contact callout. Its hover fill starts at the pointer entry point. Only the player hides when idle; its fixed height sizes the spectrum. Styling is in `styles/footer.css`; pointer and player behavior is in `lib/footer.ts`. |
+| `Hero.astro` | `/` opening: the centered heading with a scrolling code fragment on the brutalist `code` plate and an FM wave on `soundwaves`. Nothing else; the ink band and the portrait belong to the about section in `index.astro`. Language sizing is in `styles/hero.css`. |
 | `FluidPanel.astro` | One decorative ink band. The solver and the picture are `lib/sim`; the component only mounts and releases it. One canvas per page, because the mount script runs once. |
 | `ExperimentHeader.astro` | Shared heading and back link for individual experiments. |
 | `RepoRow.astro` | One row in the `/coding` repos list. |
 | `InvertLink.astro` | Inline text link that turns blue on hover and focus. For a name inside a heading. |
 | `SocialButton.astro` | One outbound social link. |
-| `LinkPreview.astro` | One outbound link inside running text, using the `text-highlight` plate, with its `note` shown as a popover on hover and keyboard focus. The note stays real text in the document, so assistive tech reads it and the localization pass translates it; only its placement is hover-only. |
-| `MusicJourney.astro` | `/music` influence history using the complete artist-authored English and Spanish copy from `lib/i18n.ts`. Early years and adolescence span both paths; later discoveries share time rows before converging in the full current-practice chapter. Mobile interleaves the same moments. A ResizeObserver keeps SVG paths attached to markers as language changes reflow the text; it disconnects before route swaps. Prose preserves the author's capitalization. Photos live in `public/images/influences`; `sources.json` and `credits.html` link to their source pages. |
+| `LinkPreview.astro` | One outbound link inside running text, using the `text-highlight` plate, with its `note` shown as a popover on hover and keyboard focus. The note stays real text in the document, so assistive tech reads it and the localization pass translates it; only its placement is hover-only. Styling is in `styles/link-preview.css`. |
+| `MusicJourney.astro` | `/music` influence history using the complete artist-authored English and Spanish copy from `lib/music-journey-copy.ts`. Early years and adolescence span both paths; later discoveries share time rows before converging in the full current-practice chapter. Mobile interleaves the same moments. Layout lives in `styles/music-journey.css`; SVG path lifecycle and geometry live in `lib/music-journey.ts`. Prose preserves the author's capitalization. Photos live in `public/images/influences`; `sources.json` and `credits.html` link to their source pages. |
 | `NowPlaying.astro` | Defines `<now-playing-el>`; the bridge to `lib/now-playing-element.ts`. |
 | `LanguageSelector.astro` | Shared navbar language select; the square bordered surface lives in `styles/language-selector.css`; the cursor target is the whole control. |
 | `MorphlingCursor.astro` | Persistent canvas overlay for the fine-pointer cursor treatment. |
 | `FluidPanel.astro` | The ink behind the `/` about panel. A canvas plus a mount call; released on `astro:before-swap`. |
+
+### `src/styles/`
+
+| File | Role |
+| --- | --- |
+| `footer.css` | Shared footer, page shortcut dock, and mobile audio-player spacing. |
+| `hero.css` | Translated home heading sizing. |
+| `link-preview.css` | Link note popover presentation. |
+
+### `src/lib/`
+
+| File | Role |
+| --- | --- |
+| `footer.ts` | Footer contact hover origin, player toggle and persisted-route sync. |
+| `boot/replay.ts` | `/loading` replay schedule and repeat lifecycle. |
 
 ### `src/components/` — `.tsx`, inside an island
 
@@ -350,7 +366,7 @@ The sections are `/`, `/coding`, `/music`, `/contact` and `/experimentation`. Se
 | `useUploadQueue.ts` | One batch coordinator with two upload workers; React state and network I/O around the pure queue model. |
 | `usePlayer.ts` | Bridges the player singleton into React. |
 | `useServerWarmup.ts` | Polls `/health` so the cold start can be narrated. |
-| `useTranslations.ts` | Subscribes a React component to the current site language. |
+| `lib/i18n/useTranslations.ts` | Subscribes a React component to the current site language. |
 
 ### `src/services/`
 
@@ -381,12 +397,19 @@ Framework-free unless the name says otherwise.
 | `paint-surface.ts` | Grid where overlapping pigment resolves into colour. |
 | `playback-canvas.ts` | 2D spectrum and waveform painters. |
 | `playback-ui.ts` | Glyphs and clock formatting shared by three toggles. |
-| `i18n.ts` | English copy, the available language list and translations. `musicJourneyCopy` stores the artist's complete paired English/Spanish titles and paragraphs and derives dictionary entries from those pairs. Journey copy falls back to English for French, German and Japanese until authored versions exist. |
-| `i18n-browser.ts` | Applies translations to Astro shell text across Astro navigation. |
+| `i18n/` | English source schema, locale implementations, translation logic, locale persistence, browser localization and the React hook. `en.ts` defines required fields; other languages implement its derived contract. Consumers use generated `messages` references and typed template parameters. |
+| `components/LocalizedText.astro` | Renders catalog-backed static copy from a semantic `MessageKey`, with English server output and client-side locale changes. |
+| `i18n.ts` | Compatibility entry point for existing language and translation imports. |
+| `music-journey-copy.ts` | Artist-authored English and Spanish journey content; other locales fall back to English. |
+| `i18n/browser.ts` | Applies translations to Astro shell text across Astro navigation. |
+| `i18n/types.ts` | Derives sections, complete translation catalogs, message keys and required interpolation arguments from English literals. |
+| `i18n/catalog.ts` | Generates typed `messages` references and internal lookup tables from the English object shape; no manually maintained message ID registry. |
+| `i18n/translate.ts` | Typed message lookup and interpolation; dynamic text lookup for the DOM and editorial content. |
 | `now-playing-element.ts` | **Browser only.** The `<now-playing-el>` custom element. Flips `data-playing`, which is what shows the bar. |
 | `morphling-cursor.ts` | **Browser only.** Morphs local outline and center paths into an I-beam over editable fields or a tip-anchored arrow over ranges, sliders, and precision surfaces; caps other control outlines at 800 × 600 pixels. |
 | `fm-wave.ts` | Pure geometry and frequency calculation for the hero's modulated sine wave. |
 | `contribution-tip.ts` | Pure label and viewport placement for the `/coding` contribution hover tip. |
+| `__tests__/` | Library tests live here, grouped apart from production modules. |
 | `route-curtain.ts` | **Browser only.** Immediate navigation loading, readiness and cancellation handling, and the shared 2D partition painter. Also exports `curtainCells`. |
 | `api/schema.ts` | Generated from `openapi.json`. Never hand-edited. |
 | `api/README.md` | How and when to regenerate. |
@@ -458,8 +481,8 @@ Framework-free unless the name says otherwise.
 | `src/frontend/scripts/responsive-check.mjs` | Responsive browser checks; `--loading` verifies first paint, reloads, route loading, motion preferences and recovery. |
 | `src/frontend/scripts/refactor-check.mjs` | Bundles the real modules into a temporary browser harness. Checks fetch/XHR responses, request races, concurrent uploads, playback ownership, SDK teardown and canvas disposal. Run with `bun run check:refactor`; `BROWSER_PATH` selects a local browser. |
 | `src/frontend/scripts/png.ts` | Minimal PNG encoder, so the above has no dependency. |
-| `src/frontend/src/lib/fm-wave.test.ts` | Checks the FM frequency sweep, the wave cycle and the scroll direction. |
-| `src/frontend/src/lib/playback-canvas.test.ts` | Checks spectrum color anchors, interpolation, silence and clipping. |
+| `src/frontend/src/lib/__tests__/fm-wave.test.ts` | Checks the FM frequency sweep, the wave cycle and the scroll direction. |
+| `src/frontend/src/lib/__tests__/playback-canvas.test.ts` | Checks spectrum color anchors, interpolation, silence and clipping. |
 
 Both exist because every attempt to tune the simulation by statistics produced a
 number that improved while the picture stayed broken. Judged by eye, not by
@@ -1012,6 +1035,15 @@ dragging. The native cursor is hidden only when the canvas initializes, with nat
 fallbacks for reduced motion and coarse pointers. Run `node scripts/responsive-check.mjs --cursor` against the dev
 server to verify rendered silhouettes, editing, dragging, and route persistence.
 
+`LinkPreview` sets `data-cursor-region` on its hover target so the canvas outline
+encloses both the link and its attached note as one rectangle. The note starts at
+the link's lower edge. In panel mode the cursor fills that shape with an animated
+subtle red-and-blue ordered dither driven by the cursor's wave field, then draws a
+white outline. Red is sparse and translucent over the blue base; the texture renders
+at 2x CSS resolution and updates at 24fps.
+The link and note stay transparent above it, with white text. The note keeps a
+CSS border and background when the custom cursor is unavailable.
+
 Keep the hero, navigation, footer controls, form, and page grids usable from
 320px through desktop widths. Long email addresses and media labels wrap or
 truncate inside their panels; they do not widen the page. Touch targets and
@@ -1097,20 +1129,64 @@ handling, focus, resize, reduced motion, navigation, reload, and canvas failure.
 The shared navbar includes the small `LanguageSelector.astro`, with a square,
 44px touch target at every viewport and spacing from adjacent navigation cells.
 English, Spanish, French, German and Japanese
-are listed by their local names. `lib/i18n.ts` owns English-keyed copy and its
-translations. The full music journey uses the artist's paired English and
+are listed by their local names. `lib/i18n/en.ts` owns the English source schema;
+the other locale modules implement it. The full music journey uses the artist's paired English and
 Spanish text; its other locales fall back to English until supplied. No
 translation service or dependency is used. Browser
-language sets the first preference; `services/locale.ts` persists a visitor's
+language sets the first preference; `lib/i18n/locale.ts` persists a visitor's
 selection in local storage and React islands subscribe to the same locale.
 
-`lib/i18n-browser.ts` translates static Astro text and accessible labels,
+`lib/i18n/browser.ts` translates static Astro text and accessible labels,
 updates the document language, and observes new static content after Astro
 transitions. It deliberately skips hydrated React islands, user-entered text,
 code samples and named GitHub repositories. Interactive interface labels use
-`hooks/useTranslations.ts` inside the components, so React retains ownership of
+`lib/i18n/useTranslations.ts` inside the components, so React retains ownership of
 its text and changing locale does not reset player, form or experiment state.
-Unknown English copy stays in English until the catalog receives a translation.
+Static page copy must use `<LocalizedText id={messages.home.aboutTitle} />`
+with a generated reference from `i18n/catalog.ts`; do not repeat the English
+source value or write string message IDs in Astro markup. Accessible attributes
+use generated references in matching `data-i18n-*` attributes. Page metadata must use the same
+catalog source and update on locale changes. This keeps long paragraphs
+independent of exact-text lookup and makes the catalog the single source of
+truth. The music intro and its navigation labels follow this pattern. Run
+`bun scripts/i18n-source-copy.mjs` to audit catalog keys, interpolation
+parameters, handwritten message IDs in TypeScript/Astro and Astro literals that
+duplicate catalog entries.
+This read-only audit also runs as part of `bun run check`.
+
+Each locale file groups messages into eleven named constants: common,
+navigation, theme, loading, home, coding, contact, music, comments, experiments
+and errors. `en` is a nested object such as `en.loading.status` and defines the
+only source schema. `TranslationCatalog` derives every required section and
+field from that object, widening English literal values to strings. Each other
+locale implements that contract; `TranslationSection<"loading">` checks a section
+and `satisfies TranslationCatalog` checks the complete object. Adding an English
+field makes every incomplete locale fail type checking. Field names describe
+purpose rather than the English sentence.
+
+`messages` is generated from `en` with the same field structure. Components use
+`messages.loading.status`; runtime lookup IDs are built from the section and
+field automatically. Locale implementations repeat the required field names as
+object members, without repeating dotted IDs. The internal flattened tables
+belong to `catalog.ts`. Do not introduce a second manually maintained registry,
+numeric message positions, or a fallback that hides missing locale fields.
+Changing a schema field requires migrating all locale implementations and
+consumers in the same change. The source-copy audit rejects handwritten lookup
+IDs so future callers also use the generated references.
+
+`MessageParams<Key>` extracts `{name}` placeholders from English literals using
+template literal types. `translate`, the React translation hook and
+`LocalizedText` require those named parameters and reject parameters on plain
+labels. Use `PlainMessageKey` for components that accept only labels without
+interpolation. `translateText` is the dynamic boundary for DOM content and
+editorial copy; ordinary application calls use the typed `translate` API.
+Changing wording still requires human translation review across all five locales;
+matching keys and placeholders cannot establish equivalent meaning.
+The artist-authored journey remains paired English and Spanish copy in
+`lib/music-journey-copy.ts`; French, German and Japanese use English for that
+editorial body until translations are supplied. Do not rewrite its content while
+changing its presentation or localization wiring. Unknown English copy stays in
+English until the catalog receives a translation.
 The responsive home heading reduces its type size for the longer Latin-script
 translations. Keep the navigation routes unchanged when adding a locale.
 
@@ -1208,3 +1284,7 @@ space in body so the contact footer remains reachable. The audio bar uses
 focus for keyboard navigation. Shortcut labels use the shared translation catalog.
 Native smooth scrolling applies only without a reduced-motion preference; no
 scroll listener or JavaScript navigation state is required.
+
+
+
+

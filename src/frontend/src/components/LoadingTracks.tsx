@@ -1,4 +1,4 @@
-import { useTranslations } from "../hooks/useTranslations";
+import { useTranslations } from "../lib/i18n/useTranslations";
 import { Fragment } from "react";
 import ServerPulse, { type Stage } from "./ServerPulse";
 
@@ -65,17 +65,17 @@ export default function LoadingTracks({ serverReady, elapsed }: Props) {
           {chunks.map((chunk, i) =>
             chunk.emphasis ? (
               <em key={i} className="italic">
-                {t(chunk.text)}
+                {t.text(chunk.text)}
               </em>
             ) : (
-              <Fragment key={i}>{t(chunk.text)}</Fragment>
+              <Fragment key={i}>{t.text(chunk.text)}</Fragment>
             )
           )}
         </span>
       </div>
       {detail && (
         <p key={detail} className="text-morph mt-2 font-mono text-xs text-brut-muted">
-          {t(detail)}
+          {t.text(detail)}
         </p>
       )}
     </div>

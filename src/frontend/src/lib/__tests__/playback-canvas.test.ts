@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { spectrumColor } from "./playback-canvas";
+import { spectrumColor } from "../playback-canvas";
 
 test("spectrum colors follow dB anchors and interpolate between them", () => {
   for (const [db, color] of [
