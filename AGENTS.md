@@ -12,6 +12,10 @@
 ## Skills for agents
 - Load the matching skill from `.opencode/skills/*/SKILL.md` before coding.
   Check the `skills` scope in opencode first.
+- Use `translation-sync`
+  (`.opencode/skills/translation-sync/SKILL.md`) whenever adding, changing or
+  removing user-facing page text or localization entries. Update the matching
+  content across every supported language before finishing.
 - Use `english-commits`
   (`.opencode/skills/english-commits/SKILL.md`) for anything reaching git.
 
