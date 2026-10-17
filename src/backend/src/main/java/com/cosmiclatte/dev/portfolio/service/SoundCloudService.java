@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,7 +30,8 @@ public class SoundCloudService {
      * punctuation differences between platforms do not break the match.
      */
     private static final Map<String, String> SPOTIFY_URL_BY_TITLE = Map.of(
-            "amb", "https://open.spotify.com/album/2oWurnyAaaX5rbyF6BtfEf"
+            "amb", "https://open.spotify.com/album/2oWurnyAaaX5rbyF6BtfEf",
+            "m0tion", "https://open.spotify.com/album/5mXZrAK3715JxoJrzSNQtF?si=0S-37FfpRZi6IAy73pPh-A"
     );
 
     /**
@@ -54,6 +56,7 @@ public class SoundCloudService {
     private final String userUrl;
     private volatile List<SoundCloudAlbumDto> cachedAlbums;
     private volatile long cachedAlbumsAt;
+    private volatile CompletableFuture<Void> refresh;
 
     public SoundCloudService(
             @Value("${app.soundcloud.client-id:}") String clientId,
@@ -68,10 +71,17 @@ public class SoundCloudService {
         if (cached != null && System.currentTimeMillis() - cachedAlbumsAt < ALBUMS_CACHE_TTL_MS) {
             return cached;
         }
-        List<SoundCloudAlbumDto> albums = withCatalog(loadAlbums());
-        cachedAlbums = albums;
-        cachedAlbumsAt = System.currentTimeMillis();
-        return albums;
+        refreshAlbumsInBackground();
+        return cached != null ? cached : withCatalog(staticAlbums());
+    }
+
+    private synchronized void refreshAlbumsInBackground() {
+        if (refresh != null && !refresh.isDone()) return;
+        refresh = CompletableFuture.runAsync(() -> {
+            List<SoundCloudAlbumDto> albums = withCatalog(loadAlbums());
+            cachedAlbums = albums;
+            cachedAlbumsAt = System.currentTimeMillis();
+        });
     }
 
     /**
@@ -128,6 +138,16 @@ public class SoundCloudService {
      */
     private List<SoundCloudAlbumDto> staticAlbums() {
         return List.of(
+                new SoundCloudAlbumDto(
+                        "m0tion",
+                        "m0Tion",
+                        null,
+                        null,
+                        "2026",
+                        "album",
+                        "https://soundcloud.com/cosmiclattemusic/sets/m0tion",
+                        DEFAULT_EMBED_HEIGHT,
+                        null),
                 new SoundCloudAlbumDto(
                         "amb-album",
                         "amb",
@@ -252,3 +272,5 @@ public class SoundCloudService {
     private record SoundCloudOEmbed(String thumbnail_url, Integer height, String width) {
     }
 }
+
+
