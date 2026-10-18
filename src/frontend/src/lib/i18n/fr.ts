@@ -56,7 +56,6 @@ const homeMessages = {
   freeTime: "Temps libre",
   whenIMNotWorking: "Quand je ne travaille pas.",
   hobbiesDescription: "J'aime jouer à Minecraft moddé, Factorio, Balatro, Elden Ring et à des jeux en ligne comme Delta Force, Battlefield VI et d'autres bêtises entre amis. Je regarde aussi pas mal de YouTube.",
-  theseAreSomeOfThePeopleIKeepComingBackTo: "Voici quelques créateurs que je regarde régulièrement :",
   creatorsIKeepComingBackTo: "Les créateurs que je retrouve toujours :",
   mathChannelNote: "ma chaîne préférée d'animations mathématiques et de machine learning, avec de magnifiques cours",
   scienceChannelNote: "ma chaîne de confiance pour apprendre la science avec des sources fiables",

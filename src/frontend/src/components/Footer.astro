@@ -14,15 +14,46 @@ const { showContact = true } = Astro.props;
 <footer id="page-bottom" tabindex="-1" aria-label="Contact" class="site-footer mx-auto w-full max-w-7xl border-x-2 border-t-2 border-b-2 border-brut-black bg-brut-surface tv:max-w-[100rem]">
   <p class="font-mono text-xs" translate="no">Gabriel Paz / CosmicLatte</p>
   {showContact && <a href="/contact" class="footer-contact brut-up"><span><span><LocalizedText id={messages.common.contact} /></span> <span aria-hidden="true">↗</span></span></a>}
-  <nav class="page-jumps" aria-label="Page shortcuts" data-i18n-aria-label={messages.navigation.pageShortcuts} data-cursor-target>
-    <a class="brut-up" href="#page-top" aria-label="Back to top" data-i18n-aria-label={messages.navigation.pageTop} title="Back to top" data-i18n-title={messages.navigation.pageTop}><span aria-hidden="true">↑</span><span class="jump-label"><LocalizedText id={messages.navigation.pageTop} /></span></a>
-    <a class="brut-up" href="#page-bottom" aria-label="Go to page end" data-i18n-aria-label={messages.navigation.pageEnd} title="Go to page end" data-i18n-title={messages.navigation.pageEnd}><span aria-hidden="true">↓</span><span class="jump-label"><LocalizedText id={messages.navigation.pageEnd} /></span></a>
+  <nav
+    class="page-jumps"
+    aria-label="Page shortcuts"
+    data-i18n-aria-label={messages.navigation.pageShortcuts}
+    data-cursor-target
+  >
+    <a
+      class="brut-up"
+      href="#page-top"
+      data-page-jump="up"
+      aria-label="Back to top"
+      data-i18n-aria-label={messages.navigation.pageTop}
+      title="Back to top"
+      data-i18n-title={messages.navigation.pageTop}>
+        <span aria-hidden="true">↑</span>
+        <span class="jump-label">
+          <LocalizedText id={messages.navigation.pageTop} />
+        </span>
+    </a>
+    <a
+      class="brut-up"
+      href="#page-bottom"
+      data-page-jump="down"
+      aria-label="Go to page end"
+      data-i18n-aria-label={messages.navigation.pageEnd}
+      title="Go to page end"
+      data-i18n-title={messages.navigation.pageEnd}>
+        <span aria-hidden="true">↓</span>
+        <span class="jump-label">
+          <LocalizedText id={messages.navigation.pageEnd} />
+        </span>
+    </a>
   </nav>
 </footer>
 
 <script>
   import "../lib/footer";
 </script>
+
+<div class="page-jump-swipe" data-page-jump-swipe aria-hidden="true"></div>
 
 <footer
   data-audio-player

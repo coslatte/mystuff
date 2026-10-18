@@ -99,10 +99,18 @@ html[data-theme-transition] *::after {
     scrollbar-gutter: stable;
   }
 
+  @media (max-width: 767px) {
+    html {
+      scrollbar-gutter: auto;
+    }
+  }
+
   /* Fallback for browsers without scrollbar-gutter support */
   @supports not (scrollbar-gutter: stable) {
-    html {
-      overflow-y: scroll;
+    @media (min-width: 768px) {
+      html {
+        overflow-y: scroll;
+      }
     }
   }
 

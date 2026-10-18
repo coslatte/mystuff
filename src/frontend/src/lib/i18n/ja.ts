@@ -56,7 +56,6 @@ const homeMessages = {
   freeTime: "余暇",
   whenIMNotWorking: "仕事をしていないとき。",
   hobbiesDescription: "Mod入りのMinecraft、Factorio、Balatro、Elden Ringのほか、Delta ForceやBattlefield VIなどのオンラインゲームを友人と楽しんでいます。YouTubeもよく見ます。",
-  theseAreSomeOfThePeopleIKeepComingBackTo: "よく見ているクリエイターたちです：",
   creatorsIKeepComingBackTo: "何度も見に戻ってくるクリエイターたち：",
   mathChannelNote: "数学のアニメーションと機械学習でお好きなチャンネル。素晴らしいコースもあります",
   scienceChannelNote: "信頼できる情報源で科学を学ぶための信頼できるチャンネル",

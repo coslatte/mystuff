@@ -23,12 +23,12 @@ const links = [
     </div>
     </div>
     <div class="flex min-w-0">
-    <nav aria-label="Main navigation" class="grid min-w-0 flex-1 grid-cols-2 tablet:grid-cols-4">
+    <nav aria-label="Main navigation" class="grid min-w-0 flex-1 grid-cols-2 border-l-2 border-t-2 border-brut-black tablet:grid-cols-4 tablet:border-l-0 tablet:border-t-0">
       {links.map((link) => (
         <a href={link.href} aria-current={link.active ? "page" : undefined}
           class:list={[
             "group flex min-h-12 items-center justify-between gap-2 " +
-            "border-r-2 border-brut-black px-4 py-2 font-mono text-xs font-bold" +
+            "border-r-2 border-b-2 border-brut-black px-4 py-2 font-mono text-xs font-bold" +
             "transition-colors focus-visible:outline-2 focus-visible:-outline-offset-4 " +
             "focus-visible:outline-brut-blue tablet:min-h-16 tablet:border-b-0 tablet:px-5 tablet:text-sm",
             link.active ? "bg-brut-blue text-brut-on-accent" : "hover:bg-brut-subtle",

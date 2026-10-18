@@ -30,6 +30,25 @@ function togglePlayer(event: MouseEvent): void {
   footer.style.transform = collapsed ? "translateY(calc(100% - 0.5rem))" : "translateY(0)";
 }
 
+function jumpPage(event: MouseEvent): void {
+  if (!(event.target instanceof Element)) return;
+  const link = event.target.closest<HTMLAnchorElement>("[data-page-jump]");
+  const swipe = document.querySelector<HTMLElement>("[data-page-jump-swipe]");
+  if (!link || !swipe || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  event.preventDefault();
+  const direction = link.dataset.pageJump === "up" ? "up" : "down";
+  delete swipe.dataset.active;
+  void swipe.offsetWidth;
+  swipe.dataset.direction = direction;
+  swipe.dataset.active = "";
+  window.setTimeout(() => {
+    document.querySelector<HTMLElement>(link.hash)?.scrollIntoView({ behavior: "instant" });
+  }, 260);
+  window.setTimeout(() => delete swipe.dataset.active, 520);
+}
+
 document.addEventListener("pointerover", setContactOrigin);
 document.addEventListener("click", togglePlayer);
+document.addEventListener("click", jumpPage);
 document.addEventListener("astro:page-load", syncFooter);

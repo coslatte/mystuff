@@ -72,7 +72,10 @@ const background = [
         <p class="mt-4 max-w-xl leading-7">
           <LocalizedText id={messages.home.hobbiesDescription} />
         </p>
-        <p class="mt-5 max-w-xl leading-7"><LocalizedText id={messages.home.creatorsIKeepComingBackTo} />{" "}{channels.map((channel, index) => <Fragment>{index > 0 ? ", " : ""}<LinkPreview href={channel.url} note={channel.note}>{channel.name}</LinkPreview></Fragment>)}</p>
+        <p class="mt-5 max-w-xl leading-7">
+          <LocalizedText id={messages.home.creatorsIKeepComingBackTo} />
+            {" "}{channels.map((channel, index) => <Fragment>{index > 0 ? ", " : ""}<LinkPreview href={channel.url} note={channel.note}>{channel.name}</LinkPreview></Fragment>)}.
+        </p>
       </article>
     </div>
   </section>
