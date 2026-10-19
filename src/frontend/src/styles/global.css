@@ -85,8 +85,8 @@ html[data-theme-transition] *::after {
 }
 
 .profile-photo {
-  width: 4rem;
-  height: 4rem;
+  width: 7rem;
+  height: 7rem;
 }
 
 @layer base {
