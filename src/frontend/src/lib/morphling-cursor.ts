@@ -251,7 +251,8 @@ export function startMorphlingCursor(): void {
   const panelField = document.createElement("canvas");
   const panelFieldContext = panelField.getContext("2d");
   if (!panelFieldContext) return;
-  let panelFieldPixels = panelFieldContext.createImageData(1, 1);
+  const panelContext: CanvasRenderingContext2D = panelFieldContext;
+  let panelFieldPixels = panelContext.createImageData(1, 1);
   let panelFieldSize = { width: 1, height: 1 };
   let panelFieldUpdatedAt = 0;
   const colorFieldContext = colorField.getContext("2d");
@@ -292,20 +293,20 @@ export function startMorphlingCursor(): void {
     if (mode === "precision") return PRECISION_PATH;
     if (hovered?.isConnected) {
       const owner = hovered.closest<HTMLElement>("[data-cursor-region]");
-      const region = owner?.dataset.cursorRegion && owner.querySelector<HTMLElement>(owner.dataset.cursorRegion);
+      const selector = owner?.dataset.cursorRegion;
+      const region = owner && selector ? owner.querySelector<HTMLElement>(selector) : null;
       const target = region ?? hovered;
-      let rect = target.getBoundingClientRect();
-      if (region && rect.width && rect.height) {
-        const linkRect = owner.getBoundingClientRect();
-        const left = Math.min(linkRect.left, rect.left);
-        const top = Math.min(linkRect.top, rect.top);
-        rect = {
+      const rect = target.getBoundingClientRect();
+      if (region && owner && rect.width && rect.height) {
+        const ownerRect = owner.getBoundingClientRect();
+        const left = Math.min(ownerRect.left, rect.left);
+        const top = Math.min(ownerRect.top, rect.top);
+        lastBounds = {
           left,
           top,
-          width: Math.max(linkRect.right, rect.right) - left,
-          height: Math.max(linkRect.bottom, rect.bottom) - top,
+          width: Math.max(ownerRect.right, rect.right) - left,
+          height: Math.max(ownerRect.bottom, rect.bottom) - top,
         };
-        lastBounds = { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
         return rectanglePath(lastBounds, pointer);
       }
 
@@ -402,12 +403,12 @@ export function startMorphlingCursor(): void {
         if (resized) {
           panelField.width = width;
           panelField.height = height;
-          panelFieldPixels = panelFieldContext.createImageData(width, height);
+          panelFieldPixels = panelContext.createImageData(width, height);
           panelFieldSize = { width, height };
         }
         if (resized || now - panelFieldUpdatedAt >= PANEL_DITHER_FRAME_MS) {
           paintDuotoneDither(panelFieldPixels.data, width, height, now);
-          panelFieldContext.putImageData(panelFieldPixels, 0, 0);
+          panelContext.putImageData(panelFieldPixels, 0, 0);
           panelFieldUpdatedAt = now;
         }
       } else {
