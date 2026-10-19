@@ -84,6 +84,11 @@ html[data-theme-transition] *::after {
   transition-duration: 0s !important;
 }
 
+.profile-photo {
+  width: 4rem;
+  height: 4rem;
+}
+
 @layer base {
   ::selection {
     background-color: var(--color-brut-black);
