@@ -30,6 +30,8 @@ function fallbackEmbed(title: string, src: string, height: number): HTMLIFrameEl
   iframe.src = src;
   iframe.style.height = `${height}px`;
   iframe.className = "block w-full";
+  iframe.setAttribute("data-cursor-hide", "");
+  iframe.setAttribute("data-cursor-skip", "");
   return iframe;
 }
 
@@ -128,10 +130,12 @@ export default function AlbumCard({ album, platform, open, onToggle, collapsible
             )}
           </div>
           {link.platform === "spotify" ? (
-            <div ref={setSpotifyHost} className="w-full border-t-2 border-brut-black [&>iframe]:w-full" />
+            <div ref={setSpotifyHost} data-cursor-hide data-cursor-skip className="w-full border-t-2 border-brut-black [&>iframe]:w-full" />
           ) : link.platform === "soundcloud" ? (
             <iframe
               ref={soundCloudRef}
+              data-cursor-hide
+              data-cursor-skip
               title={t(messages.music.playerTitle, { title: album.title })}
               allow={EMBED_ALLOW}
               loading="lazy"
@@ -141,6 +145,8 @@ export default function AlbumCard({ album, platform, open, onToggle, collapsible
             />
           ) : (
             <iframe
+              data-cursor-hide
+              data-cursor-skip
               title={t(messages.music.playerTitle, { title: album.title })}
               loading="lazy"
               className="block w-full border-t-2 border-brut-black"

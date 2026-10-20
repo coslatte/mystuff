@@ -4,6 +4,13 @@
   z-index: 70;
   pointer-events: none;
   mix-blend-mode: difference;
+  transition: opacity 160ms ease;
+}
+
+/* Embedded players capture the pointer, so the morphling cursor freezes at the
+   edge. Fade it out while hovering one of those surfaces instead. */
+html:has([data-cursor-hide]:hover) .morphling-cursor {
+  opacity: 0;
 }
 
 .morphling-cursor[data-mode="panel"] {

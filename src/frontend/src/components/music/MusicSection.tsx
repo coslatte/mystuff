@@ -31,8 +31,8 @@ export default function MusicSection() {
         ))}
       </div>
       <section aria-labelledby="latest-title" className="grid min-w-0 grid-cols-1 border-b-2 border-brut-black laptop:grid-cols-[minmax(18rem,.8fr)_minmax(0,1.2fr)]">
-        <div className="relative aspect-square max-h-[42rem] min-w-0 overflow-hidden border-r-2 border-brut-black bg-brut-inverse">
-          {latest?.artworkUrl ? <img src={latest.artworkUrl} alt={`${latest.title} cover art`} className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center font-display text-8xl font-black text-brut-on-accent" aria-hidden="true">♪</span>}
+        <div className="relative flex aspect-square max-h-[42rem] min-w-0 items-center justify-center overflow-hidden border-r-2 border-brut-black bg-brut-inverse">
+          {latest?.artworkUrl ? <img src={latest.artworkUrl} alt={`${latest.title} cover art`} className="h-full w-full object-cover object-center" /> : <span className="flex h-full items-center justify-center font-display text-8xl font-black text-brut-on-accent" aria-hidden="true">♪</span>}
           <span className="absolute bottom-0 left-0 bg-brut-red px-3 py-2 font-mono text-xs font-bold text-brut-on-accent">SELECTED RELEASE</span>
         </div>
         <div className="flex min-w-0 flex-col justify-between bg-brut-inverse p-5 text-brut-on-accent tablet:p-8 laptop:p-10">
