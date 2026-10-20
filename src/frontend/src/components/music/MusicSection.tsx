@@ -1,6 +1,7 @@
 import { messages } from "../../lib/i18n/catalog";
 import { useTranslations } from "../../hooks/useTranslations";
 import { useState } from "react";
+
 import type { StreamingPlatform } from "../../types";
 import { hasLinks, STREAMING_PLATFORMS, type PlayableAlbum } from "../../data/streaming-albums";
 import { useAlbums } from "../../hooks/useAlbums";
@@ -17,8 +18,6 @@ export default function MusicSection() {
   const { albums, loading, error, reload } = useAlbums();
   const playable = albums.filter(hasLinks);
   const latest = playable[0];
-  const [selectedAlbumId, setOpenAlbumId] = useState<string | null>();
-  const openAlbumId = selectedAlbumId === undefined ? latest?.id : selectedAlbumId;
   const [platform, setPlatform] = useState<StreamingPlatform>("soundcloud");
 
   return (
@@ -33,7 +32,7 @@ export default function MusicSection() {
       </div>
       <section aria-labelledby="latest-title" className="grid min-w-0 grid-cols-1 border-b-2 border-brut-black laptop:grid-cols-[minmax(18rem,.8fr)_minmax(0,1.2fr)]">
         <div className="relative aspect-square max-h-[42rem] min-w-0 overflow-hidden border-r-2 border-brut-black bg-brut-inverse">
-          {latest?.artworkUrl ? <img src={latest.artworkUrl} alt={`${latest.title} cover art`} className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center font-display text-8xl font-black text-brut-on-accent" aria-hidden="true">{latest?.title.charAt(0) ?? "♪"}</span>}
+          {latest?.artworkUrl ? <img src={latest.artworkUrl} alt={`${latest.title} cover art`} className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center font-display text-8xl font-black text-brut-on-accent" aria-hidden="true">♪</span>}
           <span className="absolute bottom-0 left-0 bg-brut-red px-3 py-2 font-mono text-xs font-bold text-brut-on-accent">SELECTED RELEASE</span>
         </div>
         <div className="flex min-w-0 flex-col justify-between bg-brut-inverse p-5 text-brut-on-accent tablet:p-8 laptop:p-10">
@@ -44,7 +43,7 @@ export default function MusicSection() {
           </div>
           {latest ? (
             <div className="mt-8">
-              <AlbumCard album={latest} platform={platform} open={openAlbumId === latest.id} onToggle={() => setOpenAlbumId(openAlbumId === latest.id ? null : latest.id)} />
+              <AlbumCard album={latest} platform={platform} open collapsible={false} />
             </div>
           ) : loading ? <p role="status" className="mt-8 font-mono text-xs text-brut-muted">Loading releases...</p>
             : error != null ? <ErrorNotice error={error} onRetry={reload} />
@@ -55,7 +54,7 @@ export default function MusicSection() {
         </div>
       </section>
       <div id="work-catalog" className="grid grid-cols-1 laptop:grid-cols-2">
-        <AlbumCatalog albums={playable.filter((album) => album.id !== latest?.id)} loading={loading} error={error} reload={reload} platform={platform} openAlbumId={openAlbumId} setOpenAlbumId={setOpenAlbumId} />
+        <AlbumCatalog albums={playable.filter((album) => album.id !== latest?.id)} loading={loading} error={error} reload={reload} platform={platform} />
         <TrackCatalog />
       </div>
     </div>
@@ -68,11 +67,9 @@ type AlbumCatalogProps = {
   error: ReturnType<typeof useAlbums>["error"];
   reload: () => void;
   platform: StreamingPlatform;
-  openAlbumId: string | null | undefined;
-  setOpenAlbumId: (id: string | null) => void;
 };
 
-function AlbumCatalog({ albums, loading: albumsLoading, error: albumsError, reload: reloadAlbums, platform, openAlbumId, setOpenAlbumId }: AlbumCatalogProps) {
+function AlbumCatalog({ albums, loading: albumsLoading, error: albumsError, reload: reloadAlbums, platform }: AlbumCatalogProps) {
   const t = useTranslations();
 
   return (
@@ -91,8 +88,8 @@ function AlbumCatalog({ albums, loading: albumsLoading, error: albumsError, relo
             key={album.id}
             album={album}
             platform={platform}
-            open={openAlbumId === album.id}
-            onToggle={() => setOpenAlbumId(openAlbumId === album.id ? null : album.id)}
+            open
+            collapsible={false}
           />
         ))}
       </div>

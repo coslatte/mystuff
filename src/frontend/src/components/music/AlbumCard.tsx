@@ -15,7 +15,9 @@ type Props = {
   album: PlayableAlbum;
   platform: StreamingPlatform;
   open: boolean;
-  onToggle: () => void;
+  onToggle?: () => void;
+  /** When false the card is always expanded and has no collapse affordance. */
+  collapsible?: boolean;
 };
 
 const EMBED_ALLOW = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
@@ -31,7 +33,7 @@ function fallbackEmbed(title: string, src: string, height: number): HTMLIFrameEl
   return iframe;
 }
 
-export default function AlbumCard({ album, platform, open, onToggle }: Props) {
+export default function AlbumCard({ album, platform, open, onToggle, collapsible = true }: Props) {
   const t = useTranslations();
   const link = activeLink(album, platform);
   const fallback = link.platform !== platform;
@@ -78,9 +80,10 @@ export default function AlbumCard({ album, platform, open, onToggle }: Props) {
       <div className="flex items-center gap-2 p-2">
         <button
           type="button"
-          onClick={onToggle}
-          aria-expanded={open}
-          className="group flex min-w-0 flex-1 items-center gap-3 text-left transition-colors hover:bg-brut-blue hover:text-brut-on-accent focus-visible:bg-brut-blue focus-visible:text-brut-on-accent"
+          onClick={collapsible ? onToggle : undefined}
+          disabled={!collapsible}
+          aria-expanded={collapsible ? open : true}
+          className="group flex min-w-0 flex-1 items-center gap-3 text-left transition-colors hover:bg-brut-blue hover:text-brut-on-accent focus-visible:bg-brut-blue focus-visible:text-brut-on-accent disabled:cursor-default disabled:hover:bg-transparent disabled:hover:text-inherit"
         >
           <span className="block h-14 w-14 shrink-0 overflow-hidden border-2 border-brut-black bg-brut-inverse laptop:h-16 laptop:w-16">
             {album.artworkUrl ? (
@@ -92,7 +95,7 @@ export default function AlbumCard({ album, platform, open, onToggle }: Props) {
               />
             ) : (
               <span className="flex h-full w-full items-center justify-center font-display text-lg font-black text-brut-muted">
-                {album.title.charAt(0)}
+                ♪
               </span>
             )}
           </span>
@@ -116,7 +119,7 @@ export default function AlbumCard({ album, platform, open, onToggle }: Props) {
         >↗</a>
       </div>
 
-      {open && (
+      {(open || !collapsible) && (
         <>
           <div className="flex items-center justify-between gap-2 border-t-2 border-brut-black bg-brut-subtle px-2 py-1">
             <span className="font-mono text-[10px] text-brut-muted">{t(messages.music.playerPlatform, { platform: link.platform })}</span>
