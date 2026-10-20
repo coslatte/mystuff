@@ -24,15 +24,15 @@ import { writeFileSync } from "node:fs";
   }
 };
 
-import { buildPalette, colorFor } from "../src/lib/color-theory";
-import { makePigment } from "../src/lib/pigment-math";
-import { createPigmentSimulation } from "../src/lib/sim/pigment-sim";
-import type { PigmentSimulation } from "../src/lib/sim/pigment-sim";
-import { LAYOUTS, LAYOUT_NAMES } from "../src/lib/sim/layouts";
-import { createCamera, viewRect } from "../src/lib/sim/camera";
-import { writeFieldView, type FieldViewMode } from "../src/lib/sim/field-view";
-import { createTracers } from "../src/lib/sim/tracers";
-import { PRESETS, applyPreset, DEFAULT_SETTINGS, type SettingsPatch } from "../src/lib/pigment-settings";
+import { buildPalette, colorFor } from "../src/lib/graphics/color-theory";
+import { makePigment } from "../src/lib/graphics/pigment-math";
+import { createPigmentSimulation } from "../src/lib/graphics/sim/pigment-sim";
+import type { PigmentSimulation } from "../src/lib/graphics/sim/pigment-sim";
+import { LAYOUTS, LAYOUT_NAMES } from "../src/lib/graphics/sim/layouts";
+import { createCamera, viewRect } from "../src/lib/graphics/sim/camera";
+import { writeFieldView, type FieldViewMode } from "../src/lib/graphics/sim/field-view";
+import { createTracers } from "../src/lib/graphics/sim/tracers";
+import { PRESETS, applyPreset, DEFAULT_SETTINGS, type SettingsPatch } from "../src/lib/graphics/pigment-settings";
 import { blit, encodePng, flatten, upscale, type Pixels } from "./png";
 
 const W = 300;

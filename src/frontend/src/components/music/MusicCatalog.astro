@@ -1,0 +1,14 @@
+---
+import { messages } from "../../lib/i18n/catalog";
+import LocalizedText from "../shared/LocalizedText.astro";
+import MusicSection from "./MusicSection";
+import "../../styles/music/music-page.css";
+---
+
+<section id="music-catalog" class="music-catalog" aria-labelledby="catalog-title">
+  <header class="music-catalog-header">
+    <p class="brut-label">02 / releases &amp; work in progress</p>
+    <h2 id="catalog-title"><LocalizedText id={messages.music.releaseSketches} /></h2>
+  </header>
+  <MusicSection client:load />
+</section>

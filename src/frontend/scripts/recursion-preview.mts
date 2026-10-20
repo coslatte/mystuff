@@ -9,9 +9,9 @@ import { writeFileSync } from "node:fs";
 import assert from "node:assert/strict";
 
 import { mix } from "spectral.js";
-import { buildPalette, colorFor } from "../src/lib/color-theory";
-import type { HarmonyName } from "../src/lib/color-theory";
-import { subdivide, interiorEdges } from "../src/lib/recursion/subdivide";
+import { buildPalette, colorFor } from "../src/lib/graphics/color-theory";
+import type { HarmonyName } from "../src/lib/graphics/color-theory";
+import { subdivide, interiorEdges } from "../src/lib/graphics/recursion/subdivide";
 import { blit, encodePng } from "./png";
 
 if (process.argv.includes("--check")) {

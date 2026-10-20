@@ -1,0 +1,17 @@
+---
+import { messages } from "../../lib/i18n/catalog";
+import LocalizedText from "../shared/LocalizedText.astro";
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<section class="border-b-2 border-brut-black bg-brut-surface">
+  <div class="p-4 tablet:p-6">
+    <a href="/experimentation" class="editorial-link"><LocalizedText id={messages.experiments.allExperiments} /></a>
+    <h1 class="mt-4 font-display font-black tracking-tighter">{title}</h1>
+    <div class="mt-3 grid max-w-3xl gap-2 leading-7 text-brut-muted"><slot /></div>
+  </div>
+</section>

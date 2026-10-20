@@ -17,11 +17,11 @@ interface first, send the request, then reconcile with what the server says.
 
 ## Reference implementations
 
-Ratings live in `src/frontend/src/components/MusicSection.tsx` (`handleRate`), which
+Ratings live in `src/frontend/src/components/music/MusicSection.tsx` (`handleRate`), which
 bumps `avgRating`/`totalVotes` locally, posts, then refetches the single song via
 `api.getSong` and replaces it.
 
-Comments (create and edit) live in `src/frontend/src/components/CommentThread.tsx`.
+Comments (create and edit) live in `src/frontend/src/components/music/CommentThread.tsx`.
 It inserts a comment with a negative id, posts, then swaps in the server comment.
 Edits swap the content and revert on failure.
 

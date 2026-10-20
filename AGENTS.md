@@ -39,7 +39,7 @@
 - Run `bun run check` from `src/frontend/` before committing. `astro build`
   transpiles without type checking, so a build alone proves nothing about types.
 - After changing a Java DTO or a controller signature, run `bun run gen:api`
-  from `src/frontend/` with the API up. See `src/frontend/src/lib/api/README.md`.
+  from `src/frontend/` with the API up. See `src/frontend/src/types/api/README.md`.
 
 <!-- codebase-memory-mcp:start -->
 # Codebase Memory

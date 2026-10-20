@@ -1,0 +1,44 @@
+---
+import { messages } from "../../lib/i18n/catalog";
+import LocalizedText from "../shared/LocalizedText.astro";
+
+const skills = [
+  {
+    name: "Frontend, Backend & Programming Languages",
+    items: [
+      "React, Next.js, Astro, TailwindCSS, responsive UI, API integration",
+      "Spring Boot, Spring Security, Spring Data JPA, JWT, FastAPI, REST APIs, DTO design, service and repository patterns",
+      "Java, Python, JS/TS, Kotlin, Dart (Flutter), PHP, Rust, Lua, C#, C",
+    ],
+  },
+  {
+    name: "AI Agents & Code Editors",
+    items: ["Claude Code, Codex, OpenCode, Gemini, Cursor, IntelliJ IDEA, VSCode, Zed, Neovim"],
+  },
+  {
+    name: "Data, Architecture & Tools",
+    items: ["PostgreSQL, SQL, SQLite, Flyway, relational modeling, layered and modular architecture, microservices, multi-tenancy, RBAC, Git, GitHub Actions, Docker, Maven, Gradle"],
+  },
+];
+
+---
+
+<section id="skills" class="bg-brut-surface">
+  <div class="border-b-2 border-brut-black p-6 pb-4 tablet:p-8 tablet:pb-4 laptop:p-10 laptop:pb-5">
+    <p class="brut-label"><LocalizedText id={messages.coding.skills} /></p>
+    <h2 class="mt-2 font-display text-3xl font-black tracking-tighter tablet:text-5xl"><LocalizedText id={messages.coding.whatIWorkWith} /></h2>
+  </div>
+  <div class="grid tablet:grid-cols-2">
+    {skills.map((skill, index) => (
+      <article class:list={[
+        "border-b-2 border-brut-black p-6 pt-4 tablet:p-8 tablet:pt-4 laptop:p-10 laptop:pt-5",
+        index === 0 ? "tablet:col-span-2" : index !== 2 && "tablet:border-r-2",
+      ]}>
+        <h3 class="font-display text-2xl font-black tracking-tight">{skill.name}</h3>
+        {skill.items.map((item) => (
+          <p class="mt-2 leading-7 text-brut-muted">{item}.</p>
+        ))}
+      </article>
+    ))}
+  </div>
+</section>

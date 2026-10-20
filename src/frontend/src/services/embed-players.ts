@@ -1,4 +1,4 @@
-import { formatClock } from "../lib/playback-ui";
+import { formatClock } from "../lib/audio/playback-ui";
 import { player, type ExternalReport } from "./player";
 
 /*

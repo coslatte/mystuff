@@ -1,4 +1,4 @@
-import type { components } from "../lib/api/schema";
+import type { components } from "./api/schema";
 
 /*
  * The API contract.
@@ -43,7 +43,7 @@ export type ApiEnvelope<T> = {
  * The API sends one album record carrying both platform URLs; `toAlbums` splits
  * them into links, and the rest models the UI's own view of a release.
  */
-export type StreamingPlatform = "soundcloud" | "spotify";
+export type StreamingPlatform = "soundcloud" | "spotify" | "youtube-music" | "apple-music";
 
 export type AlbumLink = {
   platform: StreamingPlatform;
@@ -52,4 +52,5 @@ export type AlbumLink = {
 
 export type Album = Omit<SoundCloudAlbum, "url" | "spotifyUrl"> & {
   links: AlbumLink[];
+  description?: string;
 };

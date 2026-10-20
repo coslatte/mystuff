@@ -1,8 +1,8 @@
 @import "tailwindcss";
-@import "./brutal-button.css";
-@import "./server-pulse.css";
-@import "./music-journey.css";
-@import "./music-page.css";
+@import "./shared/brutal-button.css";
+@import "./loading/server-pulse.css";
+@import "./music/music-journey.css";
+@import "./music/music-page.css";
 
 @theme {
   --color-brut-bg: #f3f1eb;
@@ -60,6 +60,17 @@
   --color-brut-danger: #ff9487;
 }
 
+/* GitHub returns light-theme colors; remap them to the dark-theme palette so
+   empty/low squares stop reading as white on a dark page. */
+:root[data-theme="dark"] .contribution-day {
+  background-color: #161b22 !important;
+}
+:root[data-theme="dark"] .contribution-day[style*="#ebedf0" i] { background-color: #161b22 !important; }
+:root[data-theme="dark"] .contribution-day[style*="#9be9a8" i] { background-color: #0e4429 !important; }
+:root[data-theme="dark"] .contribution-day[style*="#40c463" i] { background-color: #006d32 !important; }
+:root[data-theme="dark"] .contribution-day[style*="#30a14e" i] { background-color: #26a641 !important; }
+:root[data-theme="dark"] .contribution-day[style*="#216e39" i] { background-color: #39d353 !important; }
+
 html[data-theme-ready] [data-theme-toggle] {
   display: inline-flex;
 }
@@ -85,8 +96,8 @@ html[data-theme-transition] *::after {
 }
 
 .profile-photo {
-  width: 7rem;
-  height: 7rem;
+  width: 12rem;
+  height: 12rem;
 }
 
 @layer base {
@@ -221,6 +232,10 @@ html[data-theme-transition] *::after {
 
 @media (prefers-reduced-motion: no-preference) {
   html { scroll-behavior: smooth; }
+}
+
+html[data-page-jump-instant] {
+  scroll-behavior: auto !important;
 }
 
 @supports (animation-timeline: view()) {

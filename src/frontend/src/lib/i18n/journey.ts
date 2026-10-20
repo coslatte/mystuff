@@ -1,4 +1,4 @@
-import { musicJourneyCopy } from "../music-journey-copy";
+import { musicJourneyCopy } from "../../data/music-journey-copy";
 
 export const journeyTranslations = [
   musicJourneyCopy.title,
@@ -6,17 +6,16 @@ export const journeyTranslations = [
   ...musicJourneyCopy.intro,
   ...musicJourneyCopy.chapters.flatMap((chapter) => [chapter.title, ...chapter.paragraphs]),
   ["03 / influences", "03 / influencias"],
-  ["Electronic root / continuous", "Raíz electrónica / continua"],
-  ["Musical expansion / discoveries", "Expansión musical / descubrimientos"],
-  ["Electronic root", "Raíz electrónica"],
+  ["roots", "raices"],
+  ["musical expansion", "expansión musical"],
+  ["roots", "raices"],
   ["Musical expansion", "Expansión musical"],
-  ["Shared beginnings", "Los primeros descubrimientos"],
-  ["Adolescence / parallel paths", "Adolescencia / caminos paralelos"],
-  ["Pandemic, university and after / overlapping discoveries", "Pandemia, universidad y después / descubrimientos en paralelo"],
-  ["A turning point / the electronic thread continues", "Un punto de inflexión / la electrónica continúa"],
+  ["the beginning", "primeros descubrimientos"],
+  ["adolescence & parallel paths", "adolescencia y caminos paralelos"],
+  ["pandemic, university and later evolution", "pandemia, universidad y evolución musical"],
+  ["a turning point", "punto de inflexión"],
   ["From listening to playing", "De escuchar a tocar"],
   ["Recent discoveries / the paths draw closer", "Descubrimientos recientes / los caminos se acercan"],
   ["Both paths / now", "Ambos caminos / presente"],
-  ["Listen to Moon River ↗", "Escuchar Moon River ↗"],
   ["Artist photography credits ↗", "Créditos de las fotografías ↗"],
 ] as const;

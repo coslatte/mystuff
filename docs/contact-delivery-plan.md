@@ -14,7 +14,7 @@ listed at the end. Telegram is implemented and disabled by default.
 - `src/frontend/src/pages/index.astro` opens `/contact` from its contact action.
 - `src/frontend/src/services/api.ts` owns browser API requests and `ApiError`.
 - `src/frontend/src/types/index.ts` aliases generated OpenAPI types.
-- `src/frontend/src/lib/api/README.md` describes contract generation.
+- `src/frontend/src/types/api/README.md` describes contract generation.
 - `docs/frontend/architecture.md` requires Astro pages, React islands for state,
   and updates to its file index when frontend files change.
 - `src/backend/src/main/java/com/cosmiclatte/dev/portfolio/` already contains

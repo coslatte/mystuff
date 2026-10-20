@@ -1,0 +1,104 @@
+.music-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 0.6fr);
+  align-items: start;
+  gap: 3rem;
+  padding: clamp(1.5rem, 3vw, 3rem);
+  border-bottom: 2px solid var(--color-brut-black);
+  background: var(--color-brut-surface);
+}
+.music-intro > :first-child {
+  min-width: 0;
+}
+.music-intro-description {
+  max-width: none;
+}
+.music-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.music-platforms {
+  padding-left: 2rem;
+  border-left: 2px solid var(--color-brut-black);
+}
+.music-social-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: 0.65rem;
+}
+.music-action {
+  display: inline-flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.75rem;
+  border: 2px solid var(--color-brut-black);
+  background: var(--color-brut-inverse);
+  color: var(--color-brut-on-inverse);
+  padding: 0.65rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.music-action::after {
+  content: "↓";
+}
+.music-action--secondary {
+  background: var(--color-brut-surface);
+  color: var(--color-brut-black);
+}
+.music-action:hover,
+.music-action:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 3px 3px 0 var(--color-brut-black);
+}
+.music-action:focus-visible {
+  outline: 3px solid var(--color-brut-blue);
+  outline-offset: 3px;
+}
+/* Instant jumps on /music so in-page anchors land without mid-scroll layout shifts. */
+html:has(.music-page) {
+  scroll-behavior: auto !important;
+}
+
+.music-catalog {
+  scroll-margin-top: 1rem;
+  border-bottom: 2px solid var(--color-brut-black);
+}
+.music-catalog-header {
+  display: flex;
+  align-items: baseline;
+  gap: 2rem;
+  padding: 1.25rem clamp(1rem, 3vw, 3rem);
+  border-bottom: 2px solid var(--color-brut-black);
+  background: var(--color-brut-surface);
+}
+.music-catalog-header h2 {
+  margin: 0;
+  font-weight: 800;
+}
+@media (max-width: 1023px) {
+  .music-intro {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 2rem 1.25rem;
+  }
+  .music-platforms {
+    padding: 1.5rem 0 0;
+    border-top: 2px solid var(--color-brut-black);
+    border-left: 0;
+  }
+  .music-actions {
+    grid-template-columns: 1fr;
+  }
+  .music-catalog-header {
+    display: block;
+  }
+  .music-catalog-header h2 {
+    margin-top: 0.5rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .music-action { transition: none; }
+}

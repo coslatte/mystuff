@@ -1,21 +1,8 @@
 ---
-import { messages } from "../lib/i18n/catalog";
 import Layout from "../layouts/Layout.astro";
-import LocalizedText from "../components/LocalizedText.astro";
-import MusicSection from "../components/MusicSection";
-import SocialButton from "../components/SocialButton.astro";
-import MusicJourney from "../components/MusicJourney.astro";
-import "../styles/music-page.css";
-
-const socials = [
-  { name: "soundcloud", url: "https://soundcloud.com/cosmiclattemusic" },
-  { name: "spotify", url: "https://open.spotify.com/intl-es/artist/35cspPwQYNmbLf76EbI0oP" },
-  { name: "bandcamp", url: "https://cosmiclatteedm.bandcamp.com/" },
-  { name: "youtube", url: "https://www.youtube.com/@cosmiclattemusic" },
-  { name: "x", url: "https://x.com/CosmicLatteEdm" },
-  { name: "linktree", url: "https://linktr.ee/CosmicLatteEdm" },
-  { name: "telegram", url: "https://t.me/cosmiclatteofficialchannel" },
-] as const;
+import MusicIntro from "../components/music/MusicIntro.astro";
+import MusicCatalog from "../components/music/MusicCatalog.astro";
+import MusicJourney from "../components/music/MusicJourney.astro";
 ---
 
 <Layout
@@ -23,34 +10,9 @@ const socials = [
   description="Original releases, sound design, and the musical influences behind an experimental electronic practice."
 >
   <div class="music-page">
-    <section class="music-intro" aria-labelledby="music-title">
-      <div>
-        <p class="brut-label"><LocalizedText id={messages.music.section01Music} /></p>
-        <h1 id="music-title" class="mt-4 font-display font-black leading-none tracking-tighter"><LocalizedText id={messages.music.introTitle} /></h1>
-        <p class="mt-5 max-w-2xl text-base leading-7"><LocalizedText id={messages.music.introDescription} /></p>
-        <div class="mt-5 flex flex-wrap gap-4">
-          <a class="editorial-link" href="#music-catalog"><LocalizedText id={messages.music.listenReleases} /></a>
-          <a class="editorial-link" href="#journey-title"><LocalizedText id={messages.music.exploreJourney} /></a>
-        </div>
-      </div>
-      <nav class="music-platforms" aria-label="Music platforms" data-i18n-aria-label={messages.music.musicPlatforms}>
-        <h2 class="brut-label mb-4"><LocalizedText id={messages.music.findMusic} /></h2>
-        <div class="music-social-grid">
-          {socials.slice(0, 4).map((social) => <SocialButton name={social.name} url={social.url} />)}
-        </div>
-        <div class="mt-4 flex flex-wrap gap-4 font-mono text-xs">
-          {socials.slice(4).map((social) => <a class="editorial-link" href={social.url} target="_blank" rel="noreferrer">{social.name} ↗</a>)}
-        </div>
-      </nav>
-    </section>
+    <MusicIntro />
 
-    <section id="music-catalog" class="music-catalog" aria-labelledby="catalog-title">
-      <header class="music-catalog-header">
-        <p class="brut-label">02 / releases &amp; work in progress</p>
-        <h2 id="catalog-title"><LocalizedText id={messages.music.releaseSketches} /></h2>
-      </header>
-      <MusicSection client:load />
-    </section>
+    <MusicCatalog />
 
     <MusicJourney />
   </div>

@@ -52,7 +52,7 @@ current locale list in `src/frontend/src/lib/i18n/types.ts` before editing.
 
 ## Existing bilingual content
 
-Some editorial content, including `src/frontend/src/lib/music-journey-copy.ts`,
+Some editorial content, including `src/frontend/src/data/music-journey-copy.ts`,
 stores authored English and Spanish pairs instead of catalog keys. Preserve
 both authored versions. When one side changes, update its paired translation
 and provide the equivalent copy for French, German, and Japanese through the

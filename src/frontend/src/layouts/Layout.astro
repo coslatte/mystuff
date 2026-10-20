@@ -1,10 +1,10 @@
 ---
 import { ClientRouter } from "astro:transitions";
-import Navbar from "../components/Navbar.astro";
-import Footer from "../components/Footer.astro";
-import BootScreen from "../components/BootScreen.astro";
-import MorphlingCursor from "../components/MorphlingCursor.astro";
-import RouteCurtain from "../components/RouteCurtain.astro";
+import Navbar from "../components/shell/Navbar.astro";
+import Footer from "../components/shell/Footer.astro";
+import BootScreen from "../components/loading/BootScreen.astro";
+import MorphlingCursor from "../components/shell/MorphlingCursor.astro";
+import RouteCurtain from "../components/loading/RouteCurtain.astro";
 import "../styles/global.css";
 
 interface Props {
@@ -94,8 +94,8 @@ const socialImage = new URL("/images/previews/og.png", Astro.site);
 </html>
 
 <script>
-  import { writeText } from "../lib/storage";
-  import { transitionTheme } from "../lib/theme-transition";
+  import { writeText } from "../services/storage";
+  import { transitionTheme } from "../browser/shell/theme-transition";
 
   let cancelThemeTransition = () => {};
 

@@ -1,0 +1,33 @@
+---
+import { messages } from "../../lib/i18n/catalog";
+import LocalizedText from "../shared/LocalizedText.astro";
+import SocialButton from "../shared/SocialButton.astro";
+import "../../styles/music/music-page.css";
+const socials = [
+  { name: "soundcloud", url: "https://soundcloud.com/cosmiclattemusic" },
+  { name: "spotify", url: "https://open.spotify.com/intl-es/artist/35cspPwQYNmbLf76EbI0oP" },
+  { name: "bandcamp", url: "https://cosmiclatteedm.bandcamp.com/" },
+  { name: "youtube", url: "https://www.youtube.com/@cosmiclattemusic" },
+  { name: "x", url: "https://x.com/CosmicLatteEdm" },
+  { name: "linktree", url: "https://linktr.ee/CosmicLatteEdm" },
+  { name: "telegram", url: "https://t.me/cosmiclatteofficialchannel" },
+] as const;
+---
+
+<section class="music-intro" aria-labelledby="music-title">
+  <div>
+    <p class="brut-label"><LocalizedText id={messages.music.section01Music} /></p>
+    <h1 id="music-title" class="mt-4 font-display font-black leading-none tracking-tighter"><LocalizedText id={messages.music.introTitle} /></h1>
+    <p class="music-intro-description mt-5 text-base leading-7"><LocalizedText id={messages.music.introDescription} /></p>
+    <div class="music-actions mt-5 grid gap-3">
+      <a class="music-action" href="#music-catalog"><LocalizedText id={messages.music.listenReleases} /></a>
+      <a class="music-action music-action--secondary" href="#journey-title"><LocalizedText id={messages.music.exploreJourney} /></a>
+    </div>
+  </div>
+  <nav class="music-platforms" aria-label="Music platforms" data-i18n-aria-label={messages.music.musicPlatforms}>
+    <h2 class="brut-label mb-4"><LocalizedText id={messages.music.findMusic} /></h2>
+    <div class="music-social-grid">
+      {socials.map((social) => <SocialButton name={social.name} url={social.url} />)}
+    </div>
+  </nav>
+</section>

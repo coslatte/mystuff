@@ -1,0 +1,66 @@
+---
+import { messages } from "../../lib/i18n/catalog";
+import "../../styles/loading/boot-screen.css";
+import LocalizedText from "../shared/LocalizedText.astro";
+import { splashFrame } from "../../lib/loading/frame";
+import { interiorEdges } from "../../lib/graphics/recursion/subdivide";
+
+/* The server frame is visible before the client bundle can start. */
+
+const { cells, ink } = splashFrame(0);
+const edges = interiorEdges(cells);
+---
+
+<div
+  class="boot-screen"
+  data-boot-screen
+  role="progressbar"
+  aria-label="loading cosmiclatte" data-i18n-aria-label={messages.loading.application}
+  aria-valuemin="0"
+  aria-valuemax="100"
+  aria-valuenow="0"
+  aria-valuetext="waking up" data-i18n-aria-valuetext={messages.loading.starting} data-i18n-aria-label={messages.loading.application}
+>
+  <span class="boot-screen__mark" aria-hidden="true">cosmiclatte</span>
+
+  <div class="boot-stage" data-boot-frame>
+    <div class="boot-stage__fallback" data-boot-fallback aria-hidden="true">
+      {
+        cells.map((cell, index) => (
+          <div
+            class={`boot-rect boot-rect--${ink[index] ? "ink" : "paper"}`}
+            style={`left:${cell.x0 * 100}%;top:${cell.y0 * 100}%;width:${(cell.x1 - cell.x0) * 100}%;height:${(cell.y1 - cell.y0) * 100}%`}
+          />
+        ))
+      }
+      <svg class="boot-grid" viewBox="0 0 1 1" preserveAspectRatio="none">
+        {edges.map(edge => <line x1={edge.x1} y1={edge.y1} x2={edge.x2} y2={edge.y2} vector-effect="non-scaling-stroke" />)}
+      </svg>
+    </div>
+    <canvas class="boot-stage__canvas" data-boot-canvas aria-hidden="true"></canvas>
+  </div>
+
+  <div class="boot-readout">
+    <!--
+      A bare percentage means nothing on its own, so the stage is carried in
+      `aria-valuetext` and the visible label is decorative. Announcing the text
+      separately would double up every time the value changes.
+    -->
+    <span class="boot-percent" data-boot-percent aria-hidden="true">0%</span>
+  <span class="boot-stage-label" data-boot-stage aria-hidden="true"><LocalizedText id={messages.loading.starting} /></span>
+  </div>
+
+  <div class="boot-bar" aria-hidden="true">
+    <div class="boot-bar__fill" data-boot-bar></div>
+  </div>
+</div>
+
+<script>
+  import { startBootScreen } from "../../browser/loading/boot-controller";
+
+  // `/loading` drives the overlay itself so it can replay, and two controllers on
+  // one overlay would each tear down the other's work.
+  if (!document.documentElement.hasAttribute("data-boot-replay")) {
+    startBootScreen();
+  }
+</script>

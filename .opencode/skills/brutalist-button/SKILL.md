@@ -11,7 +11,7 @@ name slides out on hover.
 
 ## Source of truth
 
-CSS: `src/frontend/src/styles/brutal-button.css`, imported from
+CSS: `src/frontend/src/styles/shared/brutal-button.css`, imported from
 `src/frontend/src/styles/global.css`. Read the values there rather than repeating
 them here; they change.
 

@@ -1,23 +1,9 @@
 ---
-import { messages } from "../lib/i18n/catalog";
 import Layout from "../layouts/Layout.astro";
-import Hero from "../components/Hero.astro";
-import FluidPanel from "../components/FluidPanel.astro";
-import LinkPreview from "../components/LinkPreview.astro";
-import LocalizedText from "../components/LocalizedText.astro";
-
-const channels = [
-  { name: "3Blue1Brown", url: "https://www.youtube.com/@3blue1brown", note: messages.home.mathChannelNote },
-  { name: "Veritasium", url: "https://www.youtube.com/@veritasium", note: messages.home.scienceChannelNote },
-  { name: "Fireship", url: "https://www.youtube.com/@Fireship", note: messages.home.techChannelNote },
-  { name: "Juja", url: "https://www.youtube.com/@jujalag", note: messages.home.entertainmentChannelNote },
-] as const;
-
-const background = [
-  { label: messages.home.education, text: messages.home.educationDescription },
-  { label: messages.home.research, text: messages.home.researchDescription },
-  { label: messages.home.languages, text: messages.home.spokenLanguages },
-] as const;
+import Hero from "../components/home/Hero.astro";
+import HomeAbout from "../components/home/HomeAbout.astro";
+import HomeInterests from "../components/home/HomeInterests.astro";
+import ContactCallout from "../components/home/ContactCallout.astro";
 ---
 
 <Layout
@@ -27,65 +13,9 @@ const background = [
 >
   <Hero />
 
-  <section id="about" class="overflow-x-clip border-b-2 border-brut-black bg-brut-surface">
-    <div class="grid laptop:grid-cols-[minmax(15rem,0.8fr)_minmax(0,1.6fr)]">
-      <div class="relative isolate overflow-hidden border-b-2 border-brut-black bg-brut-bg p-6 tablet:p-8 laptop:border-b-0 laptop:border-r-2 laptop:p-10">
-        <FluidPanel />
-        <p class="brut-label relative text-center"><LocalizedText id={messages.home.aboutSection} /></p>
-        <h2 class="relative mx-auto mt-8 max-w-lg text-center font-display font-black leading-[1.05] tracking-tighter">
-          <LocalizedText id={messages.home.aboutTitle} />
-        </h2>
-        <img src="https://github.com/coslatte.png?size=800" alt="pfp"
-          class="profile-photo relative mx-auto mt-8 aspect-square border-2 border-brut-black bg-brut-soft object-cover" />
-      </div>
-      <div class="grid gap-8 p-6 tablet:p-8 laptop:p-10">
-        <p class="max-w-3xl text-lg leading-relaxed tablet:text-xl">
-          <LocalizedText id={messages.home.aboutDescription} />
-        </p>
-        {background.map((item) => (
-          <div class="grid gap-3 border-t-2 border-brut-black pt-6 tablet:grid-cols-[8rem_1fr] tablet:gap-6">
-            <p class="brut-label"><LocalizedText id={item.label} /></p>
-            <p class="max-w-2xl leading-7"><LocalizedText id={item.text} /></p>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
+  <HomeAbout />
 
-  <section class="border-b-2 border-brut-black bg-brut-subtle">
-    <div class="border-b-2 border-brut-black p-6 tablet:p-8 laptop:p-10">
-      <p class="brut-label"><LocalizedText id={messages.home.section02OutsideTheEditor} /></p>
-      <h2 class="mt-3 font-display font-black tracking-tighter"><LocalizedText id={messages.home.whatKeepsMeAwake} /></h2>
-    </div>
-    <div class="grid laptop:grid-cols-2">
-      <article class="border-b-2 border-brut-black p-6 tablet:p-8 laptop:border-b-0 laptop:border-r-2 laptop:p-10">
-        <p class="brut-label"><LocalizedText id={messages.home.listening} /></p>
-        <h3 class="mt-3 font-display font-bold tracking-tight"><LocalizedText id={messages.home.musicFromEveryAngle} /></h3>
-        <p class="mt-4 max-w-xl leading-7">
-          <LocalizedText id={messages.home.musicInterestsDescription} />
-        </p>
-        <a class="editorial-link mt-6 inline-flex" href="/music"><LocalizedText id={messages.home.hearMyMusic} /> <span aria-hidden="true">↗</span></a>
-      </article>
-      <article class="p-6 tablet:p-8 laptop:p-10">
-        <p class="brut-label"><LocalizedText id={messages.home.freeTime} /></p>
-        <h3 class="mt-3 font-display font-bold tracking-tight"><LocalizedText id={messages.home.whenIMNotWorking} /></h3>
-        <p class="mt-4 max-w-xl leading-7">
-          <LocalizedText id={messages.home.hobbiesDescription} />
-        </p>
-        <p class="mt-5 max-w-xl leading-7">
-          <LocalizedText id={messages.home.creatorsIKeepComingBackTo} />
-            {" "}{channels.map((channel, index) => <Fragment>{index > 0 ? ", " : ""}<LinkPreview href={channel.url} note={channel.note}>{channel.name}</LinkPreview></Fragment>)}.
-        </p>
-      </article>
-    </div>
-  </section>
+  <HomeInterests />
 
-  <section class="flex flex-col gap-5 bg-brut-inverse p-6 text-brut-on-accent tablet:flex-row tablet:items-center tablet:justify-between tablet:p-8 laptop:p-10">
-    <div>
-      <p class="brut-label inline-block bg-brut-surface px-2 py-1"><LocalizedText id={messages.contact.section03Contact} /></p>
-      <h2 class="mt-2 font-display font-black tracking-tighter"><LocalizedText id={messages.contact.haveSomethingInMind} /></h2>
-      <p class="mt-3 font-mono text-sm text-neutral-300"><LocalizedText id={messages.home.locationAndPhone} /></p>
-    </div>
-    <a href="/contact" class="border-2 border-white px-5 py-3 font-mono font-bold text-brut-on-accent transition-colors hover:bg-white hover:text-brut-inverse focus-visible:bg-white focus-visible:text-brut-inverse"><LocalizedText id={messages.common.contact} /> <span aria-hidden="true">↗</span></a>
-  </section>
+  <ContactCallout />
 </Layout>

@@ -1,0 +1,24 @@
+---
+/*
+ * The ink behind the "a little about myself" panel on `/`.
+ *
+ * Alpha lets the ink sit over the panel paper without an opaque rectangle.
+ */
+---
+
+<div class="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
+  <canvas data-fluid-panel class="pointer-events-auto block h-full w-full touch-none"></canvas>
+</div>
+
+<script>
+  import { mountFluidPanel } from "../../browser/experiments/fluid-panel";
+
+  // Released on the way out, because a loop left running paints into a canvas the
+  // router has already detached.
+  const canvas = document.querySelector<HTMLCanvasElement>("[data-fluid-panel]");
+  if (canvas && canvas.dataset.bound !== "true") {
+    canvas.dataset.bound = "true";
+    const release = mountFluidPanel(canvas);
+    document.addEventListener("astro:before-swap", release, { once: true });
+  }
+</script>

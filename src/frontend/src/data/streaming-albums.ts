@@ -1,7 +1,19 @@
 import type { Album, AlbumLink, SoundCloudAlbum, StreamingPlatform } from "../types";
 
 // Order shown in the "listen on" selector.
-export const STREAMING_PLATFORMS: StreamingPlatform[] = ["soundcloud", "spotify"];
+export const STREAMING_PLATFORMS: StreamingPlatform[] = ["soundcloud", "spotify", "youtube-music", "apple-music"];
+
+export const FEATURED_ALBUM: Album = {
+  id: "m0tion",
+  title: "m0Tion",
+  setType: "album",
+  links: [
+    { platform: "spotify", url: "https://open.spotify.com/album/5mXZrAK3715JxoJrzSNQtF?si=0S-37FfpRZi6IAy73pPh-A" },
+    { platform: "youtube-music", url: "https://music.youtube.com/playlist?list=OLAK5uy_nm8swcmR4kB1pVhsfly7eQGYg9NVHssB4&si=01lWSdERGk5Qlp9Z" },
+    { platform: "apple-music", url: "https://music.apple.com/us/album/m0tion/6818121227" },
+    { platform: "soundcloud", url: "https://soundcloud.com/cosmiclattemusic/sets/m0tion" },
+  ],
+};
 
 // The API sends one record per release carrying both platform URLs, so this only
 // splits them into links.
@@ -51,7 +63,11 @@ export function spotifyEmbedUrl(url: string): string {
 }
 
 export function embedSrcFor(link: AlbumLink): string {
-  return link.platform === "spotify" ? spotifyEmbedUrl(link.url) : soundCloudEmbedUrl(link.url);
+  if (link.platform === "spotify") return spotifyEmbedUrl(link.url);
+  if (link.platform === "soundcloud") return soundCloudEmbedUrl(link.url);
+  if (link.platform === "apple-music") return link.url.replace("music.apple.com", "embed.music.apple.com");
+  const list = new URL(link.url).searchParams.get("list");
+  return list ? `https://www.youtube.com/embed/videoseries?list=${encodeURIComponent(list)}` : link.url;
 }
 
 // SoundCloud's oEmbed reports 450px for every set, which leaves empty space

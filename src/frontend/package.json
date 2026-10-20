@@ -10,11 +10,12 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check && bun scripts/i18n-source-copy.mjs",
+    "check": "astro check && bun scripts/architecture-check.mjs && bun scripts/i18n-source-copy.mjs",
+    "check:architecture": "bun scripts/architecture-check.mjs",
     "check:refactor": "bun scripts/refactor-check.mjs",
     "check:i18n": "node scripts/i18n-check.mjs",
     "check:responsive": "node scripts/responsive-check.mjs",
-    "gen:api": "openapi-typescript openapi.json -o src/lib/api/schema.ts",
+    "gen:api": "openapi-typescript openapi.json -o src/types/api/schema.ts",
     "astro": "astro"
   },
   "dependencies": {

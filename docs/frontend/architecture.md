@@ -91,19 +91,20 @@ state. If you add another island, add it here too.
 
 `src/types/index.ts` aliases the OpenAPI schema instead of restating the Java
 DTOs. After changing a DTO or a controller signature, run `bun run gen:api` with
-the API up. Details in `src/lib/api/README.md`.
+the API up. Details in `src/types/api/README.md`.
 
 ### Rule 5 — The server/client line is not negotiable
 
-`.astro` must never import anything browser-only, and client bundles must never
-reach a server module.
+Astro frontmatter must never import browser controllers. Processed component
+scripts may import them. Client bundles must never reach a server module.
 
 | Module | Side | Why it matters |
 | --- | --- | --- |
 | `services/github.ts` | **server only** | reads `GITHUB_TOKEN`, runs during the render of `/coding` |
-| `lib/now-playing-element.ts` | **browser only** | `customElements.define`; no computed style on the server |
-| `lib/morphling-cursor.ts` | **browser only** | canvas, `requestAnimationFrame`, pointer events; a prerender has nothing to drive |
-| `lib/three/*`, `lib/sim/*` | **browser only** | canvas, WebGL, `requestAnimationFrame` |
+| `browser/shell/now-playing-element.ts` | **browser only** | `customElements.define`; no computed style on the server |
+| `browser/shell/morphling-cursor.ts` | **browser only** | canvas, `requestAnimationFrame`, pointer events; a prerender has nothing to drive |
+| `browser/` | **browser only** | DOM controllers, canvas painters and animation lifecycles |
+| `lib/graphics/` | **server or client** | pure geometry, simulation and color |
 
 An island's module body also runs while the page is being rendered on the
 server. Read the theme through a `useRef` on first paint, never during render.
@@ -133,8 +134,8 @@ Format, so the file stays skimmable:
   not self-explanatory.
 - **No comment banners that describe a diff**, no commented-out code.
 
-Two things already violate the one-header rule. `lib/sim/vents.ts` and
-`lib/sim/layouts.ts` carry near-identical preambles opening with "the aesthetic
+Two things already violate the one-header rule. `lib/graphics/sim/vents.ts` and
+`lib/graphics/sim/layouts.ts` carry near-identical preambles opening with "the aesthetic
 layer, deliberately kept out of the solver", and they are not two concerns that
 happen to share a preamble — `vents.ts` is the abandoned earlier iteration of
 the same module and `layouts.ts` replaced it. `vents.ts` is dead; see
@@ -148,7 +149,7 @@ partition and hides application content before the client bundle executes.
 Without JavaScript the marker is absent and the page remains usable. A 6.5s
 inline timeout removes the marker and overlay if the client bundle fails.
 
-Boot and route loading share the Canvas 2D painter in `lib/route-curtain.ts`.
+Boot and route loading share the Canvas 2D painter in `browser/loading/route-curtain.ts`.
 It reads theme properties, draws at most 30fps, caps DPR at 2, stops in hidden
 tabs, and holds its frame under reduced motion. Shared cuts move through the
 partition engine; no WebGL download is required to animate loading.
@@ -156,7 +157,7 @@ partition engine; no WebGL download is required to animate loading.
 Future WebGL scenes must load through dynamic imports after first paint and
 register teardown through `createCleanupRegistry`. The old three.js splash
 scene and its custom Vite chunk warning limit were removed when the loading
-painter became 2D. `lib/playback-canvas.ts` also remains 2D.
+painter became 2D. `browser/audio/playback-canvas.ts` also remains 2D.
 
 ### Rule 8 — A partition draws its boundaries once, from the geometry
 
@@ -164,7 +165,7 @@ Anything that tiles a rectangle gets its cells from `lib/recursion/subdivide` an
 its lines from `interiorEdges`. Cells never carry a border.
 
 The theme curtain is an alpha mask rather than a geometric partition. Its regular
-Bayer pixel grid lives in `lib/theme-transition.ts`; it has no cell boundaries to draw.
+Bayer pixel grid lives in `browser/shell/theme-transition.ts`; it has no cell boundaries to draw.
 
 A border on each cell draws every interior line twice, once from each side, so the
 grid comes out at double weight inside and single weight at the frame. Worse, each
@@ -194,48 +195,67 @@ and both children from one shared cut. This permits continuous motion without
 interpolating unrelated leaf rectangles. Phase zero reproduces the static seed;
 a cut ratio of `0.5` stays a regular grid at every phase.
 
+### Rule 9 — Routes compose sections
+
+Page templates own route metadata, rendering mode, response headers, server data
+fetching and the order of their sections. Keep substantial section markup and its
+local presentation data in named Astro components. Small route shells can mount
+existing islands and shared headers directly without another wrapper component.
+
+Do not put `<script>`, `<style>` or `style` attributes in `pages/`. Browser behavior
+belongs to a browser module loaded by its owning component through a processed
+`<script src="...">`. Stylesheets belong in `styles/` and are imported by the
+component. Tailwind utilities remain appropriate for markup layout.
+
+Data-driven inline styles are allowed inside components. `GithubProfile.astro`
+sets calendar columns, weekday rows and cell colors from GitHub data; those values
+cannot be represented by a fixed stylesheet. Its tooltip controller stays separate
+from the pure SSR label and placement helpers in `lib/coding/contribution-tip.ts`.
+
+The section extraction follows route boundaries: home biography, interests and
+contact callout; coding introduction, experience, skills, contribution profile and
+repositories; music introduction and catalog; experiment index; loading workbench.
+Content, message references, IDs, section order and island hydration directives
+stay with the extracted markup. GitHub requests and cache headers stay on `/coding`.
+Validate the extraction with `bun run check` and `bun run build`.
+
 ## Dependency direction
 
-Imports point downward only. Nothing in a row may import from a row below it
-being edited to reach something in a row above.
+Keep framework, browser and external-system code at explicit boundaries.
 
-```
-  pages/          routes; the only place server data fetching happens
-     |            may import: layouts, components, services, lib, data, types
-     v
-  layouts/        document shell
-     |            may import: components, styles
-     v
-  components/     .astro = server UI, .tsx = client island
-     |            may import: hooks, services, lib, data, types
-     v
-  hooks/          client state and lifecycle
-     |            may import: services, lib, data, types
-     v
-  services/       I/O and long-lived mutable state
-     |            may import: lib, types
-     v
-  lib/            framework-free, no DOM assumptions beyond what the name claims
-     |            may import: types
-     v
-  data/           pure domain transforms over API types
-     |            may import: types
-     v
-  types/          generated contract aliases + client domain types
+```text
+pages/       -> layouts, components, services, lib, data, types
+layouts/     -> components, styles
+components/  -> components, hooks, browser, services, lib, data, types, styles
+hooks/       -> hooks, services, lib, data, types
+browser/     -> browser, services, lib, data, types, styles
+services/    -> services, lib, data, types
+lib/         -> lib, data, types
+data/        -> data, types
+types/       -> types
 ```
 
-Two consequences worth stating, because breaking them is easy:
+Astro frontmatter runs on the server. Import browser controllers only inside
+processed component scripts. Layout scripts may initialize browser controllers;
+layout frontmatter imports components and styles. React island modules also run
+during SSR, so browser effects belong in effects or callbacks.
 
-- `lib/` never imports `hooks/`, `services/` or `components/`. If a lib module
-  needs one of them, it is not a lib module. `lib/now-playing-element.ts`
-  currently reaches `services/player` and is the known exception: it is the
-  bridge from the singleton to the DOM, and it is browser-only.
-- `data/` is pure. No fetching, no storage, no timers. That is what makes
-  `streaming-albums.ts` checkable by reading it.
+`lib/` contains framework-free calculations and transformations. It cannot import
+React, hooks, services or browser controllers, or access browser globals. Storage,
+locale state and visitor identity belong in `services/`; DOM localization belongs
+in `browser/shell/`; the React locale subscription belongs in `hooks/`.
+`services/github.ts` is server-only and must never be reachable from client code.
+Playback has one singleton in `services/player.ts`, shared by React and the footer
+custom element through their own adapters.
 
-There are **no path aliases**. Imports are relative, which is exactly why the
-layers above are shallow. Adding aliases would let a deep import reach sideways
-and silently break the direction above.
+Use direct relative imports, without aliases or re-export barrels. Group large
+layers by responsibility and keep small layers flat. Shared UI must not depend on
+page-specific UI. Browser controllers may share painters across responsibilities,
+such as the footer using the audio painters.
+
+`bun run check:architecture` checks source imports, layer direction, browser globals
+in production libraries, browser imports in Astro frontmatter, route composition
+and client access to GitHub's server service. It runs inside `bun run check`.
 
 ## Where to go
 
@@ -247,253 +267,244 @@ The two questions that come up constantly.
 | --- | --- | --- |
 | what a page fetches | `pages/*.astro` frontmatter | `services/` for the transport |
 | how the API is called | `services/api.ts` | `types/index.ts` for the shape |
-| the site's own audio | `services/player.ts` | `lib/playback-canvas.ts` to paint it |
-| an embed (SoundCloud/Spotify) | `services/embed-players.ts` | `lib/playback-ui.ts` for its labels |
-| loading / error / retry UI | `hooks/useResource.ts` | `components/ErrorNotice.tsx` |
+| the site's own audio | `services/player.ts` | `browser/audio/playback-canvas.ts` to paint it |
+| an embed (SoundCloud/Spotify) | `services/embed-players.ts` | `lib/audio/playback-ui.ts` for its labels |
+| loading / error / retry UI | `hooks/useResource.ts` | `components/shared/ErrorNotice.tsx` |
 | an optimistic mutation | `lib/optimistic.ts` | the caller's `apply`/`rollback` |
 | a visual surface | `styles/global.css` `@utility` block | the call site for colour and layout |
 | heading size | `styles/global.css` base heading scale | heading level (`h1`–`h6`), with `.hero-title` as the display exception |
-| a colour choice | `lib/color-theory.ts` | never a raw hex in a scene |
-| the splash | `lib/boot/` | `lib/boot/frame.ts` for the frame both renderers open on |
-| navigation loading feedback | `lib/route-curtain.ts` | `styles/route-curtain.css` for the surfaces |
-| the fluid / pigment page | `lib/sim/` | `lib/pigment-settings.ts` for the knobs |
-| its zoom, pan or pointer | `lib/sim/camera.ts` | `PigmentFlow.tsx` for the drawImage |
-| the subdivision page | `lib/recursion/subdivide.ts` | `components/RecursiveSubdivision.tsx` |
-| a WebGL scene | `lib/three/` | dynamic import it from a controller |
+| a colour choice | `lib/graphics/color-theory.ts` | never a raw hex in a scene |
+| the splash | `browser/loading/` | `lib/loading/frame.ts` for the frame both renderers open on |
+| navigation loading feedback | `browser/loading/route-curtain.ts` | `styles/loading/route-curtain.css` for the surfaces |
+| the fluid / pigment page | `browser/experiments/` and `lib/graphics/sim/` | `lib/graphics/pigment-settings.ts` for the knobs |
+| its zoom, pan or pointer | `lib/graphics/sim/camera.ts` | `PigmentFlow.tsx` for the drawImage |
+| the subdivision page | `lib/graphics/recursion/subdivide.ts` | `components/experiments/RecursiveSubdivision.tsx` |
+| browser resource teardown | `browser/shared/dispose.ts` | release resources from the owning controller |
 
 ### "How do I add a file?"
 
 Ask which row of the diagram it belongs in, then place it there. If two answers
 look equally right, the deciding question is **does it touch the DOM?** If yes it
-is a component, a hook or a service. If no it is `lib/` or `data/`.
+is a component, a hook or a browser controller. External I/O and persistent state
+belong in services. Pure calculations belong in `lib/`; editorial content and
+domain transforms belong in `data/`.
 
 When a directory outgrows its name, split the layer, not the convention —
 [ADR-006](#adr-006-layer-over-subfolder).
 
 ## File index
 
-One line per file. Read this before you move something.
+Paths are relative to `src/frontend/src/`. Large layers group files by
+responsibility. A component used by one area stays there; shared UI requires
+actual reuse. Create no empty groups or re-export barrels.
 
-### `src/pages/` — routes
-
-The sections are `/`, `/coding`, `/music`, `/contact` and `/experimentation`. See
-[ADR-012](#adr-012--the-routes-are-the-sections).
+### `pages/` — Routes
 
 | File | Role |
 | --- | --- |
-| `index.astro` | `/`. Profile, education, research, interests, contact callout linking to `/contact`, and the ink band. Prerendered. |
-| `contact.astro` | `/contact`. Static shell, mounts `ContactForm` for message submissions. |
-| `coding.astro` | `/coding`. Bicotex experience, work skills, SSR GitHub pinned repos + contribution calendar. |
-| `music.astro` | `/music`. Vertical composition of intro/platform links, the listening catalog, and the influence journey. |
-| `experimentation/index.astro` | `/experimentation`. Index of the experiments. |
-| `experimentation/spectral.astro` | Static shell, mounts `PigmentFlow`. |
-| `experimentation/subdivision.astro` | Static shell, mounts `RecursiveSubdivision`. |
-| `admin.astro` | `/admin`. Static shell, mounts `AdminUpload`. |
-| `loading.astro` | `/loading`. Dev workbench; nothing links to it. |
+| `admin.astro` | Unlisted upload console. |
+| `coding.astro` | SSR GitHub requests, repository mapping, cache headers and coding sections. |
+| `contact.astro` | Contact introduction and form island. |
+| `experimentation/index.astro` | Experiment index composition. |
+| `experimentation/spectral.astro` | Experiment header and PigmentFlow island. |
+| `experimentation/subdivision.astro` | Experiment header and RecursiveSubdivision island. |
+| `index.astro` | Home composition. |
+| `loading.astro` | Unlisted loading workbench. |
+| `music.astro` | Prerendered introduction, browser catalog and editorial journey. |
 
-### `src/layouts/`
+### `layouts/` — Document shell
 
 | File | Role |
 | --- | --- |
 | `Layout.astro` | html/head/body, mounts Navbar + BootScreen + Footer. Also the one place a page states how it is described and indexed: `description`, `noindex`, and the canonical/OG tags. |
 
-### `src/components/` — `.astro`, server-rendered
+### `components/` — Astro UI and React islands
 
 | File | Role |
 | --- | --- |
-| `BootScreen.astro` | First-visit splash. In the layout, so one copy covers all routes. |
-| `RouteCurtain.astro` | Navigation loading overlay. In the layout, persisted across swaps. |
-| `Navbar.astro` | Site navigation. |
-| `Footer.astro` | Compact contact footer, native shortcuts to the page's top and bottom, and the independently collapsible now-playing bar on every route. Shortcuts use a side rail on desktop and a labelled bottom dock on mobile; the audio bar sits above that dock. Contact links to `/contact` on every route except `/`, where the landing page has its own contact callout. Its hover fill starts at the pointer entry point. Only the player hides when idle; its fixed height sizes the spectrum. Styling is in `styles/footer.css`; pointer and player behavior is in `lib/footer.ts`. |
-| `Hero.astro` | `/` opening: the centered heading with a scrolling code fragment on the brutalist `code` plate and an FM wave on `soundwaves`. Nothing else; the ink band and the portrait belong to the about section in `index.astro`. Language sizing is in `styles/hero.css`. |
-| `FluidPanel.astro` | One decorative ink band. The solver and the picture are `lib/sim`; the component only mounts and releases it. One canvas per page, because the mount script runs once. |
-| `ExperimentHeader.astro` | Shared heading and back link for individual experiments. |
-| `RepoRow.astro` | One row in the `/coding` repos list. |
-| `InvertLink.astro` | Inline text link that turns blue on hover and focus. For a name inside a heading. |
-| `SocialButton.astro` | One outbound social link. |
-| `LinkPreview.astro` | One outbound link inside running text, using the `text-highlight` plate, with its `note` shown as a popover on hover and keyboard focus. The note stays real text in the document, so assistive tech reads it and the localization pass translates it; only its placement is hover-only. Styling is in `styles/link-preview.css`. |
-| `MusicJourney.astro` | `/music` influence history using the complete artist-authored English and Spanish copy from `lib/music-journey-copy.ts`. Early years and adolescence span both paths; later discoveries share time rows before converging in the full current-practice chapter. Mobile interleaves the same moments. Layout lives in `styles/music-journey.css`; SVG path lifecycle and geometry live in `lib/music-journey.ts`. Prose preserves the author's capitalization. Photos live in `public/images/influences`; `sources.json` and `credits.html` link to their source pages. |
-| `NowPlaying.astro` | Defines `<now-playing-el>`; the bridge to `lib/now-playing-element.ts`. |
-| `LanguageSelector.astro` | Shared navbar language select; the square bordered surface lives in `styles/language-selector.css`; the cursor target is the whole control. |
-| `MorphlingCursor.astro` | Persistent canvas overlay for the fine-pointer cursor treatment. |
-| `FluidPanel.astro` | The ink behind the `/` about panel. A canvas plus a mount call; released on `astro:before-swap`. |
+| `admin/AdminUpload.tsx` | `/admin` root. Key entry, song list, replace/delete. |
+| `admin/UploadQueue.tsx` | The upload list and its controls. |
+| `coding/CodingExperience.astro` | Employer, role and responsibilities. |
+| `coding/CodingIntro.astro` | Coding heading and GitHub profile link. |
+| `coding/CodingSkills.astro` | Coding skills and their local presentation data. |
+| `coding/GithubProfile.astro` | Server-rendered contribution calendar and profile; loads the browser tooltip module. |
+| `coding/PinnedRepositories.astro` | Pinned repository rows and unavailable state, receiving server-fetched repos. |
+| `coding/RepoRow.astro` | One row in the `/coding` repos list. |
+| `contact/ContactForm.tsx` | `/contact` form island with validation, stable retry references, and accessible delivery status. |
+| `experiments/controls.tsx` | The `Slider`/`Chips`/`Toggle`/`Panel` primitives both lab pages share. |
+| `experiments/ExperimentHeader.astro` | Shared heading and back link for individual experiments. |
+| `experiments/ExperimentIndex.astro` | Experiment index heading and study links. |
+| `experiments/PigmentControls.tsx` | The `/experimentation/spectral` panel. One slider per settings field. |
+| `experiments/PigmentFlow.tsx` | `/experimentation/spectral` root. Owns settings, camera, persistence and controls; mounts the browser board controller. |
+| `experiments/RecursiveSubdivision.tsx` | `/experimentation/subdivision` root. Pixel-snapped cells, grid layer, knobs. |
+| `home/ContactCallout.astro` | Home contact invitation linking to `/contact`. |
+| `home/FluidPanel.astro` | Home canvas; mounts and releases browser/experiments/fluid-panel.ts. |
+| `home/Hero.astro` | `/` opening: the centered heading with a scrolling code fragment on the brutalist `code` plate and an FM wave on `soundwaves`. Nothing else; the ink band and the portrait belong to `HomeAbout.astro`. Language sizing is in `styles/home/hero.css`. |
+| `home/HomeAbout.astro` | Home biography, background rows, portrait and fluid panel. |
+| `home/HomeInterests.astro` | Home music interests, hobbies and creator links. |
+| `loading/BootScreen.astro` | First-visit splash. In the layout, so one copy covers all routes. |
+| `loading/LoadingTracks.tsx` | Cold-start skeleton driven by `ServerPulse`. |
+| `loading/LoadingTracksLoop.tsx` | `/loading` island. Fake clock at 4x. |
+| `loading/LoadingWorkbench.astro` | Loading replay UI, `LoadingTracksLoop` island and processed replay script. |
+| `loading/RouteCurtain.astro` | Navigation loading overlay. In the layout, persisted across swaps. |
+| `loading/ServerPulse.tsx` | One pulsing stage dot. |
+| `music/AlbumCard.tsx` | One album plus its mounted embed. |
+| `music/CommentThread.tsx` | Comments for one track, with optimistic edits. |
+| `music/MusicCatalog.astro` | Catalog heading and the single `MusicSection` island. |
+| `music/MusicIntro.astro` | Music introduction, catalog/journey anchors and platform links. |
+| `music/MusicJourney.astro` | `/music` influence history using the complete artist-authored English and Spanish copy from `data/music-journey-copy.ts`. Early years and adolescence span both paths; later discoveries share time rows before converging in the full current-practice chapter. Mobile interleaves the same moments. Layout lives in `styles/music/music-journey.css`; SVG path lifecycle and geometry live in `browser/music/music-journey.ts`. Prose preserves the author's capitalization. Photos live in `public/images/influences`; `sources.json` and `credits.html` link to their source pages. |
+| `music/MusicSection.tsx` | The single `/music` interactive catalog island. Owns releases and embed selection, presents the first catalog release with large artwork, and opens its preview after data arrives without autoplay. Catalog order is curated, not a guarantee of release chronology. TrackCatalog owns songs and PlayerBar; AlbumCard owns each embed. |
+| `music/PlayerBar.tsx` | Transport + spectrum/waveform canvases. |
+| `music/StarRating.tsx` | Five-star input. |
+| `music/TrackBlock.tsx` | One track row: rating plus comments. |
+| `shared/ErrorNotice.tsx` | Error display plus retry. |
+| `shared/InvertLink.astro` | Inline text link that turns blue on hover and focus. For a name inside a heading. |
+| `shared/LinkPreview.astro` | One outbound link inside running text, using the `text-highlight` plate, with its `note` shown as a popover on hover and keyboard focus. The note stays real text in the document, so assistive tech reads it and the localization pass translates it; only its placement is hover-only. Styling is in `styles/shared/link-preview.css`. |
+| `shared/LocalizedText.astro` | Renders catalog-backed static copy from a semantic `MessageKey`, with English server output and client-side locale changes. |
+| `shared/SocialButton.astro` | One outbound social link. |
+| `shell/Footer.astro` | Compact contact footer, native shortcuts to the page's top and bottom, and the independently collapsible now-playing bar on every route. Shortcuts use a side rail on desktop and a labelled bottom dock on mobile; the audio bar sits above that dock. Contact links to `/contact` on every route except `/`, where the landing page has its own contact callout. Its hover fill starts at the pointer entry point. Only the player hides when idle; its fixed height sizes the spectrum. Styling is in `styles/shell/footer.css`; pointer and player behavior is in `browser/shell/footer.ts`. |
+| `shell/LanguageSelector.astro` | Shared navbar language select; the square bordered surface lives in `styles/shell/language-selector.css`; the cursor target is the whole control. |
+| `shell/MorphlingCursor.astro` | Persistent canvas overlay for the fine-pointer cursor treatment. |
+| `shell/Navbar.astro` | Site navigation. |
+| `shell/NowPlaying.astro` | Defines `<now-playing-el>`; the bridge to `browser/shell/now-playing-element.ts`. |
 
-### `src/styles/`
-
-| File | Role |
-| --- | --- |
-| `footer.css` | Shared footer, page shortcut dock, and mobile audio-player spacing. |
-| `hero.css` | Translated home heading sizing. |
-| `link-preview.css` | Link note popover presentation. |
-
-### `src/lib/`
-
-| File | Role |
-| --- | --- |
-| `footer.ts` | Footer contact hover origin, player toggle and persisted-route sync. |
-| `boot/replay.ts` | `/loading` replay schedule and repeat lifecycle. |
-
-### `src/components/` — `.tsx`, inside an island
-
-| File | Role |
-| --- | --- |
-| `MusicSection.tsx` | The single `/music` interactive catalog island. Owns releases and embed selection, presents the first catalog release with large artwork, and opens its preview after data arrives without autoplay. Catalog order is curated, not a guarantee of release chronology. TrackCatalog owns songs and PlayerBar; AlbumCard owns each embed. |
-| `ContactForm.tsx` | `/contact` form island with validation, stable retry references, and accessible delivery status. |
-| `AdminUpload.tsx` | `/admin` root. Key entry, song list, replace/delete. |
-| `PigmentFlow.tsx` | `/experimentation/spectral` root. Owns settings, camera, persistence and controls; mounts the browser board controller. |
-| `PigmentControls.tsx` | The `/experimentation/spectral` panel. One slider per settings field. |
-| `RecursiveSubdivision.tsx` | `/experimentation/subdivision` root. Pixel-snapped cells, grid layer, knobs. |
-| `controls.tsx` | The `Slider`/`Chips`/`Toggle`/`Panel` primitives both lab pages share. |
-| `LoadingTracksLoop.tsx` | `/loading` island. Fake clock at 4x. |
-| `PlayerBar.tsx` | Transport + spectrum/waveform canvases. |
-| `TrackBlock.tsx` | One track row: rating plus comments. |
-| `AlbumCard.tsx` | One album plus its mounted embed. |
-| `UploadQueue.tsx` | The upload list and its controls. |
-| `LoadingTracks.tsx` | Cold-start skeleton driven by `ServerPulse`. |
-| `ServerPulse.tsx` | One pulsing stage dot. |
-| `StarRating.tsx` | Five-star input. |
-| `CommentThread.tsx` | Comments for one track, with optimistic edits. |
-| `ErrorNotice.tsx` | Error display plus retry. |
-| `SubdivisionLab.tsx` | **Dead.** See [Dead code](#dead-code). |
-
-### `src/hooks/`
+### `browser/` — Browser controllers and painters
 
 | File | Role |
 | --- | --- |
-| `useResource.ts` | Resource-scoped loading, cancellation and optimistic patches; only the current request may publish a result. |
-| `useSongs.ts` | Track list plus the rating mutation. Also exports `applyVote`. |
+| `audio/playback-canvas.ts` | Browser spectrum and waveform painters; pure colors live in lib/audio/spectrum.ts. |
+| `coding/contribution-calendar.ts` | Browser-only contribution tooltip binding across Astro navigation; hides and releases the old tooltip before swaps. |
+| `experiments/fluid-filters.ts` | Browser grain and halftone canvas filters. |
+| `experiments/fluid-panel.ts` | Home canvas controller, observers, animation and teardown. |
+| `experiments/pigment-board.ts` | **Browser only.** Mounts one simulation, canvas layers, frame loop, resize observer and pointer listeners; exposes update/reset/dispose. |
+| `loading/boot-controller.ts` | Every-load splash lifecycle, browser readiness, replay and bounded teardown. |
+| `loading/replay.ts` | `/loading` replay schedule and repeat lifecycle. |
+| `loading/route-curtain.ts` | Browser navigation overlay, loading painter, readiness and teardown. |
+| `music/music-journey.ts` | Browser journey connector geometry, resize handling and teardown. |
+| `shared/dispose.ts` | `createCleanupRegistry` and `frameBudget`. |
+| `shell/footer.ts` | Footer contact hover origin, player toggle and persisted-route sync. |
+| `shell/localization.ts` | DOM translations and accessible attributes across Astro navigation. |
+| `shell/morphling-cursor.ts` | **Browser only.** Morphs local outline and center paths into an I-beam over editable fields or a tip-anchored arrow over ranges, sliders, and precision surfaces; caps other control outlines at 800 × 600 pixels. |
+| `shell/now-playing-element.ts` | **Browser only.** The `<now-playing-el>` custom element. Flips `data-playing`, which is what shows the bar. |
+| `shell/theme-transition.ts` | Browser-only Bayer cover/reveal canvas for explicit theme changes, with cancellation and reduced-motion fallback. |
+
+### `hooks/` — React state and lifecycle
+
+| File | Role |
+| --- | --- |
 | `useAlbums.ts` | Album list, mapped through `toAlbums`. |
-| `useUploadQueue.ts` | One batch coordinator with two upload workers; React state and network I/O around the pure queue model. |
 | `usePlayer.ts` | Bridges the player singleton into React. |
+| `useResource.ts` | Resource-scoped loading, cancellation and optimistic patches; only the current request may publish a result. |
 | `useServerWarmup.ts` | Polls `/health` so the cold start can be narrated. |
-| `lib/i18n/useTranslations.ts` | Subscribes a React component to the current site language. |
+| `useSongs.ts` | Track list plus the rating mutation. Also exports `applyVote`. |
+| `useTranslations.ts` | React subscription to the locale service and typed translation functions. |
+| `useUploadQueue.ts` | One batch coordinator with two upload workers; React state and network I/O around the pure queue model. |
 
-### `src/services/`
+### `services/` — I/O and shared state
 
 | File | Role |
 | --- | --- |
 | `api.ts` | Typed client. Validates response envelopes, separates empty responses from required data, and shares decoding between fetch and XHR. |
-| `errors.ts` | Turns any thrown value into a user-facing message. |
-| `github.ts` | **Server only.** Pinned repos, validated daily contribution calendar, media images. |
-| `player.ts` | `PlayerEngine` singleton, waveform cache. |
 | `embed-players.ts` | SoundCloud and Spotify widget transports. |
+| `errors.ts` | Turns any thrown value into a user-facing message. |
+| `github.ts` | Shapes returned by `services/github.ts`. |
 | `locale.ts` | Shared, persisted browser locale for React islands and static pages. |
+| `pigment-settings.ts` | Persist and restore pigment settings through storage and the pure settings validator. |
+| `player.ts` | `PlayerEngine` singleton, waveform cache. |
+| `storage.ts` | Guarded browser storage reads and writes, safe to import during SSR. |
+| `visitor.ts` | Persistent visitor identity for ratings and comment ownership. |
 
-### `src/lib/`
-
-Framework-free unless the name says otherwise.
+### `lib/` — Pure logic
 
 | File | Role |
 | --- | --- |
-| `storage.ts` | `localStorage` with the three guards every caller needs. |
-| `theme-transition.ts` | Browser-only Bayer cover/reveal canvas for explicit theme changes, with cancellation and reduced-motion fallback. |
-| `visitor.ts` | Stable visitor id for rating and comment ownership. |
+| `audio/__tests__/playback-canvas.test.ts` | Checks spectrum color anchors, interpolation, silence and clipping. |
+| `audio/playback-ui.ts` | Glyphs and clock formatting shared by three toggles. |
+| `audio/spectrum.ts` | Pure dB-to-color interpolation for real and decorative spectra. |
+| `coding/__tests__/contribution-tip.test.ts` | Contribution tip.test. |
+| `coding/contribution-tip.ts` | Pure label and viewport placement for the `/coding` contribution hover tip. |
+| `graphics/__tests__/fm-wave.test.ts` | Checks the FM frequency sweep, the wave cycle and the scroll direction. |
+| `graphics/color-theory.ts` | OKLCh harmony palettes. |
+| `graphics/fm-wave.ts` | Pure geometry and frequency calculation for the hero's modulated sine wave. |
+| `graphics/paint-surface.ts` | Grid where overlapping pigment resolves into colour. |
+| `graphics/pigment-math.ts` | Kubelka-Munk mixing and its cache. |
+| `graphics/pigment-settings.ts` | Pure pigment settings, ranges, presets, validation and serialization. |
+| `graphics/recursion/subdivide.ts` | The partition itself. Exact tiling, plus its boundary list. |
+| `graphics/sim/camera.ts` | Zoom and pan as arithmetic on a normalised centre. |
+| `graphics/sim/field-view.ts` | Speed and curl as an RGBA diagnostic layer. |
+| `graphics/sim/fluid.ts` | Stable-fluids solver. No canvas, no DOM. |
+| `graphics/sim/layouts.ts` | Emitter layouts. Aesthetic, not physics. |
+| `graphics/sim/pigment-sim.ts` | Velocity + dye fields, layout, `PaintSurface`. |
+| `graphics/sim/tracers.ts` | Points carried by the field, drawn as streaks. |
+| `graphics/sim/vents.ts` | **Dead.** See [Dead code](#dead-code). |
+| `i18n/catalog.ts` | Generated message references and locale tables derived from the English schema. |
+| `i18n/de.ts` | German catalog implementation. |
+| `i18n/en.ts` | English source schema and interpolation parameters. |
+| `i18n/es.ts` | Spanish catalog implementation. |
+| `i18n/fr.ts` | French catalog implementation. |
+| `i18n/ja.ts` | Japanese catalog implementation. |
+| `i18n/journey.ts` | Editorial translations derived from paired journey copy. |
+| `i18n/translate.ts` | Typed catalog lookup and dynamic editorial translation lookup. |
+| `i18n/types.ts` | Locale, catalog and interpolation types derived from English. |
+| `loading/frame.ts` | Pure shared splash geometry and server-rendered route curtain cells. |
+| `loading/progress.ts` | Pure boot milestones and progress arithmetic. |
 | `optimistic.ts` | `runOptimistic`: apply, commit, rollback, report. |
-| `audio-file.ts` | Upload validation mirrored from the server. |
-| `upload-queue.ts` | Pure upload states and transitions, including metadata failures and state-specific progress. |
-| `color-theory.ts` | OKLCh harmony palettes. |
-| `pigment-math.ts` | Kubelka-Munk mixing and its cache. |
-| `pigment-settings.ts` | Every knob on `/experimentation/spectral`, its ranges, presets, persistence. |
-| `paint-surface.ts` | Grid where overlapping pigment resolves into colour. |
-| `playback-canvas.ts` | 2D spectrum and waveform painters. |
-| `playback-ui.ts` | Glyphs and clock formatting shared by three toggles. |
-| `i18n/` | English source schema, locale implementations, translation logic, locale persistence, browser localization and the React hook. `en.ts` defines required fields; other languages implement its derived contract. Consumers use generated `messages` references and typed template parameters. |
-| `components/LocalizedText.astro` | Renders catalog-backed static copy from a semantic `MessageKey`, with English server output and client-side locale changes. |
-| `i18n.ts` | Compatibility entry point for existing language and translation imports. |
-| `music-journey-copy.ts` | Artist-authored English and Spanish journey content; other locales fall back to English. |
-| `i18n/browser.ts` | Applies translations to Astro shell text across Astro navigation. |
-| `i18n/types.ts` | Derives sections, complete translation catalogs, message keys and required interpolation arguments from English literals. |
-| `i18n/catalog.ts` | Generates typed `messages` references and internal lookup tables from the English object shape; no manually maintained message ID registry. |
-| `i18n/translate.ts` | Typed message lookup and interpolation; dynamic text lookup for the DOM and editorial content. |
-| `now-playing-element.ts` | **Browser only.** The `<now-playing-el>` custom element. Flips `data-playing`, which is what shows the bar. |
-| `morphling-cursor.ts` | **Browser only.** Morphs local outline and center paths into an I-beam over editable fields or a tip-anchored arrow over ranges, sliders, and precision surfaces; caps other control outlines at 800 × 600 pixels. |
-| `fm-wave.ts` | Pure geometry and frequency calculation for the hero's modulated sine wave. |
-| `contribution-tip.ts` | Pure label and viewport placement for the `/coding` contribution hover tip. |
-| `__tests__/` | Library tests live here, grouped apart from production modules. |
-| `route-curtain.ts` | **Browser only.** Immediate navigation loading, readiness and cancellation handling, and the shared 2D partition painter. Also exports `curtainCells`. |
-| `api/schema.ts` | Generated from `openapi.json`. Never hand-edited. |
-| `api/README.md` | How and when to regenerate. |
-| `boot/boot-controller.ts` | Every-load splash lifecycle, browser readiness, replay and bounded teardown. |
-| `boot/progress.ts` | Pure milestone arithmetic behind the percentage. |
-| `boot/frame.ts` | The splash's opening partition, read by the CSS frame and the scene. |
-| `recursion/subdivide.ts` | The partition itself. Exact tiling, plus its boundary list. |
-| `sim/fluid.ts` | Stable-fluids solver. No canvas, no DOM. |
-| `sim/fluid-panel.ts` | **Browser only.** The `/` ink: what the solver's dye looks like, reduced motion, visibility, pointer stir, teardown. |
-| `sim/fluid-panel.ts` | The home ink band: sources, dye tints and the composite. One canvas per mount. |
-| `sim/pigment-sim.ts` | Velocity + dye fields, layout, `PaintSurface`. |
-| `sim/pigment-board.ts` | **Browser only.** Mounts one simulation, canvas layers, frame loop, resize observer and pointer listeners; exposes update/reset/dispose. |
-| `sim/layouts.ts` | Emitter layouts. Aesthetic, not physics. |
-| `sim/camera.ts` | Zoom and pan as arithmetic on a normalised centre. |
-| `sim/tracers.ts` | Points carried by the field, drawn as streaks. |
-| `sim/field-view.ts` | Speed and curl as an RGBA diagnostic layer. |
-| `sim/vents.ts` | **Dead.** See [Dead code](#dead-code). |
-| `subdivision/catmull-clark.ts` | Pure geometry: positions in, positions out. |
-| `subdivision/seeds.ts` | Seeded control nets. Never reads `Math.random`. |
-| `subdivision/paint.ts` | Mesh to picture through a three-primitive `Painter`. |
-| `subdivision/cages.ts` | **Dead.** See [Dead code](#dead-code). |
-| `subdivision/fit.ts` | **Dead.** See [Dead code](#dead-code). |
-| `three/dispose.ts` | `createCleanupRegistry` and `frameBudget`. |
-| `three/subdivision-scene.ts` | **Dead.** See [Dead code](#dead-code). |
+| `upload/audio-file.ts` | Upload validation mirrored from the server. |
+| `upload/upload-queue.ts` | Pure upload states and transitions, including metadata failures and state-specific progress. |
 
-### `src/data/`
+### `data/` — Editorial content and transforms
 
 | File | Role |
 | --- | --- |
+| `music-journey-copy.ts` | Complete artist-authored English and Spanish editorial copy. |
 | `streaming-albums.ts` | Splits one API album into per-platform links; embed URLs and heights. |
 
-### `src/types/`
+### `types/` — Contracts and shared types
 
 | File | Role |
 | --- | --- |
-| `index.ts` | Contract aliases plus client-side domain types. |
-| `github.ts` | Shapes returned by `services/github.ts`. |
+| `api/README.md` | API contract generation and backend prerequisites. |
+| `api/schema.ts` | Generated OpenAPI contract; regenerate with bun run gen:api. |
 | `custom-elements.d.ts` | Declares `<now-playing-el>` for the template. |
-| `streaming-embeds.d.ts` | Declares `SC.Widget` and the Spotify iframe API. |
+| `github.ts` | Shapes returned by `services/github.ts`. |
+| `index.ts` | Generated API aliases and shared client domain types. |
 | `spectral.d.ts` | Declares the `spectral.js` module. |
+| `streaming-embeds.d.ts` | Declares `SC.Widget` and the Spotify iframe API. |
 
-### `src/styles/`
+### `styles/` — Presentation
 
 | File | Role |
 | --- | --- |
 | `global.css` | Light/dark palette tokens, base layer, `@utility` surfaces including `text-highlight` for inline paragraph links, and native scroll entrance motion for static headings, paragraphs and figures. |
-| `brutal-button.css` | The `brut-up` hover reveal. |
-| `boot-screen.css` | First-paint splash visibility, static partition and canvas crossfade. |
-| `brut-word.css` | Hover plates and layered animations on the two highlighted hero words. |
-| `server-pulse.css` | `ServerPulse` animation. |
-| `social-button.css` | `SocialButton` surfaces. |
-| `language-selector.css` | `LanguageSelector` plate, select and chevron. Every part keeps `border-radius: 0`, because the native select chrome is rounded and must stay hidden. |
-| `morphling-cursor.css` | Canvas overlay and native cursor suppression only after initialization on fine pointers without reduced motion. |
-| `route-curtain.css` | Full-viewport partition, destination plate, exit fade and pending-link wash. |
+| `home/brut-word.css` | Hover plates and layered animations on the two highlighted hero words. |
+| `home/hero.css` | Translated home heading sizing. |
+| `loading/boot-screen.css` | First-paint splash visibility, static partition and canvas crossfade. |
+| `loading/route-curtain.css` | Full-viewport partition, destination plate, exit fade and pending-link wash. |
+| `loading/server-pulse.css` | `ServerPulse` animation. |
+| `music/music-journey.css` | Music journey. |
+| `music/music-page.css` | Music intro, platform links and catalog layout; imported by the owning Astro sections. |
+| `shared/brutal-button.css` | The `brut-up` hover reveal. |
+| `shared/link-preview.css` | Link note popover presentation. |
+| `shared/social-button.css` | `SocialButton` surfaces. |
+| `shell/footer.css` | Shared footer, page shortcut dock, and mobile audio-player spacing. |
+| `shell/language-selector.css` | `LanguageSelector` plate, select and chevron. Every part keeps `border-radius: 0`, because the native select chrome is rounded and must stay hidden. |
+| `shell/morphling-cursor.css` | Canvas overlay and native cursor suppression only after initialization on fine pointers without reduced motion. |
 
-### `public/` — copied to the site root as-is
+### Verification tooling
+
+Paths are relative to `src/frontend/`.
 
 | File | Role |
 | --- | --- |
-| `robots.txt` | Points at the sitemap the sitemap integration generates at build. |
-| `images/previews/og.png` | The Open Graph image. Supplied, not generated; see [Known constraints](#known-constraints). |
-
-### Verification tooling — not shipped
-
-| File | Role |
-| --- | --- |
-| `src/frontend/scripts/sim-preview.mts` | Renders the shipped simulation to a PNG contact sheet. |
-| `src/frontend/scripts/recursion-preview.mts` | Renders partition contact sheets; `--check` verifies 5,600 animated partitions, pixel coverage, boundaries and regular grids. |
-| `src/frontend/scripts/responsive-check.mjs` | Responsive browser checks; `--loading` verifies first paint, reloads, route loading, motion preferences and recovery. |
-| `src/frontend/scripts/refactor-check.mjs` | Bundles the real modules into a temporary browser harness. Checks fetch/XHR responses, request races, concurrent uploads, playback ownership, SDK teardown and canvas disposal. Run with `bun run check:refactor`; `BROWSER_PATH` selects a local browser. |
-| `src/frontend/scripts/png.ts` | Minimal PNG encoder, so the above has no dependency. |
-| `src/frontend/src/lib/__tests__/fm-wave.test.ts` | Checks the FM frequency sweep, the wave cycle and the scroll direction. |
-| `src/frontend/src/lib/__tests__/playback-canvas.test.ts` | Checks spectrum color anchors, interpolation, silence and clipping. |
-
-Both exist because every attempt to tune the simulation by statistics produced a
-number that improved while the picture stayed broken. Judged by eye, not by
-counters. `recursion-preview.mts` also draws the grid the way the page does, from
-`interiorEdges` and once, so a regression in the drawing is visible in the sheet.
-
-`sim-preview.mts` runs two sheets. The core one is 300×300 and costs about five
-minutes; the layer one runs at half that resolution and costs about thirty seconds.
-They are separate because every module in `lib/sim/` moves the fast sheet and none
-of them move the slow one. Set `SIM_LAB_ONLY=1` to skip the core sheet while
-iterating on relief, camera, tracers or heading.
+| `scripts/architecture-check.mjs` | Import resolution, layer direction, pure-library browser globals, route composition and client/server separation. Included in check. |
+| `scripts/reorganize-frontend.mjs` | One-time migration and import rewriting; completed migrations make no changes on rerun. |
+| `scripts/i18n-source-copy.mjs` | Locale fields, parameters, generated references and Astro source-copy audit. |
+| `scripts/refactor-check.mjs` | Browser harness for transport, resources, uploads, playback and canvas lifecycle. |
+| `scripts/responsive-check.mjs` | Responsive, loading, theme, experiment, cursor and music checks. |
+| `scripts/i18n-check.mjs` | Language switching, hydration and layout checks. |
+| `scripts/sim-preview.mts` | Simulation contact sheets using pure graphics modules. |
+| `scripts/recursion-preview.mts` | Partition contact sheets and geometry checks. |
+| `scripts/png.ts` | Shared minimal preview PNG encoder. |
 
 ## Decisions
 
@@ -590,16 +601,26 @@ unbind their events and Spotify mounts destroy their controller on release.
 <a id="adr-006"></a>
 ### ADR-006 — Layer over subfolder
 
-**Context.** `components/` holds 24 files with two different execution models,
-and `lib/` holds three unrelated graphics experiments.
-**Decision.** The layer directory is the unit of ownership; a subfolder is added
-only when one layer outgrows a flat listing. `components/*.astro` and
-`components/*.tsx` stay flat, because the extension already says which model a
-file runs under and a second path segment would only restate it.
-**Consequences.** Subfolders that duplicate what the filename says are
-rejected — see [Rule 6](#rule-6--comments-explain-why-or-do-not-exist) for the
-same reasoning applied to comments. When a flat layer does outgrow itself, split
-the *concept*, not the file type.
+**Context.** The original flat component directory held 24 files. Route-section
+extraction expanded the listing, while `lib/` mixed algorithms, React hooks,
+persistent state and browser controllers.
+
+**Decision.** Keep layers and group large layers by concept. Components group
+shell, shared UI, home, coding, music, contact, admin, loading and experiments.
+Styles follow the same owners where styles exist. Browser controllers and painters
+live in `browser/`. Pure graphics, audio, loading, upload, coding and translation
+modules live in `lib/`. Small hooks, services, data and type layers stay flat except
+for generated API contracts under `types/api/`.
+
+**Alternatives.** A flat tree no longer makes ownership easy to find. Full feature
+directories would distribute shared playback, localization, loading and graphics
+infrastructure across features. Grouping within layers retains dependency direction.
+
+**Consequences.** Extensions identify Astro versus React; subdirectories identify
+ownership. Shared UI requires actual reuse. Direct imports replace translation
+barrels. The footer and React player retain one playback singleton. Pure pigment
+configuration is separate from persistence, and spectrum colors are separate from
+browser painters. `check:architecture` guards boundaries in subsequent changes.
 
 <a id="adr-007"></a>
 ### ADR-007 — Every full load starts with the splash
@@ -662,7 +683,7 @@ that prop count each one is another argument, another effect that has to push it
 value into the simulation, and nowhere to put a preset or a keyboard shortcut.
 
 **Decision.** Every knob is one field of `PigmentSettings` in
-`lib/pigment-settings.ts`, with its accepted range in `RANGES`. The panel renders
+`lib/graphics/pigment-settings.ts`, with its accepted range in `RANGES`. The panel renders
 `SettingSlider` from that field name, `sanitize` clamps against the same table, and
 presets are partial objects merged through it.
 
@@ -683,7 +704,7 @@ magnify cells the solver has already smoothed. Brush: the board ran a second
 `PaintSurface` at device resolution above the fluid, and every stroke on it was
 outside the simulation — a picture that could be painted over.
 
-**Decision.** `lib/sim/camera.ts` is a pure crop: `zoom`, a normalised centre, the
+**Decision.** `lib/graphics/sim/camera.ts` is a pure crop: `zoom`, a normalised centre, the
 source rect for `drawImage`, and the inverse mapping for the pointer. It never
 reaches the solver. The brush layer, the `draw` mode, and `PaintSurface`'s
 deposition primitives (`dab`, `splat`, `clear`) are gone; the class resolves
@@ -715,7 +736,7 @@ have built — had to scroll past the biography to find it.
 
 An experiment is nested rather than kept beside the sections, because a sixth
 top-level entry in the navbar would read as a sixth section. The list on
-`/experimentation` is an array in the page, so adding an experiment is one entry
+`/experimentation` belongs to `components/experiments/ExperimentIndex.astro`, so adding an experiment is one entry
 plus one page.
 
 **Consequences.** The GitHub fetch left `/`, which is now prerendered: the one route
@@ -790,7 +811,7 @@ success envelope. DTO fields remain governed by the generated OpenAPI contract;
 this transport check does not claim to validate every DTO field at runtime. The
 contact receipt keeps its additional validation before clearing the draft.
 
-`lib/upload-queue.ts` owns pure state transitions. Only uploading rows have progress,
+`lib/upload/upload-queue.ts` owns pure state transitions. Only uploading rows have progress,
 and only failed rows have a metadata or request failure. `useUploadQueue` reserves
 rows synchronously and runs two workers under one batch promise. Successful batches
 refresh the catalog once, even after a partial failure. Refresh errors release the
@@ -811,33 +832,14 @@ Run `bun run check` and `bun run build` for the types and deployment output.
 
 ## Dead code
 
-Dead files are a navigation hazard: they look like a place to make the change and
-silently are not. This register exists so that "where do I go" has no wrong
-answers.
+`lib/graphics/sim/vents.ts` remains the unreferenced predecessor of `layouts.ts`.
+It is retained during this structural migration. The previously listed 3D viewer,
+its cages, fit helper and subdivision scene are already absent from the source
+tree; they are not valid extension points.
 
-| File | Size | Status |
-| --- | --- | --- |
-| `src/components/SubdivisionLab.tsx` | — | Unreferenced. The 3D cage viewer was replaced by `SubdivisionImage.tsx`. |
-| `src/lib/subdivision/cages.ts` | 2.9 kB | Only `SubdivisionLab.tsx` imports it. |
-| `src/lib/subdivision/fit.ts` | 1.9 kB | Only `SubdivisionLab.tsx` imports it. |
-| `src/lib/three/subdivision-scene.ts` | 14 kB | Only `SubdivisionLab.tsx` imports it, dynamically. |
-| `src/lib/sim/vents.ts` | 6.9 kB | Nothing imports it. The earlier iteration of `sim/layouts.ts`. |
-
-Together these are about 26 kB across two abandoned features.
-
-The first four are one 3D subdivision viewer with no route. The 2D path shares
-only the vertex concepts.
-
-`vents.ts` is a different kind of leftover: a rename where the old name was never
-removed. `layouts.ts` is live and is what the spectral page uses.
-
-**Decide before deleting.** Either delete the chain, or give it a route, or
-record here why it stays unreferenced. An unlisted dead file is a bug in this
-document.
-
-Note that the three `lib/` subdivision files *are* referenced — by
-`SubdivisionLab.tsx`. Describing them as "unreferenced" was wrong; they are
-reachable only from code that nothing reaches.
+The duplicate `services/ServerPulse.tsx` was identical to the UI component and has
+been removed. `components/loading/ServerPulse.tsx` owns that presentation. Both
+translation barrels were removed after migrating consumers to direct imports.
 
 ## Known constraints
 
@@ -866,7 +868,7 @@ reachable only from code that nothing reaches.
   `streaming-albums`, `errors`, `catmull-clark`, `pigment-math`, `pigment-settings`,
   `recursion/subdivide`, `sim/camera`, `sim/tracers`, `sim/field-view`) are already
   shaped for further coverage.
-- **Zoom cannot invent detail.** `lib/sim/camera` crops, so past roughly 4x on
+- **Zoom cannot invent detail.** `lib/graphics/sim/camera` crops, so past roughly 4x on
   `medium` the board is showing bilinear magnification of cells the solver has
   already smoothed. Raising `detail` re-seats the grid and is the only thing that
   adds information, and it restarts the picture. See
@@ -911,7 +913,7 @@ reachable only from code that nothing reaches.
   bilinear splat, so a handful of them cannot lift dye against velocity damping, and
   the failure is two round blobs with no filaments rather than an error.
 - **No path aliases.** See [Dependency direction](#dependency-direction).
-- **Upload limits are duplicated** between `lib/audio-file.ts` and
+- **Upload limits are duplicated** between `lib/upload/audio-file.ts` and
   `FileStorageService.validate`. They are constants in two languages and the
   alternative is a round trip to find out.
 - **Contact receipts are validated before clearing the draft.** The API boundary
@@ -992,7 +994,7 @@ The coding profile displays the daily contribution calendar, not only its total.
 GitHub's weekday positions; narrow screens scroll the chart without widening the page.
 Missing data shows a link to GitHub instead of fabricated contribution cells.
 Hovering or tapping a cell shows GitHub's own wording for that day, so the label and
-its placement live in `lib/contribution-tip.ts` instead of in the page; the chart
+its placement live in `lib/coding/contribution-tip.ts` instead of in the page; the chart
 declares `data-cursor="precision"` and the cursor morphs into the tip-anchored arrow
 while it is under the pointer.
 
@@ -1075,11 +1077,11 @@ responses retain `ResponseEntity<Resource>` to stream bytes and range headers.
 `light` or `dark` from `clm_theme` in local storage before first paint. A missing,
 invalid, or inaccessible preference falls back to light regardless of OS settings.
 The navbar toggle exposes its dark-mode state through `aria-pressed` and stays
-hidden without JavaScript. Its delegated listener uses `lib/storage.ts` for writes.
+hidden without JavaScript. Its delegated listener uses `services/storage.ts` for writes.
 Astro swaps copy the current theme to the incoming document, including when storage
 is unavailable. `astro:page-load` synchronizes each new toggle.
 
-Explicit toggle clicks use `lib/theme-transition.ts`: 180ms of Bayer coverage in
+Explicit toggle clicks use `browser/shell/theme-transition.ts`: 180ms of Bayer coverage in
 the current page background, followed by 240ms of pixel removal over the next
 theme. The theme and saved preference change only when the mask is fully opaque.
 The mask is decorative, ignores pointer events, and sits below the custom cursor
@@ -1133,14 +1135,14 @@ are listed by their local names. `lib/i18n/en.ts` owns the English source schema
 the other locale modules implement it. The full music journey uses the artist's paired English and
 Spanish text; its other locales fall back to English until supplied. No
 translation service or dependency is used. Browser
-language sets the first preference; `lib/i18n/locale.ts` persists a visitor's
+language sets the first preference; `services/locale.ts` persists a visitor's
 selection in local storage and React islands subscribe to the same locale.
 
-`lib/i18n/browser.ts` translates static Astro text and accessible labels,
+`browser/shell/localization.ts` translates static Astro text and accessible labels,
 updates the document language, and observes new static content after Astro
 transitions. It deliberately skips hydrated React islands, user-entered text,
 code samples and named GitHub repositories. Interactive interface labels use
-`lib/i18n/useTranslations.ts` inside the components, so React retains ownership of
+`hooks/useTranslations.ts` inside the components, so React retains ownership of
 its text and changing locale does not reset player, form or experiment state.
 Static page copy must use `<LocalizedText id={messages.home.aboutTitle} />`
 with a generated reference from `i18n/catalog.ts`; do not repeat the English
@@ -1183,7 +1185,7 @@ editorial copy; ordinary application calls use the typed `translate` API.
 Changing wording still requires human translation review across all five locales;
 matching keys and placeholders cannot establish equivalent meaning.
 The artist-authored journey remains paired English and Spanish copy in
-`lib/music-journey-copy.ts`; French, German and Japanese use English for that
+`data/music-journey-copy.ts`; French, German and Japanese use English for that
 editorial body until translations are supplied. Do not rewrite its content while
 changing its presentation or localization wiring. Unknown English copy stays in
 English until the catalog receives a translation.
@@ -1226,9 +1228,11 @@ inside each chapter; the gallery stays in normal scroll flow. Smaller screens
 place the gallery between the chapter heading and its prose so references appear
 before their explanation. Skrillex, Jacob Collier, Keith Jarrett and Ryuichi
 Sakamoto receive larger portraits for their importance to the artist. Wide-card
-galleries occupy at most 28% of the content width and stop at 16rem; featured
-portraits use a 4:3 crop so short prose does not leave a tall empty card. The
-two-pianist gallery keeps both portraits beside each other, with Keith larger.
+galleries occupy at most 28% of the content width and stop at 16rem; the single-
+portrait Jacob Collier and Keith Jarrett galleries expand to 34% and stop at 20rem.
+Jacob's solo portrait stays square and Keith's uses a taller 4:5 crop. The five-
+artist electronic gallery uses an asymmetrical tile layout, led by Mr. Bill, with
+names overlaid on each photo; mobile reflows the same hierarchy into four columns.
 Sakamoto keeps his existing photograph and spans the gallery width below a
 single row of three supporting artists, avoiding an empty grid cell. Supporting
 images use three columns, reducing to two below 480px; group photos use a wider crop.

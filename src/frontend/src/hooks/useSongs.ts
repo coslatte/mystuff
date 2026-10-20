@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { api } from "../services/api";
 import { runOptimistic } from "../lib/optimistic";
-import { getVisitorId } from "../lib/visitor";
+import { getVisitorId } from "../services/visitor";
 import { useResource } from "./useResource";
 import type { Song } from "../types";
 

@@ -33,7 +33,7 @@ const root = process.cwd();
 const files = await sourceFiles(path.join(root, "src"));
 const bySource = new Map(Object.entries(en).map(([key, value]) => [normalize(value), key]));
 const ignoredTags = new Set(["script", "style", "pre", "code", "textarea", "title", "option"]);
-const ignoredFiles = new Set(["components/LocalizedText.astro"]);
+const ignoredFiles = new Set(["components/shared/LocalizedText.astro"]);
 const remaining = [];
 
 for (const file of files) {

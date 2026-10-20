@@ -1,0 +1,29 @@
+---
+import { messages } from "../../lib/i18n/catalog";
+import LocalizedText from "../shared/LocalizedText.astro";
+import RepoRow from "./RepoRow.astro";
+import type { RepoView } from "../../types/github";
+
+interface Props { repos: RepoView[]; }
+const { repos } = Astro.props;
+---
+
+<section id="repos" class="bg-brut-surface">
+  <div class="flex items-center justify-between gap-4 border-b-2 border-brut-black bg-brut-subtle px-6 py-4 tablet:px-8">
+    <h2 class="font-display text-xl font-bold"><LocalizedText id={messages.coding.pinnedRepositories} /></h2>
+    <span class="brut-label">{repos.length} <LocalizedText id={messages.coding.projects} /></span>
+  </div>
+
+  {repos.length > 0
+    ? repos.map((repo) => <RepoRow {...repo} />)
+    : (
+      <p class="border-b-2 border-brut-black bg-brut-surface p-8 text-center font-mono text-sm">
+        <LocalizedText id={messages.coding.repositoriesAreUnavailableRightNow} />{" "}
+        <a
+          href="https://github.com/coslatte?tab=repositories"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="editorial-link"><LocalizedText id={messages.coding.seeThemOnGithub} /></a>
+      </p>
+    )}
+</section>

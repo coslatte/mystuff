@@ -1,42 +1,19 @@
 ---
-import { messages } from "../lib/i18n/catalog";
-export const prerender = false;
-
 import Layout from "../layouts/Layout.astro";
-import LinkPreview from "../components/LinkPreview.astro";
-import RepoRow from "../components/RepoRow.astro";
-import LocalizedText from "../components/LocalizedText.astro";
+import CodingIntro from "../components/coding/CodingIntro.astro";
+import CodingExperience from "../components/coding/CodingExperience.astro";
+import CodingSkills from "../components/coding/CodingSkills.astro";
+import GithubProfile from "../components/coding/GithubProfile.astro";
+import PinnedRepositories from "../components/coding/PinnedRepositories.astro";
 import { fetchContributionSummary, fetchPinnedRepos, fetchRepoMediaImage } from "../services/github";
-import { contributionTip } from "../lib/contribution-tip";
 import type { RepoView } from "../types/github";
+
+export const prerender = false;
 
 const GITHUB_PROFILE = "https://github.com/coslatte";
 const GITHUB_HANDLE = "coslatte";
 
-const skills = [
-  {
-    name: "Frontend, Backend & Programming Languages",
-    items: [
-      "React, Next.js, Astro, TailwindCSS, responsive UI, API integration",
-      "Spring Boot, Spring Security, Spring Data JPA, JWT, FastAPI, REST APIs, DTO design, service and repository patterns",
-      "Java, Python, JS/TS, Kotlin, Dart (Flutter), PHP, Rust, Lua, C#, C",
-    ],
-  },
-  {
-    name: "AI Agents & Code Editors",
-    items: ["Claude Code, Codex, OpenCode, Gemini, Cursor, IntelliJ IDEA, VSCode, Zed, Neovim"],
-  },
-  {
-    name: "Data, Architecture & Tools",
-    items: ["PostgreSQL, SQL, SQLite, Flyway, relational modeling, layered and modular architecture, microservices, multi-tenancy, RBAC, Git, GitHub Actions, Docker, Maven, Gradle"],
-  },
-];
-
-/**
- * The pinned repos are the single source of truth for this section. When the
- * GitHub API is unavailable (no token, rate limit, outage) we show an empty
- * state instead of a hardcoded list that would drift from the real profile.
- */
+// An unavailable GitHub API shows the empty state instead of a stale fallback list.
 const [pinned, contributions] = await Promise.all([
   fetchPinnedRepos(GITHUB_HANDLE),
   fetchContributionSummary(GITHUB_HANDLE),
@@ -64,191 +41,13 @@ Astro.response.headers.set(
   title="coding ][ cosmiclatte.dev"
   description="Backend systems, tooling, and experimental software, with pinned GitHub repositories and a live contribution calendar."
 >
-  <section class="border-b-2 border-brut-black bg-brut-surface">
-    <div class="grid gap-8 p-6 tablet:p-8 laptop:grid-cols-[1fr_18rem] laptop:items-end laptop:p-10">
-      <div>
-        <p class="brut-label"><LocalizedText id={messages.coding.introSection} /></p>
-        <h1 class="mt-4 font-display font-black leading-none tracking-tighter"><LocalizedText id={messages.coding.introTitle} /></h1>
-        <p class="mt-5 max-w-2xl text-base leading-7"><LocalizedText id={messages.coding.introDescription} /></p>
-      </div>
-      <a class="editorial-link justify-self-start laptop:justify-self-end" href={GITHUB_PROFILE} target="_blank" rel="noopener noreferrer"><LocalizedText id={messages.coding.openGithub} /></a>
-    </div>
-  </section>
+  <CodingIntro profileUrl={GITHUB_PROFILE} />
 
-  <section id="experience" class="border-b-2 border-brut-black bg-brut-surface">
-    <div class="grid laptop:grid-cols-[minmax(15rem,0.8fr)_minmax(0,1.6fr)]">
-      <div class="border-b-2 border-brut-black bg-brut-red p-6 text-brut-on-accent tablet:p-8 laptop:border-b-0 laptop:border-r-2 laptop:p-10">
-        <p class="brut-label inline-block bg-brut-surface px-2 py-1"><LocalizedText id={messages.coding.experience} /></p>
-        <h2 class="mt-8 max-w-lg font-display text-4xl font-black leading-[1.05] tracking-tighter tablet:text-5xl">
-          <LocalizedText id={messages.coding.experienceTitle} />
-        </h2>
-      </div>
-      <div class="p-6 tablet:p-8 laptop:p-10">
-        <div class="flex flex-col gap-2 tablet:flex-row tablet:items-start tablet:justify-between">
-          <div>
-            <h3 class="font-display text-3xl font-black tracking-tight">
-              <LocalizedText id={messages.coding.backendEngineer} /> <LinkPreview href="https://bicotexsoftware.com/" note={messages.coding.employerDescription}>Bicotex Software</LinkPreview>
-            </h3>
-          </div>
+  <CodingExperience />
 
-        </div>
-        <p class="font-mono text-xs font-bold text-brut-muted"><LocalizedText id={messages.coding.february2026Present} /></p>
-        <p class="mt-6 max-w-3xl text-lg leading-8"><LocalizedText id={messages.coding.experienceDescription} /></p>
-        <ul class="mt-6 grid gap-4 border-t-2 border-brut-black pt-6 leading-7 tablet:grid-cols-2 tablet:gap-8">
-          <li><LocalizedText id={messages.coding.apiResponsibilities} /></li>
-          <li><LocalizedText id={messages.coding.securityResponsibilities} /></li>
-          <li><LocalizedText id={messages.coding.workflowResponsibilities} /></li>
-        </ul>
-      </div>
-    </div>
-  </section>
+  <CodingSkills />
 
-  <section id="skills" class="bg-brut-surface">
-    <div class="p-6 tablet:p-8 laptop:p-10">
-      <p class="brut-label"><LocalizedText id={messages.coding.skills} /></p>
-      <h2 class="font-display text-3xl font-black tracking-tighter tablet:text-5xl"><LocalizedText id={messages.coding.whatIWorkWith} /></h2>
-    </div>
-    <div class="grid tablet:grid-cols-2">
-      {skills.map((skill, index) => (
-        <article class:list={[
-          "border-b-2 border-brut-black p-6 tablet:p-8 laptop:p-10",
-          index === 0 ? "tablet:col-span-2" : index !== 2 && "tablet:border-r-2",
-        ]}>
-          <h3 class="font-display text-2xl font-black tracking-tight">{skill.name}</h3>
-          {skill.items.map((item) => (
-            <p class="mt-4 max-w-3xl leading-7 text-brut-muted">{item}.</p>
-          ))}
-        </article>
-      ))}
-    </div>
-  </section>
+  <GithubProfile profileUrl={GITHUB_PROFILE} handle={GITHUB_HANDLE} contributions={contributions} />
 
-  <section id="profile" class="grid grid-cols-1 border-b-2 border-brut-black laptop:grid-cols-[17rem_minmax(0,1fr)]">
-    <div class="flex items-center gap-4 border-b-2 border-brut-black bg-brut-blue text-brut-on-accent p-6 laptop:flex-col laptop:items-start laptop:justify-center laptop:border-b-0 laptop:border-r-2 laptop:p-8">
-      <div class="h-20 w-20 shrink-0 overflow-hidden border-2 border-brut-black bg-brut-soft">
-        <img
-          src="https://github.com/coslatte.png?size=400"
-          alt=""
-          class="h-full w-full object-cover contrast-100"
-        />
-      </div>
-      <div class="min-w-0">
-        <p class="brut-label inline-block bg-brut-surface px-2 py-1"><LocalizedText id={messages.coding.githubProfile} /></p>
-        <a
-          href={GITHUB_PROFILE}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="font-display text-3xl font-black leading-none tracking-tighter underline"
-        >
-          @{GITHUB_HANDLE}
-        </a>
-      </div>
-    </div>
-
-    <div class="min-w-0 bg-brut-surface p-6 tablet:p-8">
-      <h2 class="brut-label"><LocalizedText id={messages.coding.contributionsLast12Months} /></h2>
-      {contributions ? (
-        <>
-          <p class="mt-3 font-display text-3xl font-black tracking-tighter">
-            {contributions.totalContributions.toLocaleString("en-US")} <LocalizedText id={messages.coding.contributions} />
-          </p>
-          <div class="mt-5 overflow-x-auto pb-2" tabindex="0" role="region" aria-label="Daily GitHub contributions, scroll horizontally to view the full year">
-            <div class="grid min-w-160 grid-cols-[2rem_minmax(0,1fr)] gap-x-2 gap-y-2">
-              <div></div>
-              <div class="grid gap-0.75 font-mono text-[10px] text-brut-muted" style={`grid-template-columns: repeat(${contributions.weeks.length}, minmax(0, 1fr))`} aria-hidden="true">
-                {contributions.weeks.map((week, index) => {
-                  const day = index === 0 ? week.contributionDays[0] : week.contributionDays.find((day) => day.date.endsWith("-01"));
-                  return <span class="overflow-visible whitespace-nowrap">{day ? new Date(`${day.date}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }) : ""}</span>;
-                })}
-              </div>
-      <div class="grid grid-rows-7 items-center font-mono text-[10px] text-brut-muted" aria-hidden="true">
-                <span class="row-start-2"><LocalizedText id={messages.coding.mon} /></span><span class="row-start-4"><LocalizedText id={messages.coding.wed} /></span><span class="row-start-6"><LocalizedText id={messages.coding.fri} /></span>
-              </div>
-              <div class="grid gap-0.75" data-contribution-grid data-cursor="precision" style={`grid-template-columns: repeat(${contributions.weeks.length}, minmax(0, 1fr))`} role="img" aria-label={`${contributions.totalContributions.toLocaleString("en-US")} GitHub contributions over the last 12 months. Darker squares indicate more contributions.`}>
-                {contributions.weeks.map((week) => (
-                  <div class="grid grid-rows-7 gap-0.75">
-                    {week.contributionDays.map((day) => (
-                      <span class="aspect-square border border-brut-black/10" style={`grid-row: ${day.weekday + 1}; background-color: ${day.color}`} data-tip={contributionTip(day.contributionCount, day.date)} aria-hidden="true"></span>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div
-            data-contribution-tip
-            aria-hidden="true"
-            class="pointer-events-none fixed z-50 hidden border-2 border-brut-black bg-brut-inverse px-2 py-1 font-mono text-[11px] leading-tight whitespace-nowrap text-brut-on-accent shadow-[4px_4px_0_var(--color-brut-blue)]"
-          ></div>
-          <p class="mt-2 font-mono text-[10px] text-brut-muted"><LocalizedText id={messages.coding.contributionChartHelp} /></p>
-        </>
-      ) : (
-        <p class="mt-4 font-mono text-sm text-brut-muted">
-          <LocalizedText id={messages.coding.contributionDataIsUnavailable} /> <a class="underline" href={`${GITHUB_PROFILE}?tab=overview`} target="_blank" rel="noopener noreferrer"><LocalizedText id={messages.coding.viewActivityOnGithub} /></a>
-        </p>
-      )}
-    </div>
-  </section>
-
-  <section id="repos" class="bg-brut-surface">
-    <div class="flex items-center justify-between gap-4 border-b-2 border-brut-black bg-brut-subtle px-6 py-4 tablet:px-8">
-      <h2 class="font-display text-xl font-bold"><LocalizedText id={messages.coding.pinnedRepositories} /></h2>
-      <span class="brut-label">{repos.length} <LocalizedText id={messages.coding.projects} /></span>
-    </div>
-
-    {repos.length > 0
-      ? repos.map((repo) => <RepoRow {...repo} />)
-      : (
-        <p class="border-b-2 border-brut-black bg-brut-surface p-8 text-center font-mono text-sm">
-          <LocalizedText id={messages.coding.repositoriesAreUnavailableRightNow} />{" "}
-          <a
-            href="https://github.com/coslatte?tab=repositories"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="editorial-link"><LocalizedText id={messages.coding.seeThemOnGithub} /></a>
-        </p>
-      )}
-  </section>
-
-  <script>
-    import { placeContributionTip } from "../lib/contribution-tip";
-
-    let tip: HTMLElement | null = null;
-
-    function hideTip(): void {
-      tip?.classList.add("hidden");
-    }
-
-    function bindContributionTip(): void {
-      const found = document.querySelector<HTMLElement>("[data-contribution-tip]");
-      const grid = document.querySelector<HTMLElement>("[data-contribution-grid]");
-      if (!found || !grid || grid.dataset.tipBound) return;
-      grid.dataset.tipBound = "true";
-      tip = found;
-
-      grid.addEventListener("pointerover", (event) => {
-        const cell = (event.target as HTMLElement).closest<HTMLElement>("[data-tip]");
-        if (!cell || !tip) return;
-        tip.textContent = cell.dataset.tip ?? "";
-        tip.classList.remove("hidden");
-        const { left, top } = placeContributionTip(
-          cell.getBoundingClientRect(),
-          tip.getBoundingClientRect(),
-          window.innerWidth,
-          window.innerHeight
-        );
-        tip.style.left = `${left}px`;
-        tip.style.top = `${top}px`;
-      });
-      grid.addEventListener("pointerleave", hideTip);
-    }
-
-    bindContributionTip();
-    document.addEventListener("astro:page-load", bindContributionTip);
-    // The chart scrolls under the pointer, and a tap outside the grid has to dismiss the tip.
-    window.addEventListener("scroll", hideTip, true);
-    window.addEventListener("pointerdown", (event) => {
-      if (!(event.target as HTMLElement).closest?.("[data-tip]")) hideTip();
-    });
-  </script>
+  <PinnedRepositories repos={repos} />
 </Layout>

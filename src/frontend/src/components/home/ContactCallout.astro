@@ -1,0 +1,13 @@
+---
+import { messages } from "../../lib/i18n/catalog";
+import LocalizedText from "../shared/LocalizedText.astro";
+---
+
+<section class="flex flex-col gap-5 bg-brut-inverse p-6 text-brut-on-accent tablet:flex-row tablet:items-center tablet:justify-between tablet:p-8 laptop:p-10">
+  <div>
+    <p class="brut-label inline-block bg-brut-surface px-2 py-1"><LocalizedText id={messages.contact.section03Contact} /></p>
+    <h2 class="mt-2 font-display font-black tracking-tighter"><LocalizedText id={messages.contact.haveSomethingInMind} /></h2>
+    <p class="mt-3 font-mono text-sm text-neutral-300"><LocalizedText id={messages.home.locationAndPhone} /></p>
+  </div>
+  <a href="/contact" class="border-2 border-white px-5 py-3 font-mono font-bold text-brut-on-accent transition-colors hover:bg-white hover:text-brut-inverse focus-visible:bg-white focus-visible:text-brut-inverse"><LocalizedText id={messages.common.contact} /> <span aria-hidden="true">↗</span></a>
+</section>

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../services/api";
 import { isRetryable } from "../services/errors";
-import { checkAudioFile, titleFromFilename } from "../lib/audio-file";
-import { editUploadMetadata, transitionUpload, type MetadataChange, type QueueItem, type RejectedFile, type UploadEvent } from "../lib/upload-queue";
+import { checkAudioFile, titleFromFilename } from "../lib/upload/audio-file";
+import { editUploadMetadata, transitionUpload, type MetadataChange, type QueueItem, type RejectedFile, type UploadEvent } from "../lib/upload/upload-queue";
 
 const CONCURRENCY = 2;
 

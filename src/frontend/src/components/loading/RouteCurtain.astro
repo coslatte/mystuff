@@ -1,0 +1,47 @@
+---
+import { messages } from "../../lib/i18n/catalog";
+import "../../styles/loading/route-curtain.css";
+import LocalizedText from "../shared/LocalizedText.astro";
+import { curtainCells } from "../../lib/loading/frame";
+import { interiorEdges } from "../../lib/graphics/recursion/subdivide";
+
+/* Persistence keeps the loading animation alive while Astro replaces the page. */
+
+const { cells, ink } = curtainCells();
+const edges = interiorEdges(cells);
+---
+
+<div class="route-curtain" data-route-curtain role="status" aria-live="polite"
+  aria-label="loading" data-i18n-aria-label={messages.loading.status} transition:persist="route-curtain">
+  {
+    cells.map((cell, index) => (
+      <div
+        class={`route-curtain__cell route-curtain__cell--${ink[index] ? "ink" : "paper"}`}
+        aria-hidden="true"
+        style={`left:${cell.x0 * 100}%;top:${cell.y0 * 100}%;width:${(cell.x1 - cell.x0) * 100}%;height:${(cell.y1 - cell.y0) * 100}%`}
+      />
+    ))
+  }
+
+  <svg class="route-curtain__grid" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">
+    {edges.map(edge => <line x1={edge.x1} y1={edge.y1} x2={edge.x2} y2={edge.y2} vector-effect="non-scaling-stroke" />)}
+  </svg>
+  <canvas class="route-curtain__canvas" aria-hidden="true"></canvas>
+  <div class="route-curtain__plate">
+    <span class="route-curtain__caption"><LocalizedText id={messages.loading.status} /></span>
+    <span class="route-curtain__target" data-route-curtain-label>&nbsp;</span>
+  </div>
+</div>
+
+<script>
+  import { startRouteCurtain } from "../../browser/loading/route-curtain";
+
+  // Persisted, so the element survives the swap and its `data-state` is still
+  // there when the controller comes back around. Two controllers on one overlay
+  // would each tear down the other's timers.
+  const curtain = document.querySelector<HTMLElement>("[data-route-curtain]");
+  if (curtain && curtain.dataset.bound !== "true") {
+    curtain.dataset.bound = "true";
+    startRouteCurtain();
+  }
+</script>

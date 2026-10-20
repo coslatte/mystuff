@@ -1,0 +1,20 @@
+---
+import { messages } from "../../lib/i18n/catalog";
+import LocalizedText from "../shared/LocalizedText.astro";
+interface Props { profileUrl: string; }
+const { profileUrl: GITHUB_PROFILE } = Astro.props;
+---
+
+<section class="border-b-2 border-brut-black bg-brut-surface">
+  <div class="grid gap-8 p-6 tablet:p-8 laptop:grid-cols-[minmax(0,1fr)_auto] laptop:items-end laptop:gap-10 laptop:p-10">
+    <div>
+      <p class="brut-label"><LocalizedText id={messages.coding.introSection} /></p>
+      <h1 class="mt-4 font-display font-black leading-none tracking-tighter"><LocalizedText id={messages.coding.introTitle} /></h1>
+      <p class="mt-5 text-base leading-7"><LocalizedText id={messages.coding.introDescription} /></p>
+    </div>
+    <a class="editorial-link inline-flex items-center justify-self-start laptop:justify-self-end" href={GITHUB_PROFILE} target="_blank" rel="noopener noreferrer">
+      <LocalizedText id={messages.coding.openGithub} />
+      <svg aria-hidden="true" viewBox="0 0 24 24" class="size-5 fill-current"><path d="M12 .9a11.1 11.1 0 0 0-3.51 21.63c.55.1.76-.24.76-.53v-2.06c-3.1.67-3.75-1.32-3.75-1.32-.5-1.29-1.23-1.63-1.23-1.63-1.01-.69.08-.68.08-.68 1.12.08 1.71 1.15 1.71 1.15 1 .1.74 2.11 3.39 1.5.1-.72.4-1.21.72-1.49-2.47-.28-5.07-1.24-5.07-5.5 0-1.22.44-2.21 1.15-2.99-.12-.28-.5-1.42.11-2.95 0 0 .94-.3 3.05 1.14a10.6 10.6 0 0 1 5.55 0c2.11-1.43 3.04-1.14 3.04-1.14.61 1.53.23 2.67.12 2.95.71.78 1.14 1.77 1.14 2.99 0 4.27-2.6 5.21-5.08 5.49.4.35.76 1.02.76 2.06V22c0 .29.2.63.77.52A11.1 11.1 0 0 0 12 .9Z"/></svg>
+    </a>
+  </div>
+</section>
