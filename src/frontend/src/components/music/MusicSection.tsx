@@ -1,6 +1,6 @@
 import { messages } from "../../lib/i18n/catalog";
 import { useTranslations } from "../../hooks/useTranslations";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import type { StreamingPlatform } from "../../types";
 import { hasLinks, STREAMING_PLATFORMS, type PlayableAlbum } from "../../data/streaming-albums";
@@ -71,26 +71,32 @@ type AlbumCatalogProps = {
 
 function AlbumCatalog({ albums, loading: albumsLoading, error: albumsError, reload: reloadAlbums, platform }: AlbumCatalogProps) {
   const t = useTranslations();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollReleases = () => {
+    const node = scrollRef.current;
+    if (!node) return;
+    node.scrollBy({ left: Math.max(280, node.clientWidth * 0.8), behavior: "smooth" });
+  };
 
   return (
     <section aria-labelledby="albums-title" className="flex min-w-0 flex-col border-b-2 border-brut-black laptop:border-b-0 laptop:border-r-2">
       <div className="flex min-h-16 flex-col justify-center gap-2 border-b-2 border-brut-black bg-brut-surface p-3 tablet:flex-row tablet:flex-wrap tablet:items-center tablet:justify-between">
         <h3 id="albums-title" className="font-display font-bold leading-10">{t(messages.music.albums)}</h3>
+        <button type="button" onClick={scrollReleases} className="border-2 border-brut-black bg-brut-surface px-3 py-2 font-mono text-xs font-bold hover:bg-brut-blue hover:text-brut-on-accent">
+          →
+        </button>
       </div>
-      <div className="flex flex-col gap-2 bg-brut-subtle p-3 tablet:p-4 laptop:p-5">
+      <div ref={scrollRef} className="flex snap-x snap-mandatory gap-3 overflow-x-auto bg-brut-subtle p-3 tablet:p-4 laptop:p-5">
         {albumsLoading && !albums.length && <p className="font-mono text-xs">{t(messages.music.loadingAlbums)}</p>}
         {albumsError != null && <ErrorNotice error={albumsError} onRetry={reloadAlbums} />}
         {!albumsLoading && !albumsError && !albums.length && (
           <p className="font-mono text-xs text-brut-muted">No other releases available.</p>
         )}
         {albums.map((album) => (
-          <AlbumCard
-            key={album.id}
-            album={album}
-            platform={platform}
-            open
-            collapsible={false}
-          />
+          <div key={album.id} className="w-[min(24rem,85vw)] shrink-0 snap-start">
+            <AlbumCard album={album} platform={platform} open collapsible={false} />
+          </div>
         ))}
       </div>
     </section>
