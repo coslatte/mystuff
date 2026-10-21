@@ -1,0 +1,18 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import ExperimentHeader from "../../components/experiments/ExperimentHeader.astro";
+import ExperimentCredits from "../../components/experiments/ExperimentCredits.astro";
+import ConvChain from "../../components/experiments/ConvChain";
+import LocalizedText from "../../components/shared/LocalizedText.astro";
+import { messages } from "../../lib/i18n/catalog";
+---
+
+<Layout title="convchain | cosmiclatte" description="Learn a pattern from an editable sample and grow new textures with ConvChain.">
+  <ExperimentHeader title="ConvChain">
+    <p><LocalizedText id={messages.experiments.convChainInstructions} /></p>
+  </ExperimentHeader>
+  <section class="border-b-2 border-brut-black p-4 tablet:p-6" data-no-reveal>
+    <ConvChain client:load />
+  </section>
+  <ExperimentCredits sources={["convChain"]} />
+</Layout>

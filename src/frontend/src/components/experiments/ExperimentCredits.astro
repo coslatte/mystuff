@@ -1,0 +1,47 @@
+---
+import LocalizedText from "../shared/LocalizedText.astro";
+import { messages } from "../../lib/i18n/catalog";
+
+const projects = {
+  spectral: {
+    name: "Spectral.js",
+    author: "Ronald van Wijnen",
+    href: "https://github.com/rvanwijnen/spectral.js",
+    licence: "https://github.com/rvanwijnen/spectral.js/blob/3.0.0/LICENSE",
+    description: messages.experiments.spectralCredit,
+  },
+  heatMap: {
+    name: "Bencho · Heat map",
+    author: "Bencho",
+    href: "https://bencho.dev",
+    licence: "https://bencho.dev/licence",
+    description: messages.experiments.heatMapCredit,
+  },
+  convChain: {
+    name: "ConvChain",
+    author: "Maxim Gumin · mxgmn",
+    href: "https://github.com/mxgmn/ConvChain",
+    licence: "https://github.com/mxgmn/ConvChain/blob/master/ConvChainFast.cs",
+    description: messages.experiments.convChainCredit,
+  },
+};
+interface Props {
+  sources?: (keyof typeof projects)[];
+}
+const { sources = ["spectral", "heatMap", "convChain"] } = Astro.props;
+---
+
+<aside class="border-b-2 border-brut-black bg-brut-surface p-4 tablet:p-6" data-experiment-credits>
+  <h2 class="font-mono text-sm font-bold uppercase"><LocalizedText id={messages.experiments.openSourceCredits} /></h2>
+  <ul class:list={["mt-3 grid gap-4", sources.length > 1 && "tablet:grid-cols-2 laptop:grid-cols-3"]}>
+    {sources.map(source => {
+      const project = projects[source];
+      return <li class="flex flex-col gap-1 text-sm leading-6">
+        <a class="editorial-link w-fit font-bold" href={project.href} translate="no">{project.name} ↗</a>
+        <span class="text-brut-muted" translate="no">{project.author}</span>
+        <p><LocalizedText id={project.description} /></p>
+        <a class="editorial-link w-fit" href={project.licence}>MIT · <LocalizedText id={messages.experiments.sourceLicence} /></a>
+      </li>;
+    })}
+  </ul>
+</aside>

@@ -2,6 +2,8 @@
 @import "./shared/brutal-button.css";
 @import "./loading/server-pulse.css";
 @import "./music/music-journey.css";
+@import "./music/music-journey-chapters.css";
+@import "./music/music-journey-artists.css";
 @import "./music/music-page.css";
 
 @theme {

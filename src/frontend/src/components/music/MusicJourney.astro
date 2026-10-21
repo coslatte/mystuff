@@ -2,59 +2,9 @@
 import { messages } from "../../lib/i18n/catalog";
 import LocalizedText from "../shared/LocalizedText.astro";
 import { musicJourneyCopy } from "../../data/music-journey-copy";
+import { musicJourneyMoments as moments } from "../../lib/music-journey-moments";
 import portraitSources from "../../../public/images/influences/sources.json";
 
-const moments = [
-  {
-    period: messages.music.sharedBeginnings,
-    shared: {
-      copy: musicJourneyCopy.chapters[0],
-      artists: [["skrillex", "Skrillex"], ["zomboy", "Zomboy"], ["bmth", "Bring Me the Horizon"]],
-    },
-  },
-  {
-    period: messages.music.adolescenceParallelPaths,
-    shared: {
-      copy: musicJourneyCopy.chapters[1],
-      artists: [["linkin-park", "Linkin Park"], ["marshmello", "Marshmello"], ["post-malone", "Post Malone"], ["twenty-one-pilots", "Twenty One Pilots"]],
-    },
-  },
-  {
-    period: messages.music.overlappingDiscoveries,
-    root: {
-      copy: musicJourneyCopy.chapters[2],
-      artists: [["mr-bill", "Mr. Bill"], ["chime", "Chime"], ["ace-aura", "Ace Aura"], ["au5", "Au5"], ["voltra", "VOLTRA"]],
-    },
-    discovery: {
-      copy: musicJourneyCopy.chapters[3],
-      artists: [["joji", "Joji"], ["fujii-kaze", "Fujii Kaze"], ["tyler-the-creator", "Tyler, the Creator"]],
-    },
-  },
-  {
-    period: messages.music.turningPoint,
-    discovery: {
-      copy: musicJourneyCopy.chapters[4],
-      artists: [["jacob-collier", "Jacob Collier"]],
-      milestone: true,
-      link: "https://www.youtube.com/watch?v=VPLCk-FTVvw",
-    },
-  },
-  {
-    period: messages.music.fromListeningToPlaying,
-    discovery: {
-      copy: musicJourneyCopy.chapters[5],
-      artists: [["keith-jarrett", "Keith Jarrett"]],
-      milestone: true,
-    },
-  },
-  {
-    period: messages.music.pathsDrawCloser,
-    discovery: {
-      copy: musicJourneyCopy.chapters[6],
-      artists: [["opn", "Oneohtrix Point Never"], ["boards-of-canada", "Boards of Canada"], ["cubalibre-exe", "cubalibre.exe"], ["sakamoto", "Ryuichi Sakamoto"]],
-    },
-  },
-];
 const keyArtists = new Set(["skrillex", "jacob-collier", "keith-jarrett", "sakamoto"]);
 const groups = new Set(["bmth", "linkin-park", "twenty-one-pilots", "boards-of-canada"]);
 const portraits = new Map(portraitSources.map(source => [source.id, source.image]));

@@ -5,6 +5,7 @@ import { computeWaveform, player, type WaveformPeaks } from "../../services/play
 import { usePlayer } from "../../hooks/usePlayer";
 import { drawSpectrum, drawWaveform, sizeCanvas } from "../../browser/audio/playback-canvas";
 import { formatClock, playPauseClass, playPauseGlyph } from "../../lib/audio/playback-ui";
+import type { Song } from "../../types";
 
 const SEEK_STEP_SECONDS = 5;
 
@@ -51,12 +52,15 @@ function syntheticPeaks(seed: number): WaveformPeaks {
   return peaks;
 }
 
-export default function PlayerBar() {
+export default function PlayerBar({ song }: { song: Song }) {
   const t = useTranslations();
-  // The bar owns the audio element, so it reads the track view and leaves the
-  // global now-playing to the footer widget.
+  // Browsing another preview must not expose the playing song's seek position.
   const { track } = usePlayer();
-  const { song, isPlaying, currentTime, duration, error } = track;
+  const active = track.song?.id === song.id;
+  const isPlaying = active && track.isPlaying;
+  const currentTime = active ? track.currentTime : 0;
+  const duration = active ? track.duration : 0;
+  const error = active && track.error;
   const [decoded, setDecoded] = useState<WaveformPeaks | null>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const waveformRef = useRef<HTMLCanvasElement>(null);
@@ -121,12 +125,13 @@ export default function PlayerBar() {
   }, [paintWaveform]);
 
   const seekFromPointer = useCallback((clientX: number) => {
+    if (!active) return;
     const bar = seekBarRef.current;
     if (!bar) return;
     const rect = bar.getBoundingClientRect();
     const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     player.seek(ratio);
-  }, []);
+  }, [active]);
 
   const seekToSeconds = useCallback(
     (seconds: number) => {
@@ -210,6 +215,7 @@ export default function PlayerBar() {
         aria-valuemin={0}
         aria-valuemax={Math.round(duration) || 0}
         aria-valuenow={Math.round(currentTime)}
+        aria-disabled={!active || duration <= 0}
         tabIndex={0}
         onKeyDown={onSeekKeyDown}
         onPointerDown={(e) => {

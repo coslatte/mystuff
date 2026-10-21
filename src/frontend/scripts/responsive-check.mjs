@@ -16,6 +16,120 @@ const comment = { id: 1, songId: 1, author: longText, content: longText, created
 const browser = await chromium.launch({
   ...(process.env.BROWSER_PATH ? { executablePath: process.env.BROWSER_PATH } : {}),
 });
+if (process.argv.includes("--music-preview")) {
+  try { await checkMusicPreview(); }
+  finally { await browser.close(); }
+  process.exit(0);
+}
+
+async function checkMusicPreview() {
+  const artwork = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#2448c8"/><circle cx="150" cy="150" r="90" fill="#f3f1eb"/></svg>')}`;
+  const releases = [
+    { id: "motion", title: "m0Tion", trackCount: 10, artworkUrl: artwork, url: "https://soundcloud.com/cosmiclattemusic/sets/m0tion" },
+    { id: "second", title: "Second Release", trackCount: 30, artworkUrl: artwork, url: "https://soundcloud.com/example/sets/second" },
+  ];
+  const songs = [
+    { ...song, title: "First Track", artist: "CosmicLatte", audioUrl: `${baseURL}/preview-test.wav` },
+    { ...song, id: 2, title: "Second Track", artist: "CosmicLatte", audioUrl: `${baseURL}/preview-test.wav?second` },
+    { ...song, id: 3, audioUrl: `${baseURL}/preview-test.wav?long` },
+  ];
+  const audio = Buffer.alloc(44 + 8000 * 2 * 30);
+  audio.write("RIFF"); audio.writeUInt32LE(audio.length - 8, 4); audio.write("WAVEfmt ", 8);
+  audio.writeUInt32LE(16, 16); audio.writeUInt16LE(1, 20); audio.writeUInt16LE(1, 22);
+  audio.writeUInt32LE(8000, 24); audio.writeUInt32LE(16000, 28); audio.writeUInt16LE(2, 32);
+  audio.writeUInt16LE(16, 34); audio.write("data", 36); audio.writeUInt32LE(audio.length - 44, 40);
+  for (const viewport of [{ width: 320, height: 740 }, { width: 768, height: 900 }, { width: 1440, height: 1000 }]) {
+    const page = await browser.newPage({ viewport, reducedMotion: "reduce" });
+    const errors = [];
+    let failSongs = false, failAlbums = false, commentRequests = 0;
+    page.on("pageerror", error => errors.push(error.message));
+    await page.addInitScript(() => {
+      window.previewPlays = 0;
+      const play = HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play = function () { window.previewPlays++; return play.call(this); };
+    });
+    await page.route(`${baseURL}/**`, async route => {
+      const pathname = new URL(route.request().url()).pathname;
+      const file = pathname.includes(".") ? pathname : `${pathname.replace(/\/$/, "")}/index.html`;
+      const contentType = file.endsWith(".js") ? "text/javascript" : file.endsWith(".css") ? "text/css" : file.endsWith(".png") ? "image/png" : "text/html";
+      await route.fulfill({ body: await readFile(`dist/client${file}`), contentType });
+    });
+    await page.route("**/preview-test.wav*", route => route.fulfill({ body: audio, contentType: "audio/wav", headers: { "Access-Control-Allow-Origin": "*" } }));
+    await page.route(/fonts\.google/, route => route.abort());
+    await page.route("https://w.soundcloud.com/player/api.js", route => route.fulfill({ contentType: "text/javascript", body: "" }));
+    await page.route("https://open.spotify.com/embed/iframe-api/v1", route => route.fulfill({ contentType: "text/javascript", body: "window.onSpotifyIframeApiReady(null)" }));
+    await page.route(/https:\/\/(w\.soundcloud\.com\/player\/\?|open\.spotify\.com\/embed\/album\/|www\.youtube\.com\/embed\/|embed\.music\.apple\.com\/)/, route => route.fulfill({ contentType: "text/html", body: '<body style="margin:0;background:#eee;font:16px monospace;padding:20px">Streaming player fixture<br>Track list</body>' }));
+    await page.route("**/health", route => route.fulfill({ json: { success: true, data: { status: "UP" } } }));
+    await page.route("**/api/**", async route => {
+      const path = new URL(route.request().url()).pathname;
+      if (path.endsWith("/comments")) commentRequests++;
+      const albumsRequest = path.includes("/albums/");
+      const failed = albumsRequest ? failAlbums : failSongs;
+      const data = albumsRequest ? releases : path.endsWith("/comments") ? [] : /\/songs\/\d+$/.test(path) ? songs[0] : path.endsWith("/ratings") ? {} : songs;
+      await route.fulfill({ status: failed ? 503 : 200, json: { success: !failed, data } });
+    });
+    const settle = () => page.waitForFunction(() => !document.documentElement.matches("[data-boot-pending], .boot-locked, .route-locked"));
+    await page.goto(`${baseURL}/music`);
+    await page.locator("astro-island:not([ssr])").waitFor({ state: "attached" });
+    await settle();
+    const list = page.locator(".music-catalog-list");
+    await list.getByRole("button", { name: /Second Release/ }).waitFor();
+    await list.getByRole("button", { name: /First Track/ }).waitFor();
+    const title = page.locator("#music-preview-title");
+    assert.equal(await title.textContent(), "m0Tion");
+    assert.equal(await page.locator(".music-preview iframe").count(), 1);
+    await page.getByRole("button", { name: "Next release or track", exact: true }).click();
+    assert.equal(await title.textContent(), "Second Release");
+    const region = page.locator(".music-preview-content");
+    const scroll = await region.evaluate(element => ({ height: element.clientHeight, full: element.scrollHeight }));
+    assert.ok(scroll.full > scroll.height, "Long albums remain scrollable inside the preview");
+    await region.evaluate(element => { element.scrollTop = element.scrollHeight; });
+    assert.ok(await region.evaluate(element => element.scrollTop > 0));
+    await page.getByRole("button", { name: "Next release or track", exact: true }).click();
+    assert.equal(await title.textContent(), "First Track");
+    assert.equal(await page.locator(".music-preview iframe").count(), 0);
+    assert.equal(commentRequests, 0, "Selecting a track does not load comments");
+    assert.equal(await page.evaluate(() => window.previewPlays), 0, "Browsing does not autoplay");
+    await page.locator(".music-track-preview").getByRole("button", { name: "play", exact: true }).click();
+    await page.locator(".music-track-preview").getByRole("button", { name: "pause", exact: true }).waitFor();
+    await list.getByRole("button", { name: /Second Track/ }).click();
+    assert.equal(await title.textContent(), "Second Track");
+    assert.equal(await page.locator(".music-track-preview [role=slider]").getAttribute("aria-disabled"), "true");
+    assert.equal(await page.locator(".music-track-preview [role=slider]").getAttribute("aria-valuenow"), "0");
+    assert.equal(await page.evaluate(() => window.previewPlays), 1, "Changing previews leaves playback explicit");
+    await page.getByRole("button", { name: "comments", exact: true }).click();
+    await page.waitForFunction(() => document.querySelector(".music-track-feedback textarea"));
+    assert.equal(commentRequests, 1);
+    await list.getByRole("button", { name: /m0Tion/ }).click();
+    await page.getByRole("button", { name: "Spotify", exact: true }).click();
+    await page.waitForFunction(() => !!document.querySelector('.music-preview iframe[src*="spotify"]'));
+    const embed = await page.locator(".music-preview iframe").elementHandle();
+    for (const locale of ["es", "fr", "de", "ja", "en"]) {
+      await page.locator("[data-language-select]").selectOption(locale);
+      assert.equal(await title.textContent(), "m0Tion");
+      assert.ok(await embed.evaluate(element => element.isConnected), "Locale changes keep the mounted embed");
+    }
+    await page.getByRole("button", { name: "Next release or track", exact: true }).focus();
+    await page.keyboard.press("ArrowLeft");
+    assert.equal(await title.textContent(), longText, "Keyboard navigation wraps to the last entry");
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Long titles do not cause page overflow");
+    await list.getByRole("button", { name: /m0Tion/ }).click();
+    await page.locator(".music-preview-navigation").evaluate(element => scrollTo(0, scrollY + element.getBoundingClientRect().top));
+    await mkdir("dist/checks", { recursive: true });
+    await page.screenshot({ path: `dist/checks/music-preview-${viewport.width}.png` });
+    failSongs = true;
+    await page.reload(); await settle();
+    await list.getByRole("button", { name: /Second Release/ }).waitFor();
+    assert.equal(await title.textContent(), "m0Tion", "Track errors retain the release preview");
+    failSongs = false; failAlbums = true;
+    await page.reload(); await settle();
+    await list.getByRole("button", { name: /First Track/ }).click();
+    assert.equal(await title.textContent(), "First Track", "Release errors retain tracks");
+    assert.deepEqual(errors, [], "No browser or hydration errors");
+    await page.close();
+  }
+  console.log("PASS: unified music previews, list/buttons/keyboard navigation, one embed, no autoplay, playback isolation, comments, independent failures, five locales and responsive layout.");
+}
 if (process.argv.includes("--experiments")) {
   try {
     for (const viewport of [{ width: 320, height: 700 }, { width: 390, height: 844 }, { width: 568, height: 320 }, { width: 844, height: 390 }, { width: 1280, height: 900 }]) {
@@ -602,9 +716,9 @@ try {
       await page.locator("now-playing-el > div").waitFor({ state: "attached" });
       await page.evaluate(() => document.fonts.ready).catch(() => {});
       if (path === "/music") {
-        await page.getByRole("button", { name: "comments ▼" }).click();
+        await page.locator('.music-catalog-list section[aria-labelledby="tracks-title"] button').first().click();
+        await page.getByRole("button", { name: "comments", exact: true }).click();
         await page.getByText(longText, { exact: true }).last().waitFor();
-        await page.getByRole("button", { name: /LongUnbrokenContent/ }).click();
         await page.getByRole("button", { name: "play", exact: true }).last().click();
         await page.locator("now-playing-el .text-brut-red").waitFor();
       }

@@ -1,8 +1,21 @@
 ---
 import { messages } from "../../lib/i18n/catalog";
 import LocalizedText from "../shared/LocalizedText.astro";
+import ExperimentCredits from "./ExperimentCredits.astro";
 
 const experiments = [
+  {
+    slug: "convchain",
+    title: "ConvChain",
+    titleKey: messages.experiments.convChain,
+    descriptionKey: messages.experiments.convChainDescription,
+  },
+  {
+    slug: "heat-map",
+    title: "Heat map",
+    titleKey: messages.experiments.heatMap,
+    descriptionKey: messages.experiments.heatMapDescription,
+  },
   {
     slug: "spectral",
     title: "Spectral",
@@ -30,7 +43,7 @@ const experiments = [
     <a href={`/experimentation/${experiment.slug}`}
       class:list={[
         "group flex flex-col gap-6 border-b-2 border-brut-black bg-brut-surface p-6 transition-colors hover:bg-brut-blue hover:text-brut-on-accent focus-visible:bg-brut-blue focus-visible:text-brut-on-accent tablet:p-8 laptop:p-10",
-        index === 0 && "laptop:border-r-2",
+        index % 2 === 0 && "laptop:border-r-2",
       ]}>
       <div class="flex items-start justify-between gap-6">
         <span class="brut-label bg-brut-surface px-2 py-1">0{index + 1} / study</span>
@@ -43,3 +56,4 @@ const experiments = [
     </a>
   ))}
 </section>
+<ExperimentCredits />

@@ -1,0 +1,27 @@
+/* ══ Heat word ═════════════════════════════════════════════ */
+.heat {
+  position: relative;
+  display: block;
+  width: 300px;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.heat:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+
+.heat-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 300 / 170;
+}

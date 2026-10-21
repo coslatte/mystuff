@@ -73,13 +73,15 @@ Do not "improve" this by moving `/music` to SSR.
 
 ### Rule 3 — One `.tsx` root per island
 
-There are six interactive roots, each mounted `client:load`:
+There are eight interactive roots, each mounted `client:load`:
 
 | Root | Page |
 | --- | --- |
 | `MusicSection.tsx` | `/music` |
 | `AdminUpload.tsx` | `/admin` |
 | `ContactForm.tsx` | `/contact` |
+| `ConvChain.tsx` | `/experimentation/convchain` |
+| `HeatMap.tsx` | `/experimentation/heat-map` |
 | `PigmentFlow.tsx` | `/experimentation/spectral` |
 | `RecursiveSubdivision.tsx` | `/experimentation/subdivision` |
 | `LoadingTracksLoop.tsx` | `/loading` |
@@ -305,6 +307,8 @@ actual reuse. Create no empty groups or re-export barrels.
 | `admin.astro` | Unlisted upload console. |
 | `coding.astro` | SSR GitHub requests, repository mapping, cache headers and coding sections. |
 | `contact.astro` | Contact introduction and form island. |
+| `experimentation/convchain.astro` | ConvChain sample-learning workbench and upstream credits. |
+| `experimentation/heat-map.astro` | Bencho heat-map experiment header and HeatMap island. |
 | `experimentation/index.astro` | Experiment index composition. |
 | `experimentation/spectral.astro` | Experiment header and PigmentFlow island. |
 | `experimentation/subdivision.astro` | Experiment header and RecursiveSubdivision island. |
@@ -331,9 +335,12 @@ actual reuse. Create no empty groups or re-export barrels.
 | `coding/PinnedRepositories.astro` | Pinned repository rows and unavailable state, receiving server-fetched repos. |
 | `coding/RepoRow.astro` | One row in the `/coding` repos list. |
 | `contact/ContactForm.tsx` | `/contact` form island with validation, stable retry references, and accessible delivery status. |
+| `experiments/ConvChain.tsx` | ConvChain React root: editable 8×8 samples, model controls, time-budgeted generation, colors, tiling and PNG export. |
+| `experiments/ExperimentCredits.astro` | Visible source, author and licence links for Spectral.js, Bencho and ConvChain, shared by the index and individual studies. |
 | `experiments/controls.tsx` | The `Slider`/`Chips`/`Toggle`/`Panel` primitives both lab pages share. |
 | `experiments/ExperimentHeader.astro` | Shared heading and back link for individual experiments. |
 | `experiments/ExperimentIndex.astro` | Experiment index heading and study links. |
+| `experiments/HeatMap.tsx` | Reusable React Canvas 2D heat map adapted from Bencho. Exports typed props, shapes and palettes; owns pointer/keyboard input and animation cleanup. |
 | `experiments/PigmentControls.tsx` | The `/experimentation/spectral` panel. One slider per settings field. |
 | `experiments/PigmentFlow.tsx` | `/experimentation/spectral` root. Owns settings, camera, persistence and controls; mounts the browser board controller. |
 | `experiments/RecursiveSubdivision.tsx` | `/experimentation/subdivision` root. Pixel-snapped cells, grid layer, knobs. |
@@ -348,15 +355,15 @@ actual reuse. Create no empty groups or re-export barrels.
 | `loading/LoadingWorkbench.astro` | Loading replay UI, `LoadingTracksLoop` island and processed replay script. |
 | `loading/RouteCurtain.astro` | Navigation loading overlay. In the layout, persisted across swaps. |
 | `loading/ServerPulse.tsx` | One pulsing stage dot. |
-| `music/AlbumCard.tsx` | One album plus its mounted embed. |
+| `music/AlbumCard.tsx` | The selected release embed and source link; its parent owns artwork, metadata and navigation. |
 | `music/CommentThread.tsx` | Comments for one track, with optimistic edits. |
 | `music/MusicCatalog.astro` | Catalog heading and the single `MusicSection` island. |
 | `music/MusicIntro.astro` | Music introduction, catalog/journey anchors and platform links. |
 | `music/MusicJourney.astro` | `/music` influence history using the complete artist-authored English and Spanish copy from `data/music-journey-copy.ts`. Early years and adolescence span both paths; later discoveries share time rows before converging in the full current-practice chapter. Mobile interleaves the same moments. Layout lives in `styles/music/music-journey.css`; SVG path lifecycle and geometry live in `browser/music/music-journey.ts`. Prose preserves the author's capitalization. Photos live in `public/images/influences`; `sources.json` and `credits.html` link to their source pages. |
-| `music/MusicSection.tsx` | The single `/music` interactive catalog island. Owns releases and embed selection, presents the first catalog release with large artwork, and opens its preview after data arrives without autoplay. Catalog order is curated, not a guarantee of release chronology. TrackCatalog owns songs and PlayerBar; AlbumCard owns each embed. |
-| `music/PlayerBar.tsx` | Transport + spectrum/waveform canvases. |
+| `music/MusicSection.tsx` | The single `/music` interactive catalog island. Loads releases and tracks independently into one keyed preview browser, with previous/next navigation and a selectable catalog. AlbumCard owns the one mounted release embed; PlayerBar and TrackBlock render the selected track. |
+| `music/PlayerBar.tsx` | Selected-song transport and spectrum/waveform canvases; hides another song's progress and disables seeking until the selected song is active. |
 | `music/StarRating.tsx` | Five-star input. |
-| `music/TrackBlock.tsx` | One track row: rating plus comments. |
+| `music/TrackBlock.tsx` | Selected-track rating and comments; playback controls live in PlayerBar. |
 | `shared/ErrorNotice.tsx` | Error display plus retry. |
 | `shared/InvertLink.astro` | Inline text link that turns blue on hover and focus. For a name inside a heading. |
 | `shared/LinkPreview.astro` | One outbound link inside running text, using the `text-highlight` plate, with its `note` shown as a popover on hover and keyboard focus. The note stays real text in the document, so assistive tech reads it and the localization pass translates it; only its placement is hover-only. Styling is in `styles/shared/link-preview.css`. |
@@ -374,6 +381,7 @@ actual reuse. Create no empty groups or re-export barrels.
 | --- | --- |
 | `audio/playback-canvas.ts` | Browser spectrum and waveform painters; pure colors live in lib/audio/spectrum.ts. |
 | `coding/contribution-calendar.ts` | Browser-only contribution tooltip binding across Astro navigation; hides and releases the old tooltip before swaps. |
+| `experiments/conv-chain-canvas.ts` | Draws a binary ConvChain field with user-selected ink/paper and optional 2×2 tiling. |
 | `experiments/fluid-filters.ts` | Browser grain and halftone canvas filters. |
 | `experiments/fluid-panel.ts` | Home canvas controller, observers, animation and teardown. |
 | `experiments/pigment-board.ts` | **Browser only.** Mounts one simulation, canvas layers, frame loop, resize observer and pointer listeners; exposes update/reset/dispose. |
@@ -423,6 +431,8 @@ actual reuse. Create no empty groups or re-export barrels.
 | `audio/spectrum.ts` | Pure dB-to-color interpolation for real and decorative spectra. |
 | `coding/__tests__/contribution-tip.test.ts` | Contribution tip.test. |
 | `coding/contribution-tip.ts` | Pure label and viewport placement for the `/coding` contribution hover tip. |
+| `graphics/conv-chain.ts` | Framework-free ConvChain model learning and deterministic Metropolis sampler with cached toroidal pattern indices. |
+| `graphics/__tests__/conv-chain.test.ts` | Checks learned counts, symmetry, epsilon, toroidal energy changes, deterministic batches and input boundaries. |
 | `graphics/__tests__/fm-wave.test.ts` | Checks the FM frequency sweep, the wave cycle and the scroll direction. |
 | `graphics/color-theory.ts` | OKLCh harmony palettes. |
 | `graphics/fm-wave.ts` | Pure geometry and frequency calculation for the hero's modulated sine wave. |
@@ -446,6 +456,7 @@ actual reuse. Create no empty groups or re-export barrels.
 | `i18n/journey.ts` | Editorial translations derived from paired journey copy. |
 | `i18n/translate.ts` | Typed catalog lookup and dynamic editorial translation lookup. |
 | `i18n/types.ts` | Locale, catalog and interpolation types derived from English. |
+| `music-journey-moments.ts` | Structural description of the journey's moments: lanes, artists, milestones and links. |
 | `loading/frame.ts` | Pure shared splash geometry and server-rendered route curtain cells. |
 | `loading/progress.ts` | Pure boot milestones and progress arithmetic. |
 | `optimistic.ts` | `runOptimistic`: apply, commit, rollback, report. |
@@ -475,13 +486,16 @@ actual reuse. Create no empty groups or re-export barrels.
 
 | File | Role |
 | --- | --- |
+| `experiments/heat-map.css` | HeatMap canvas sizing, pointer interaction and keyboard focus; imported by the component. |
 | `global.css` | Light/dark palette tokens, base layer, `@utility` surfaces including `text-highlight` for inline paragraph links, and native scroll entrance motion for static headings, paragraphs and figures. |
 | `home/brut-word.css` | Hover plates and layered animations on the two highlighted hero words. |
 | `home/hero.css` | Translated home heading sizing. |
 | `loading/boot-screen.css` | First-paint splash visibility, static partition and canvas crossfade. |
 | `loading/route-curtain.css` | Full-viewport partition, destination plate, exit fade and pending-link wash. |
 | `loading/server-pulse.css` | `ServerPulse` animation. |
-| `music/music-journey.css` | Music journey. |
+| `music/music-journey.css` | Music journey shell: container, intro, route key, path layout, moment grid, present section, credits and responsive breakpoints. |
+| `music/music-journey-chapters.css` | Music journey chapter cards: bordered article, marker, lane label, prose, milestone, listening/video disclosure. |
+| `music/music-journey-artists.css` | Music journey artist portrait grid and per-artist overrides. |
 | `music/music-page.css` | Music intro, platform links and catalog layout; imported by the owning Astro sections. |
 | `shared/brutal-button.css` | The `brut-up` hover reveal. |
 | `shared/link-preview.css` | Link note popover presentation. |
@@ -947,8 +961,8 @@ Yellow stays excluded from the interface palette.
 Blue leads navigation, buttons, and focus. Neutral surfaces occupy most of
 each page; full color belongs to selected planes, not every heading or card.
 The home background panel is paper, the Coding experience panel is red, the
-Coding profile is blue, and the music track heading is red beside a neutral album
-heading. Green confirms delivery and completed uploads. Red also marks errors
+Coding profile is blue, and the music browser uses neutral release/track headings
+with a blue selected item. Green confirms delivery and completed uploads. Red also marks errors
 and destructive actions; text and icons carry the status as well as color.
 
 Social buttons preserve their platform brand colors, and the SoundCloud embed
@@ -1011,7 +1025,7 @@ inside it instead of stretching the bar. The square is a phone-away decoration:
 it stays hidden below `tablet`, where the bar has no room to spare.
 
 Music loads albums and tracks independently. Track loading and errors stay in the
-track column; they must not remove the album catalog or its platform controls.
+track group; they must not remove the release list, preview or platform controls.
 The catalog precedes external platform links. An expanded album identifies the
 embedded player source without claiming that playback has started.
 
@@ -1212,9 +1226,9 @@ catalog and journey without a horizontal scroll container or navigation handlers
 Layout owns the sole main
 landmark. The catalog owns its outer boundary; its React children divide albums
 from uploaded tracks and keep their loading, error and empty states independent.
-The track player sits inside the track section, since album playback uses embeds.
-Local catalog components remain in MusicSection.tsx because only this island uses
-them. The editorial journey remains server-rendered. Its titles and paragraphs
+A shared preview switches between release embeds and the selected track player.
+The selected track owns its rating/comments panel; browsing never starts playback.
+The catalog browser remains in MusicSection.tsx because only this island uses it. The editorial journey remains server-rendered. Its titles and paragraphs
 come directly from the artist's complete paired English and Spanish versions in
 `musicJourneyCopy`; the existing localization system handles language changes.
 Keep both versions intact rather than regenerating one from the other. Shared
@@ -1292,3 +1306,90 @@ scroll listener or JavaScript navigation state is required.
 
 
 
+
+### Bencho heat map
+
+`HeatMap.tsx` retains the supplied Bencho comments and fixed heat palettes under
+the source MIT licence at https://bencho.dev/licence. This is a deliberate
+exception to Rule 6's comment format: the original explanation of shadow blur,
+field thresholds and palette arithmetic is part of the requested experiment.
+These palettes represent experiment content, independent of interface theme tokens.
+Inter is not fetched; the word uses the system fallback when Inter is absent.
+
+The component needs no additional packages. Its stylesheet is imported directly;
+its accessible labels use the existing translation hook in all five locales.
+Use `<HeatMap client:load />` in Astro or `<HeatMap />` inside React. Props
+`heat`, `soft` and `area` accept 0–100; `colors` selects Neon, Fire, Sea or Pop;
+`shape` selects Dots, Asterisk or Word. Click, Enter and Space cycle shapes.
+The loop sleeps at rest, cancels on cleanup and applies changes immediately
+under reduced motion. Prop updates repaint without replaying the entrance.
+`/experimentation/heat-map` provides the initial interactive preview.
+
+### ConvChain and source credits
+
+`/experimentation/convchain` adapts Maxim Gumin's ConvChain to an editable
+Canvas 2D workbench. The pure engine in `lib/graphics/conv-chain.ts` learns
+periodic N×N pattern weights from a square binary sample, optionally including
+all eight rotations/reflections with their multiplicities. Unseen patterns retain
+the upstream 0.1 weight. Random pixel proposals use the Metropolis rule with
+log weights; cached indices update only the N² affected toroidal patterns.
+A seeded PRNG makes output independent of animation batching. This is a port
+of the algorithm, not a promise to reproduce .NET's random sequence.
+
+The React root owns model parameters and animation lifetime; the browser painter
+owns canvas pixels. No packages were added. The engine supports pattern sizes
+2–4 and outputs up to 128×128; the UI caps output at 64×64 to keep the controls
+responsive. Generation spends at most about 5ms per frame in batches of up to
+128 proposals, with a separate sweeps-per-second control. It skips computation
+in hidden documents, cancels frames on cleanup and starts paused under reduced
+motion. Explicit Run remains available. A sweep is size² attempted flips, not
+a visit to every pixel. Automatic generation stops at the iteration target; a
+manual sweep can continue past it. Running after completion starts the seed again.
+
+Editing the sample, pattern size, symmetries, output size or seed rebuilds the
+model/field. Temperature, speed, target iterations, ink/paper and tile preview
+continue from the current field. Reset restores the same seed and pauses; reroll
+advances the seed. PNG export contains the current native-resolution canvas,
+including the 2×2 repetition when enabled. All four editable 8×8 presets were
+created for the site; no upstream sample images are copied. The upstream MIT
+notice is retained in source and shipped as `public/convchain-LICENSE.txt`.
+
+`ExperimentCredits.astro` credits Spectral.js by Ronald van Wijnen, Bencho's
+Heat map and ConvChain by Maxim Gumin with project and licence links. The
+experiment index lists all three; spectral/subdivision, heat-map and convchain
+pages show their relevant source. Descriptions and controls use all five locales.
+
+Verify the engine with `bun test src/lib/graphics/__tests__/conv-chain.test.ts`.
+After `bun run build`, run `node scripts/conv-chain-check.mjs` with an optional
+`BROWSER_PATH` to verify pixels, seeded reset/steps, editor changes, N=2–4,
+resolution, automatic completion, tiles, PNG, locale switching and visible source
+links on mobile and desktop. Screenshots go to ignored `dist/checks/`.
+
+### Unified music preview
+
+`MusicSection.tsx` owns one selection keyed by source and ID across curated
+releases and uploaded tracks. The sidebar groups both sources and preserves their
+independent loading, error and empty states. Previous/next buttons wrap through
+the combined list; Left/Right work while focus is in that navigation. Incoming
+API metadata and rating updates preserve selection by key rather than array index.
+Catalog order remains curated, not a chronology claim.
+
+Artwork and metadata render once above the shared preview. `AlbumCard` no longer
+provides a second artwork/header or a collapse control. Exactly one release embed
+is mounted at a time, with teardown on selection/platform changes. The preview
+and catalog have bounded native scroll regions so long albums and lists remain
+reachable without stretching the page. Mobile stacks the preview above the list;
+choosing an item scrolls its preview into view when needed.
+
+`PlayerBar` receives the preview song explicitly. If another song is playing,
+the preview shows zero progress and cannot seek that other song. Only an explicit
+Play starts the selected track. The shared player and footer keep owning existing
+playback while the user browses. `TrackBlock` now owns selected-track feedback
+only; its comments still load on demand. No API contract or backend changes.
+
+After building, `node scripts/responsive-check.mjs --music-preview` verifies the
+rendered catalog against API and embed fixtures at phone, tablet and desktop
+widths: source selection, wrapping navigation, long titles/albums, no autoplay,
+native audio playback, isolated seek state, lazy comments, independent source
+failures and locale changes that preserve the mounted embed. Screenshots go to
+ignored `dist/checks/`. Use `BROWSER_PATH` for an installed browser.

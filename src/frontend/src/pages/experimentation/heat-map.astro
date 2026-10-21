@@ -1,0 +1,18 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import ExperimentHeader from "../../components/experiments/ExperimentHeader.astro";
+import ExperimentCredits from "../../components/experiments/ExperimentCredits.astro";
+import { HeatMap } from "../../components/experiments/HeatMap";
+import LocalizedText from "../../components/shared/LocalizedText.astro";
+import { messages } from "../../lib/i18n/catalog";
+---
+
+<Layout title="heat map | cosmiclatte" description="Interactive heat-map shapes adapted from Bencho.">
+  <ExperimentHeader title="Heat map">
+    <p><LocalizedText id={messages.experiments.heatMapInstructions} /></p>
+  </ExperimentHeader>
+  <section class="flex min-h-80 items-center justify-center border-b-2 border-brut-black bg-brut-surface p-4 tablet:p-6" data-no-reveal>
+    <HeatMap client:load heat={60} soft={50} area={50} colors="Neon" shape="Dots" />
+  </section>
+  <ExperimentCredits sources={["heatMap"]} />
+</Layout>

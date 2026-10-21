@@ -1,0 +1,109 @@
+/* Chapter cards: the bordered article, its marker, lane label, prose and the
+   optional listening/video disclosure. Owned by MusicJourney.astro. */
+.shared-cell .journey-chapter {
+  padding-right: clamp(1rem, 3vw, 3rem);
+}
+
+.journey-chapter {
+  position: relative;
+  display: grid;
+  gap: 1.25rem;
+  align-content: start;
+  padding: clamp(1rem, 2vw, 1.75rem);
+  border: 2px solid var(--color-brut-black);
+  background: var(--color-brut-surface);
+}
+
+.chapter-marker {
+  position: absolute;
+  top: -0.25rem;
+  left: calc(25% - 0.25rem);
+  width: 0.5rem;
+  height: 0.5rem;
+  border: 1px solid var(--color-brut-link);
+  border-radius: 50%;
+  background: var(--color-brut-surface);
+  opacity: 0.7;
+}
+
+.root-cell .chapter-marker {
+  left: calc(50% - 0.25rem);
+}
+
+.discovery-cell .chapter-marker {
+  left: calc(50% - 0.25rem);
+  border-color: var(--color-brut-danger);
+  border-radius: 1px;
+  transform: rotate(45deg);
+}
+
+.single-discovery .chapter-marker {
+  left: calc(64% - 0.25rem);
+}
+
+.single-discovery:nth-child(even) .chapter-marker {
+  left: calc(56% - 0.25rem);
+}
+
+.shared-cell .shared-discovery-marker {
+  left: calc(75% - 0.25rem);
+  border-color: var(--color-brut-danger);
+  border-radius: 1px;
+  transform: rotate(45deg);
+}
+
+.chapter-lane {
+  margin-bottom: 0.8rem;
+  font: 700 0.6rem var(--font-mono);
+  text-transform: uppercase;
+}
+
+.chapter-heading h3 {
+  margin-bottom: 0;
+}
+
+.milestone {
+  border-left: 5px solid var(--color-brut-red);
+}
+
+.journey-chapter .editorial-link {
+  margin-top: 1.5rem;
+}
+
+.chapter-listening {
+  margin-top: 1.5rem;
+  border: 2px solid var(--color-brut-black);
+  background: var(--color-brut-surface);
+}
+
+.chapter-listening summary {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  font: 700 0.75rem var(--font-mono);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.chapter-listening summary:hover,
+.chapter-listening summary:focus-visible {
+  background: var(--color-brut-blue);
+  color: var(--color-brut-on-accent);
+}
+
+.chapter-listening summary:focus-visible {
+  outline: 2px solid var(--color-brut-black);
+  outline-offset: 2px;
+}
+
+.chapter-listening[open] summary {
+  border-bottom: 2px solid var(--color-brut-black);
+}
+
+.chapter-video {
+  aspect-ratio: 16 / 9;
+}
+
+.chapter-video iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}

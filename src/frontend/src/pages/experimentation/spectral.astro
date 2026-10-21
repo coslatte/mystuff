@@ -2,6 +2,7 @@
 import { messages } from "../../lib/i18n/catalog";
 import Layout from "../../layouts/Layout.astro";
 import ExperimentHeader from "../../components/experiments/ExperimentHeader.astro";
+import ExperimentCredits from "../../components/experiments/ExperimentCredits.astro";
 import PigmentFlow from "../../components/experiments/PigmentFlow";
 import LocalizedText from "../../components/shared/LocalizedText.astro";
 ---
@@ -19,4 +20,5 @@ import LocalizedText from "../../components/shared/LocalizedText.astro";
       <PigmentFlow client:load />
     </div>
   </section>
+  <ExperimentCredits sources={["spectral"]} />
 </Layout>
