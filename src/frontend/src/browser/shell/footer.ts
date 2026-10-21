@@ -33,15 +33,30 @@ function togglePlayer(event: MouseEvent): void {
 function jumpPage(event: MouseEvent): void {
   if (!(event.target instanceof Element)) return;
   const link = event.target.closest<HTMLAnchorElement>("[data-page-jump]");
+  if (!link) return;
   const swipe = document.querySelector<HTMLElement>("[data-page-jump-swipe]");
-  if (!link || !swipe || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   event.preventDefault();
+
   const direction = link.dataset.pageJump === "up" ? "up" : "down";
   const target = document.querySelector<HTMLElement>(link.hash);
   if (!target) return;
-  const distance = Math.abs(target.getBoundingClientRect().top);
+
+  // Distance is measured from the actual scroll position, not from the target's
+  // viewport rect, which can be stale if the page is mid-scroll.
+  const distance = direction === "up"
+    ? window.scrollY
+    : Math.max(0, document.documentElement.scrollHeight - window.scrollY - window.innerHeight);
+
+  if (distance < 1) return;
+
   const duration = Math.min(2000, Math.max(120, distance * 0.18));
+
+  if (reducedMotion || !swipe) {
+    target.scrollIntoView({ behavior: "auto" });
+    return;
+  }
   delete swipe.dataset.active;
   void swipe.offsetWidth;
   swipe.dataset.direction = direction;
@@ -61,5 +76,5 @@ function jumpPage(event: MouseEvent): void {
 
 document.addEventListener("pointerover", setContactOrigin);
 document.addEventListener("click", togglePlayer);
-document.addEventListener("click", jumpPage);
+document.addEventListener("click", jumpPage, true);
 document.addEventListener("astro:page-load", syncFooter);
