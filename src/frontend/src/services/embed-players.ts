@@ -122,8 +122,12 @@ export function mountSoundCloud(
     if (disposed) return;
     disposed = true;
     if (token != null) player.releaseExternal(token);
-    for (const event of events) widget?.unbind(event);
-    widget?.pause();
+    // SoundCloud's unbind/pause reach into the iframe, which React may already
+    // have removed during a platform switch; guard so teardown never crashes.
+    for (const event of events) {
+      try { widget?.unbind(event); } catch {}
+    }
+    try { widget?.pause(); } catch {}
     widget = null;
   };
 }
@@ -203,7 +207,7 @@ export function mountSpotify(
     if (disposed) return;
     disposed = true;
     if (token != null) player.releaseExternal(token);
-    controller?.destroy();
+    try { controller?.destroy(); } catch {}
     controller = null;
   };
 }
