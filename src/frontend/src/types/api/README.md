@@ -23,6 +23,11 @@ specify the envelope and the concrete `data` schema, including array items.
 Update those annotations when an endpoint changes its payload. Audio streaming
 keeps `ResponseEntity<Resource>` because it returns bytes and range headers.
 
+Shared-track endpoints use `ResponseFormat<SharedTrackResponse>` so springdoc
+registers the nested DTO as a named component. Keep the concrete generic return
+type when extending these endpoints instead of inlining the DTO into an
+annotation on the wildcard envelope.
+
 Renaming a Java field without regenerating breaks `bun run check`, because
 `src/types/index.ts` aliases these schemas instead of restating them.
 

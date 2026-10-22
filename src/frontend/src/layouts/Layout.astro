@@ -15,6 +15,7 @@ interface Props {
   /** `/loading` replays the splash itself, so the layout's copy stands down. */
   bootReplay?: boolean;
   showFooterContact?: boolean;
+  immersive?: boolean;
 }
 
 const {
@@ -23,6 +24,7 @@ const {
   noindex = false,
   bootReplay = false,
   showFooterContact = true,
+  immersive = false,
 } = Astro.props;
 
 // Scrapers fetch og:image on their own, so a relative path is no image at all.
@@ -31,10 +33,11 @@ const socialImage = new URL("/images/previews/og.png", Astro.site);
 ---
 
 <!doctype html>
-<html lang="en" data-theme="light" data-boot-replay={bootReplay ? "" : undefined}>
+<html lang="en" data-theme="light" data-boot-replay={bootReplay ? "" : undefined} data-immersive={immersive ? "" : undefined}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {immersive && <meta name="referrer" content="no-referrer" />}
     <script is:inline>
       // Apply the saved palette before the first paint, even before the bundle loads.
       try {
@@ -43,7 +46,7 @@ const socialImage = new URL("/images/previews/og.png", Astro.site);
       document.documentElement.setAttribute("data-theme-ready", "");
     </script>
     <script is:inline>
-      if (document.readyState === "loading" && !document.documentElement.hasAttribute("data-boot-replay")) {
+      if (document.readyState === "loading" && !document.documentElement.hasAttribute("data-boot-replay") && !document.documentElement.hasAttribute("data-immersive")) {
         document.documentElement.setAttribute("data-boot-pending", "");
         document.documentElement.classList.add("boot-locked");
         // A blocked client bundle must still give the visitor access to the page.
@@ -81,21 +84,24 @@ const socialImage = new URL("/images/previews/og.png", Astro.site);
     <title>{title}</title>
     <ClientRouter />
   </head>
-  <body id="page-top" tabindex="-1" class="flex min-h-screen flex-col">
-    <BootScreen />
-    <RouteCurtain />
-    <MorphlingCursor />
-    <Navbar />
-    <main class="mx-auto w-full max-w-7xl flex-1 border-x-2 border-brut-black tv:max-w-[100rem]">
+  <body id="page-top" tabindex="-1" data-immersive={immersive ? "" : undefined} class:list={["flex min-h-screen flex-col", immersive && "bg-black text-white"]}>
+    {!immersive && <BootScreen />}
+    {!immersive && <RouteCurtain />}
+    {!immersive && <MorphlingCursor />}
+    {!immersive && <Navbar />}
+    <main class:list={["flex-1", !immersive && "mx-auto w-full max-w-7xl border-x-2 border-brut-black tv:max-w-[100rem]"]}>
       <slot />
     </main>
-    <Footer showContact={showFooterContact} />
+    {!immersive && <Footer showContact={showFooterContact} />}
   </body>
 </html>
 
 <script>
   import { writeText } from "../services/storage";
   import { transitionTheme } from "../browser/shell/theme-transition";
+  import { initLocalization } from "../browser/shell/localization";
+
+  initLocalization();
 
   let cancelThemeTransition = () => {};
 

@@ -112,11 +112,12 @@ Do not "improve" this by moving `/music` to SSR.
 
 ### Rule 3 — One `.tsx` root per island
 
-There are eight interactive roots, each mounted `client:load`:
+There are nine interactive roots, each mounted `client:load`:
 
 | Root | Page |
 | --- | --- |
 | `MusicSection.tsx` | `/music` |
+| `SharedTrackPage.tsx` | `/share` |
 | `AdminUpload.tsx` | `/admin` |
 | `ContactForm.tsx` | `/contact` |
 | `ConvChain.tsx` | `/experimentation/convchain` |
@@ -354,18 +355,19 @@ actual reuse. Create no empty groups or re-export barrels.
 | `index.astro` | Home composition. |
 | `loading.astro` | Unlisted loading workbench. |
 | `music.astro` | Prerendered introduction, browser catalog and editorial journey. |
+| `share.astro` | Noindex, shell-free player page; the browser resolves its shared-track token from the query string. |
 
 ### `layouts/` — Document shell
 
 | File | Role |
 | --- | --- |
-| `Layout.astro` | html/head/body, mounts Navbar + BootScreen + Footer. Also the one place a page states how it is described and indexed: `description`, `noindex`, and the canonical/OG tags. |
+| `Layout.astro` | html/head/body, mounts Navbar + BootScreen + Footer. Also the one place a page states how it is described and indexed: `description`, `noindex`, and the canonical/OG tags. `immersive` removes the site shell for the shared-track player. |
 
 ### `components/` — Astro UI and React islands
 
 | File | Role |
 | --- | --- |
-| `admin/AdminUpload.tsx` | `/admin` root. Key entry, song list, replace/delete. |
+| `admin/AdminUpload.tsx` | `/admin` root. Key entry, song list, replace/delete, and authenticated share/copy/revoke controls. |
 | `admin/UploadQueue.tsx` | The upload list and its controls. |
 | `coding/CodingExperience.astro` | Employer, role and responsibilities. |
 | `coding/CodingIntro.astro` | Coding heading and GitHub profile link. |
@@ -403,6 +405,8 @@ actual reuse. Create no empty groups or re-export barrels.
 | `music/PlayerBar.tsx` | Selected-song transport and spectrum/waveform canvases; hides another song's progress and disables seeking until the selected song is active. |
 | `music/StarRating.tsx` | Five-star input. |
 | `music/TrackBlock.tsx` | Selected-track rating and comments; playback controls live in PlayerBar. |
+| `music/SharedTrackPage.tsx` | Resolves one public share token and composes the mobile player, rating and comments. |
+| `music/TrackShareControls.tsx` | Shared authenticated create/copy/revoke controls for the admin list and selected WIP preview. |
 | `shared/ErrorNotice.tsx` | Error display plus retry. |
 | `shared/InvertLink.astro` | Inline text link that turns blue on hover and focus. For a name inside a heading. |
 | `shared/LinkPreview.astro` | One outbound link inside running text, using the `text-highlight` plate, with its `note` shown as a popover on hover and keyboard focus. The note stays real text in the document, so assistive tech reads it and the localization pass translates it; only its placement is hover-only. Styling is in `styles/shared/link-preview.css`. |
@@ -536,6 +540,7 @@ actual reuse. Create no empty groups or re-export barrels.
 | `music/music-journey-chapters.css` | Music journey chapter cards: bordered article, marker, lane label, prose, milestone, listening/video disclosure. |
 | `music/music-journey-artists.css` | Music journey artist portrait grid and per-artist overrides. |
 | `music/music-page.css` | Music intro, platform links and catalog layout; imported by the owning Astro sections. |
+| `music/shared-track.css` | Black immersive share page and phone-first player layout. |
 | `shared/brutal-button.css` | The `brut-up` hover reveal. |
 | `shared/link-preview.css` | Link note popover presentation. |
 | `shared/social-button.css` | `SocialButton` surfaces. |
@@ -555,6 +560,7 @@ Paths are relative to `src/frontend/`.
 | `scripts/refactor-check.mjs` | Browser harness for transport, resources, uploads, playback and canvas lifecycle. |
 | `scripts/responsive-check.mjs` | Responsive, loading, theme, experiment, cursor and music checks. |
 | `scripts/i18n-check.mjs` | Language switching, hydration and layout checks. |
+| `scripts/shared-track-check.mjs` | Real local API and browser check for 128 kbps encoding, range playback, sharing lifecycle, feedback, mobile layout and all locales. |
 | `scripts/sim-preview.mts` | Simulation contact sheets using pure graphics modules. |
 | `scripts/recursion-preview.mts` | Partition contact sheets and geometry checks. |
 | `scripts/png.ts` | Shared minimal preview PNG encoder. |
@@ -1406,6 +1412,17 @@ links on mobile and desktop. Screenshots go to ignored `dist/checks/`.
 
 ### Unified music preview
 
+`browser/audio/volume-control.ts` mounts the shared volume interaction inside
+`PlayerBar` and the persistent footer. It owns a keyboard-accessible slider,
+28 thin bars, and a percentage readout. Drag velocity raises crossed bars;
+frame-based exponential decay settles them, stopping at rest and on teardown.
+Reduced motion and hidden documents clear the wake. Player and locale store
+subscriptions synchronize both controls without adding React to the footer.
+`styles/music/music-page.css` owns their shared transport and volume styles.
+Repeat sits beside play/pause with matching 44px square geometry. The footer
+hides native loop/volume controls for external embeds, whose transport does not
+expose those operations. Mobile footer rows reserve room for title and controls.
+
 `MusicSection.tsx` owns one selection keyed by source and ID across curated
 releases and uploaded tracks. The sidebar groups both sources and preserves their
 independent loading, error and empty states. Previous/next buttons wrap through
@@ -1432,3 +1449,36 @@ widths: source selection, wrapping navigation, long titles/albums, no autoplay,
 native audio playback, isolated seek state, lazy comments, independent source
 failures and locale changes that preserve the mounted embed. Screenshots go to
 ignored `dist/checks/`. Use `BROWSER_PATH` for an installed browser.
+
+### Shared WIP tracks
+
+`/share?token=...` is a prerendered, noindex route excluded from the sitemap.
+The browser fetches one active share; API cold starts do not block rendering.
+`Layout` uses its immersive mode to omit navigation, footer, cursor and loading
+overlays. The body owns black theme variables independently of the saved palette.
+Localization initializes in Layout so the page also restores the saved or browser
+language without the navbar. The shared player skips the full-file waveform
+download; audio starts only after Play. Playback identity includes the audio URL
+so an original track and its shared MP3 do not reuse the wrong transport.
+
+The admin song list and selected WIP preview create, copy and revoke links using
+the existing admin key. The music preview shows those controls after the owner
+has saved the key in `/admin`. The public song list never includes share tokens.
+One active link per song is protected by a database row lock. Repeated creation reuses the active link;
+reactivation generates a new token so revoked links stay revoked. Source audio
+replacement regenerates the shared MP3 and preserves the active link. Revocation
+and song deletion remove the derivative after the database commit; rollback
+removes newly generated files. Shared responses use `Cache-Control: no-store`.
+
+FFmpeg generates and stores a separate stereo 128 kbps MP3 when sharing is
+enabled, including for tracks uploaded before sharing existed. The backend Docker
+runtime installs FFmpeg; local development needs it on PATH or `FFMPEG_PATH`.
+Comments and ratings use the song's existing records, and the share response
+restores the listener's previous rating. The page initially opens the comments.
+
+Run `node scripts/shared-track-check.mjs` against isolated local services. Defaults
+are API port 8093 and frontend port 5175; override `CHECK_API_URL`, `CHECK_SITE_URL`,
+`CHECK_ADMIN_KEY`, `BROWSER_PATH`, `FFMPEG_PATH` and `FFPROBE_PATH` as needed.
+The script only accepts loopback services, creates and removes its own song,
+probes the real MP3 bitrate, and saves phone/desktop screenshots to ignored
+`dist/checks/shared-track/`.

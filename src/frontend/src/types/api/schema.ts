@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/songs/{id}/share": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["sharedLink"];
+        put?: never;
+        post: operations["share"];
+        delete: operations["revokeShare"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/internal/contact/deliveries/process": {
         parameters: {
             query?: never;
@@ -110,6 +126,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/client-errors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reportClientError"];
         delete?: never;
         options?: never;
         head?: never;
@@ -164,6 +196,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/shared-tracks/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/local-audio/{objectPath}": {
         parameters: {
             query?: never;
@@ -209,36 +257,6 @@ export interface components {
             };
             errors?: unknown;
         };
-        UpdateCommentRequest: {
-            content: string;
-        };
-        CreateRatingRequest: {
-            /** Format: int32 */
-            stars?: number;
-            visitorId?: string;
-        };
-        CreateCommentRequest: {
-            author: string;
-            content: string;
-        };
-        CreateContactMessageRequest: {
-            /** Format: uuid */
-            submissionId: string;
-            name: string;
-            /** Format: email */
-            email: string;
-            message: string;
-            website?: string;
-        };
-        ResponseFormatObject: {
-            success?: boolean;
-            message?: string;
-            data?: unknown;
-            meta?: {
-                [key: string]: unknown;
-            };
-            errors?: unknown;
-        };
         SongResponse: {
             /** Format: int64 */
             id: number;
@@ -257,6 +275,56 @@ export interface components {
             myRating?: number;
             /** Format: int64 */
             commentCount: number;
+        };
+        UpdateCommentRequest: {
+            content: string;
+        };
+        CreateRatingRequest: {
+            /** Format: int32 */
+            stars?: number;
+            visitorId?: string;
+        };
+        CreateCommentRequest: {
+            author: string;
+            content: string;
+        };
+        ResponseFormatSharedTrackResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["SharedTrackResponse"];
+            meta?: {
+                [key: string]: unknown;
+            };
+            errors?: unknown;
+        };
+        SharedTrackResponse: {
+            token: string;
+            song: components["schemas"]["SongResponse"];
+        };
+        CreateContactMessageRequest: {
+            /** Format: uuid */
+            submissionId: string;
+            name: string;
+            /** Format: email */
+            email: string;
+            message: string;
+            website?: string;
+        };
+        ClientErrorReportRequest: {
+            component: string;
+            errorName: string;
+            message: string;
+            stack?: string;
+            path: string;
+        };
+        ResponseFormatObject: {
+            success?: boolean;
+            message?: string;
+            data?: unknown;
+            meta?: {
+                [key: string]: unknown;
+            };
+            errors?: unknown;
         };
         CommentResponse: {
             /** Format: int64 */
@@ -543,6 +611,76 @@ export interface operations {
             };
         };
     };
+    sharedLink: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Admin-Key"?: string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ResponseFormatSharedTrackResponse"];
+                };
+            };
+        };
+    };
+    share: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Admin-Key"?: string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ResponseFormatSharedTrackResponse"];
+                };
+            };
+        };
+    };
+    revokeShare: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Admin-Key"?: string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     process: {
         parameters: {
             query?: never;
@@ -586,6 +724,28 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["ResponseFormat"];
                 };
+            };
+        };
+    };
+    reportClientError: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientErrorReportRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -671,6 +831,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ResponseFormatObject"];
+                };
+            };
+        };
+    };
+    get_1: {
+        parameters: {
+            query?: {
+                visitorId?: string;
+            };
+            header?: {
+                "X-Forwarded-For"?: string;
+            };
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ResponseFormatSharedTrackResponse"];
                 };
             };
         };

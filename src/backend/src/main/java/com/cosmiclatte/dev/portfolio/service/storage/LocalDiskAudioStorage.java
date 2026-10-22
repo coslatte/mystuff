@@ -95,6 +95,27 @@ public class LocalDiskAudioStorage implements AudioStorage {
     }
 
     @Override
+    public byte[] read(String objectPath) {
+        try {
+            return Files.readAllBytes(resolve(objectPath));
+        } catch (IOException e) {
+            throw new StorageException("Could not read audio from disk: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public String storePreview(byte[] mp3Bytes) {
+        String objectPath = java.util.UUID.randomUUID() + ".mp3";
+        try {
+            Files.createDirectories(root);
+            Files.write(resolve(objectPath), mp3Bytes);
+            return objectPath;
+        } catch (IOException e) {
+            throw new StorageException("Could not store preview audio: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
     public void delete(String objectPath) {
         if (objectPath == null || objectPath.isBlank()) {
             return;

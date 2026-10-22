@@ -9,9 +9,8 @@ import java.util.List;
 /**
  * Where uploaded audio lives.
  *
- * <p>Three operations, and that is the whole contract: {@link SongService} stores a
- * file when a track is created, drops one when it is replaced or deleted, and turns
- * the stored path into a playable URL on every read.
+ * <p>Object paths stay independent of the storage backend. Shared previews read
+ * the original and store a separate MP3 without exposing the original URL.
  *
  * <p>The split exists so local development needs no cloud account. Supabase stores
  * objects in production and a directory on disk does it locally, selected by
@@ -27,6 +26,10 @@ public interface AudioStorage {
 
     /** Validates and persists the upload, returning the object path to persist. */
     String store(MultipartFile file);
+
+    byte[] read(String objectPath);
+
+    String storePreview(byte[] mp3Bytes);
 
     default String storeArtwork(MultipartFile file) {
         Rules.validateArtwork(file);

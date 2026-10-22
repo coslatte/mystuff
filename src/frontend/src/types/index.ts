@@ -21,6 +21,8 @@ export type CreatedComment = components["schemas"]["CreatedCommentResponse"];
 export type Rating = components["schemas"]["RatingResponse"];
 export type SoundCloudAlbum = components["schemas"]["SoundCloudAlbumDto"];
 export type Health = components["schemas"]["HealthResponse"];
+export type SharedTrack = components["schemas"]["SharedTrackResponse"];
+export type ClientErrorReport = components["schemas"]["ClientErrorReportRequest"];
 
 /** The envelope every endpoint answers with. */
 export type ApiMeta = {

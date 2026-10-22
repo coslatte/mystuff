@@ -5,9 +5,10 @@ import { useState } from "react";
 type Props = {
   value?: number;
   onRate?: (stars: number) => void;
+  disabled?: boolean;
 };
 
-export default function StarRating({ value = 0, onRate }: Props) {
+export default function StarRating({ value = 0, onRate, disabled = false }: Props) {
   const t = useTranslations();
   const [hover, setHover] = useState(0);
   const active = hover || value;
@@ -18,6 +19,7 @@ export default function StarRating({ value = 0, onRate }: Props) {
         <button
           key={star}
           type="button"
+          disabled={disabled}
           onClick={() => onRate?.(star)}
           onMouseEnter={() => setHover(star)}
           onMouseLeave={() => setHover(0)}

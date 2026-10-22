@@ -1,7 +1,9 @@
-import { useRef, useState } from "react";
+import { Component, useCallback, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { messages } from "../../lib/i18n/catalog";
 import { useTranslations } from "../../hooks/useTranslations";
 import type { Song, StreamingPlatform } from "../../types";
+import { api } from "../../services/api";
+import { player } from "../../services/player";
 import {
   hasLinks,
   STREAMING_PLATFORMS,
@@ -12,6 +14,8 @@ import { useServerWarmup } from "../../hooks/useServerWarmup";
 import { useSongs } from "../../hooks/useSongs";
 import PlayerBar from "./PlayerBar";
 import TrackBlock from "./TrackBlock";
+import TrackShareControls from "./TrackShareControls";
+import { readText } from "../../services/storage";
 import AlbumCard from "./AlbumCard";
 import ErrorNotice from "../shared/ErrorNotice";
 import LoadingTracks from "../loading/LoadingTracks";
@@ -29,8 +33,125 @@ const platformNames: Record<StreamingPlatform, string> = {
   "apple-music": "Apple Music",
 };
 
+type ReportStatus = "sending" | "sent" | "failed";
+
+type BoundaryProps = {
+  children: ReactNode;
+  onError: (error: Error, componentStack?: string) => void;
+  fallback: (retry: () => void) => ReactNode;
+};
+
+type BoundaryState = { error: Error | null };
+
+class MusicErrorBoundary extends Component<BoundaryProps, BoundaryState> {
+  state: BoundaryState = { error: null };
+
+  static getDerivedStateFromError(error: Error): BoundaryState {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    this.props.onError(error, info.componentStack ?? "");
+  }
+
+  capture = (error: Error) => {
+    if (this.state.error) return;
+    this.setState({ error });
+    this.props.onError(error);
+  };
+
+  retry = () => {
+    try {
+      player.recover();
+    } finally {
+      this.setState({ error: null });
+    }
+  };
+
+  render() {
+    return this.state.error ? this.props.fallback(this.retry) : this.props.children;
+  }
+}
+
+function asError(value: unknown): Error {
+  if (value instanceof Error) return value;
+  return new Error(typeof value === "string" ? value : "Unhandled client exception.");
+}
+
+function safeStack(stack: string): string {
+  return stack.replace(/(https?:\/\/[^\s)]+)[?#][^\s)]*/g, "$1").slice(0, 2500);
+}
+
 export default function MusicSection() {
   const t = useTranslations();
+  const boundary = useRef<MusicErrorBoundary | null>(null);
+  const [reportStatus, setReportStatus] = useState<ReportStatus | null>(null);
+  const lastReport = useRef<{ signature: string; at: number } | null>(null);
+
+  const reportError = useCallback((error: Error, componentStack = "") => {
+    const stack = safeStack([error.stack ?? "", componentStack].filter(Boolean).join("\n"));
+    const message = safeStack(error.message).slice(0, 1000) || "Unknown client error.";
+    const signature = `${error.name}:${message}:${stack}`;
+    const now = Date.now();
+    if (lastReport.current?.signature === signature && now - lastReport.current.at < 2000) return;
+    lastReport.current = { signature, at: now };
+    setReportStatus("sending");
+    void api.reportClientError({
+      component: "MusicSection",
+      errorName: error.name.slice(0, 100) || "Error",
+      message,
+      stack,
+      path: window.location.pathname.slice(0, 300),
+    }).then(() => setReportStatus("sent"), () => setReportStatus("failed"));
+  }, []);
+
+  useEffect(() => {
+    const onError = (event: ErrorEvent) => {
+      if (event.message) boundary.current?.capture(asError(event.error ?? event.message));
+    };
+    const onRejection = (event: PromiseRejectionEvent) => {
+      boundary.current?.capture(asError(event.reason));
+    };
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onRejection);
+    return () => {
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onRejection);
+    };
+  }, []);
+
+  const statusMessage = reportStatus == null
+    ? ""
+    : t(reportStatus === "sending"
+      ? messages.music.componentErrorSending
+      : reportStatus === "sent"
+        ? messages.music.componentErrorSent
+        : messages.music.componentErrorReportFailed);
+
+  return (
+    <MusicErrorBoundary
+      ref={boundary}
+      onError={reportError}
+      fallback={(retry) => (
+        <div className="music-browser border-2 border-brut-black bg-brut-surface p-6" role="alert">
+          <h3 className="text-lg font-bold">{t(messages.music.componentErrorTitle)}</h3>
+          <p className="mt-2">{t(messages.music.componentErrorMessage)}</p>
+          <p className="mt-2 font-mono text-xs" role="status" aria-live="polite">{statusMessage}</p>
+          <button type="button" className="brut-btn mt-4" onClick={retry}>
+            {t(messages.music.componentErrorRetry)}
+          </button>
+        </div>
+      )}
+    >
+      <MusicBrowser />
+    </MusicErrorBoundary>
+  );
+}
+
+function MusicBrowser() {
+  const t = useTranslations();
+  const [adminKey, setAdminKey] = useState("");
+  useEffect(() => { setAdminKey(readText("clm_admin_key") ?? ""); }, []);
   const releases = useAlbums();
   const tracks = useSongs();
   const { ready: serverReady, elapsed } = useServerWarmup();
@@ -213,6 +334,7 @@ export default function MusicSection() {
                   <div className="music-track-preview">
                     {trackArtwork && <img src={trackArtwork} alt="" className="mb-4 aspect-square w-full max-w-64 border-2 border-brut-black object-cover" />}
                     <PlayerBar song={selected.song} />
+                    {adminKey && <TrackShareControls songId={selected.song.id} adminKey={adminKey} />}
                     <TrackBlock key={selected.song.id} song={selected.song} onRate={tracks.rate} />
                   </div>
                 )}

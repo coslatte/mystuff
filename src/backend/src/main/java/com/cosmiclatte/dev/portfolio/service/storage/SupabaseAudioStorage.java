@@ -78,6 +78,41 @@ public class SupabaseAudioStorage implements AudioStorage {
     }
 
     @Override
+    public byte[] read(String objectPath) {
+        requireConfigured();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(signedUrl(objectPath)))
+                .timeout(Duration.ofSeconds(60))
+                .GET().build();
+        try {
+            HttpResponse<byte[]> response = http.send(request, HttpResponse.BodyHandlers.ofByteArray());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new StorageException("Supabase audio download failed (" + response.statusCode() + ").");
+            }
+            return response.body();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new StorageException("Audio download was interrupted.", e);
+        } catch (IOException e) {
+            throw new StorageException("Could not download audio from Supabase.", e);
+        }
+    }
+
+    @Override
+    public String storePreview(byte[] mp3Bytes) {
+        requireConfigured();
+        String filename = java.util.UUID.randomUUID() + ".mp3";
+        HttpResponse<String> response = send(HttpRequest.newBuilder()
+                .uri(URI.create(storageBase + "/object/" + bucket + "/" + filename))
+                .timeout(Duration.ofSeconds(60))
+                .header("Content-Type", "audio/mpeg")
+                .POST(HttpRequest.BodyPublishers.ofByteArray(mp3Bytes)),
+                "Could not upload preview audio to Supabase");
+        require2xx(response, "preview upload");
+        return filename;
+    }
+
+    @Override
     public String storeArtwork(MultipartFile file) {
         requireConfigured();
         AudioStorage.Rules.validateArtwork(file);

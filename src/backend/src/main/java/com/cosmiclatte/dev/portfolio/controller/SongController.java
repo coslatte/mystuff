@@ -29,6 +29,8 @@ import com.cosmiclatte.dev.portfolio.common.exception.ForbiddenException;
 import com.cosmiclatte.dev.portfolio.config.AdminAuth;
 import com.cosmiclatte.dev.portfolio.dto.SongResponse;
 import com.cosmiclatte.dev.portfolio.service.SongService;
+import com.cosmiclatte.dev.portfolio.service.SharedTrackService;
+import com.cosmiclatte.dev.portfolio.dto.SharedTrackResponse;
 
 
 @RestController
@@ -38,6 +40,7 @@ public class SongController {
 
     private final SongService songService;
     private final AdminAuth adminAuth;
+    private final SharedTrackService sharedTrackService;
 
     @GetMapping
     @ApiResponse(responseCode = "200", content = @Content(
@@ -57,6 +60,32 @@ public class SongController {
             schemaProperties = @SchemaProperty(name = "data", schema = @Schema(implementation = SongResponse.class))))
     public ResponseFormat<?> get(@PathVariable Long id) {
         return ResponseFormat.success(songService.getSong(id));
+    }
+
+    @PostMapping(ApiPaths.SONG_SHARE)
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseFormat<SharedTrackResponse> share(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Admin-Key", required = false) String adminKey) {
+        requireAdmin(adminKey);
+        return ResponseFormat.success(sharedTrackService.createOrEnable(id));
+    }
+
+    @GetMapping(ApiPaths.SONG_SHARE)
+    public ResponseFormat<SharedTrackResponse> sharedLink(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Admin-Key", required = false) String adminKey) {
+        requireAdmin(adminKey);
+        return ResponseFormat.success(sharedTrackService.getForSong(id));
+    }
+
+    @DeleteMapping(ApiPaths.SONG_SHARE)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void revokeShare(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Admin-Key", required = false) String adminKey) {
+        requireAdmin(adminKey);
+        sharedTrackService.revoke(id);
     }
 
     @PostMapping(consumes = "multipart/form-data")

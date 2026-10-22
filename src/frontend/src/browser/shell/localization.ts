@@ -5,7 +5,7 @@ import { getLocale, restoreLocale, setLocale, subscribeLocale } from "../../serv
 const originals = new WeakMap<Node, { source: string; rendered: string }>();
 const attributes = new WeakMap<Element, Map<string, { source: string; rendered: string }>>();
 const ignored = 'astro-island, script, style, pre, code, textarea, [translate="no"], [contenteditable]';
-const localizedAttributes = ["aria-label", "aria-valuetext", "title", "placeholder", "alt", "data-tip"];
+const localizedAttributes = ["aria-label", "aria-valuetext", "title", "placeholder", "alt", "data-tip", "content"];
 const translationAttributes = ["data-i18n-text", ...localizedAttributes.map(name => `data-i18n-${name}`)];
 let initialized = false;
 

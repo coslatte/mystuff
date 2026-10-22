@@ -50,7 +50,7 @@ function withLocalEditTokens(comments: Comment[]): Comment[] {
   return merged;
 }
 
-export default function CommentThread({ songId }: Props) {
+export default function CommentThread({ songId, onCountChange }: Props) {
   const t = useTranslations();
   const [author, setAuthor] = useState("");
   const [content, setContent] = useState("");

@@ -41,6 +41,7 @@ public class SongService {
     private final AudioStorage fileStorage;
     private final AudioMetadataService audioMetadata;
     private final SongMapper songMapper;
+    private final SharedTrackService sharedTrackService;
 
     public List<SongResponse> listSongs(String visitorId, String ipHash) {
         List<Song> songs = songRepository.findAllByOrderByCreatedAtDesc();
@@ -77,7 +78,9 @@ public class SongService {
         }
         String duration = audioMetadata.readDuration(file);
         String objectPath = fileStorage.store(file);
+        deleteAfterRollback(objectPath);
         String artworkPath = artwork == null || artwork.isEmpty() ? null : fileStorage.storeArtwork(artwork);
+        deleteAfterRollback(artworkPath);
         Song song = Song.builder()
                 .title(title.trim())
                 .artist(artist.trim())
@@ -90,10 +93,13 @@ public class SongService {
 
     @Transactional
     public SongResponse replaceAudio(Long id, MultipartFile file) {
-        Song song = findById(id);
+        Song song = songRepository.findForUpdate(id)
+                .orElseThrow(() -> new NotFoundException("Song not found: " + id));
         String oldPath = song.getAudioUrl();
         String duration = audioMetadata.readDuration(file);
         String newPath = fileStorage.store(file);
+        deleteAfterRollback(newPath);
+        sharedTrackService.refreshAudio(id, newPath);
         song.setAudioUrl(newPath);
         song.setDuration(duration);
         SongResponse response = toResponse(songRepository.save(song), null, null, commentCount(id));
@@ -103,12 +109,24 @@ public class SongService {
 
     @Transactional
     public void deleteSong(Long id) {
-        Song song = findById(id);
+        Song song = songRepository.findForUpdate(id)
+                .orElseThrow(() -> new NotFoundException("Song not found: " + id));
+        sharedTrackService.revoke(id);
         String path = song.getAudioUrl();
         String artworkPath = song.getArtworkUrl();
         songRepository.delete(song);
         deleteAfterCommit(path);
         deleteAfterCommit(artworkPath);
+    }
+
+    private void deleteAfterRollback(String objectPath) {
+        if (objectPath == null || objectPath.isBlank()) return;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status != STATUS_COMMITTED) fileStorage.delete(objectPath);
+            }
+        });
     }
 
     /**

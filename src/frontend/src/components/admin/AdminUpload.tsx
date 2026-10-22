@@ -8,6 +8,7 @@ import { FILE_ACCEPT, formatBytes } from "../../lib/upload/audio-file";
 import type { Song } from "../../types";
 import ErrorNotice from "../shared/ErrorNotice";
 import UploadQueue from "./UploadQueue";
+import TrackShareControls from "../music/TrackShareControls";
 
 const ADMIN_KEY_STORAGE = "clm_admin_key";
 
@@ -136,6 +137,7 @@ export default function AdminUpload() {
               key={song.id}
               song={song}
               busy={busySongId === song.id}
+              adminKey={adminKey}
               onReplace={handleReplace}
               onDelete={handleDelete}
             />
@@ -149,13 +151,14 @@ export default function AdminUpload() {
 type RowProps = {
   song: Song;
   busy: boolean;
+  adminKey: string;
   onReplace: (song: Song, file: File | null) => void;
   onDelete: (song: Song) => void;
 };
 
 // Each row owns its replacement input. Reading a shared upload-form input here
 // would upload whatever file happened to sit there.
-function SongRow({ song, busy, onReplace, onDelete }: RowProps) {
+function SongRow({ song, busy, adminKey, onReplace, onDelete }: RowProps) {
   const [replacement, setReplacement] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -166,7 +169,7 @@ function SongRow({ song, busy, onReplace, onDelete }: RowProps) {
         <span className="normal-case">{song.artist}</span>
         {song.duration && <span className="text-brut-muted"> · {song.duration}</span>}
       </span>
-      <span className="flex items-center gap-2">
+      <span className="flex flex-wrap items-center gap-2">
         <input
           ref={inputRef}
           type="file"
@@ -192,6 +195,7 @@ function SongRow({ song, busy, onReplace, onDelete }: RowProps) {
           delete
         </button>
       </span>
+      <TrackShareControls songId={song.id} adminKey={adminKey} disabled={busy} />
       {replacement && (
         <p className="brut-meta w-full text-brut-muted">
           {replacement.name} · {formatBytes(replacement.size)}

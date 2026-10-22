@@ -8,19 +8,20 @@ import CommentThread from "./CommentThread";
 type Props = {
   song: Song;
   onRate: (song: Song, stars: number) => void;
+  ratingDisabled?: boolean;
+  commentsInitiallyOpen?: boolean;
 };
 
-export default function TrackBlock({ song, onRate }: Props) {
+export default function TrackBlock({ song, onRate, ratingDisabled = false, commentsInitiallyOpen = false }: Props) {
   const t = useTranslations();
-  // Browsing previews must not fetch comments until the listener asks for them.
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(commentsInitiallyOpen);
   const [commentCount, setCommentCount] = useState(song.commentCount ?? 0);
   const rating = song.avgRating != null ? `${song.avgRating.toFixed(1)} (${song.totalVotes ?? 0})` : t(messages.music.unrated);
 
   return (
     <div className="music-track-feedback">
       <div className="music-track-feedback-header">
-        <StarRating value={song.myRating ?? 0} onRate={stars => onRate(song, stars)} />
+        <StarRating value={song.myRating ?? 0} disabled={ratingDisabled} onRate={stars => onRate(song, stars)} />
         <span className="font-mono text-xs text-brut-muted">★ {rating}</span>
         <button type="button" className="editorial-link" aria-expanded={showComments}
           onClick={() => setShowComments(value => !value)}>

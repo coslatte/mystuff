@@ -1,9 +1,11 @@
 import { PUBLIC_API_URL } from "astro:env/client";
 import type {
   Comment,
+  ClientErrorReport,
   CreatedComment,
   Health,
   Rating,
+  SharedTrack,
   Song,
   SoundCloudAlbum,
 } from "../types";
@@ -186,6 +188,14 @@ export const api = {
   getSongs: (visitorId?: string, signal?: AbortSignal) =>
     request<Song[]>(`/api/songs${visitorId ? `?visitorId=${encodeURIComponent(visitorId)}` : ""}`, { signal }),
   getSong: (songId: number) => request<Song>(`/api/songs/${songId}`),
+  createSharedTrack: (songId: number, adminKey: string) =>
+    request<SharedTrack>(`/api/songs/${songId}/share`, { method: "POST", adminKey }),
+  getSongShare: (songId: number, adminKey: string, signal?: AbortSignal) =>
+    request<SharedTrack>(`/api/songs/${songId}/share`, { adminKey, signal, cache: "no-store" }),
+  getSharedTrack: (token: string, visitorId?: string, signal?: AbortSignal) =>
+    request<SharedTrack>(`/api/shared-tracks/${encodeURIComponent(token)}${visitorId ? `?visitorId=${encodeURIComponent(visitorId)}` : ""}`, { signal, cache: "no-store" }),
+  revokeSharedTrack: (songId: number, adminKey: string) =>
+    request(`/api/songs/${songId}/share`, { method: "DELETE", adminKey, response: "empty" }),
   getComments: (songId: number, signal?: AbortSignal) => request<Comment[]>(`/api/songs/${songId}/comments`, { signal }),
   postComment: (songId: number, body: { author: string; content: string }) =>
     request<CreatedComment>(`/api/songs/${songId}/comments`, {
@@ -199,6 +209,11 @@ export const api = {
     }),
 
   getSoundCloudAlbums: (signal?: AbortSignal) => request<SoundCloudAlbum[]>("/api/albums/soundcloud", { signal }),
+  reportClientError: (body: ClientErrorReport) => request("/api/client-errors", {
+    method: "POST",
+    body: JSON.stringify(body),
+    response: "empty",
+  }),
 
   uploadSong: (
     form: FormData,

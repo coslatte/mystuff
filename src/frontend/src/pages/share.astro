@@ -1,0 +1,10 @@
+---
+import Layout from "../layouts/Layout.astro";
+import SharedTrackPage from "../components/music/SharedTrackPage";
+import { messages } from "../lib/i18n/catalog";
+import { translate } from "../lib/i18n/translate";
+---
+
+<Layout title={translate(messages.music.sharedTrackTitle, "en")} description={translate(messages.music.sharedTrackDescription, "en")} noindex immersive>
+  <SharedTrackPage client:load />
+</Layout>
