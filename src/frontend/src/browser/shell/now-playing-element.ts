@@ -1,9 +1,13 @@
+import { mountVolumeControl } from "../audio/volume-control";
+import { messages } from "../../lib/i18n/catalog";
+import { translate } from "../../lib/i18n/translate";
+import { getLocale, subscribeLocale } from "../../services/locale";
 import { player } from "../../services/player";
 import { drawPseudoSpectrum, drawSpectrum, sizeCanvas } from "../audio/playback-canvas";
 import { formatClock, playPauseClass, playPauseGlyph } from "../../lib/audio/playback-ui";
 
 const TOGGLE_BASE =
-  "flex h-11 w-11 shrink-0 items-center justify-center border-2 border-white text-sm font-bold transition-colors";
+  "player-transport";
 const CLOCK_CLASS = "shrink-0 font-mono text-[10px] font-bold tabular-nums text-white tablet:text-xs";
 const TITLE_CLASS =
   "block truncate font-mono text-xs font-bold leading-tight text-brut-red tablet:text-sm";
@@ -41,9 +45,10 @@ export function defineNowPlaying() {
     private total = document.createElement("span");
     private canvas = document.createElement("canvas");
     private loop = document.createElement("button");
-    private volume = document.createElement("input");
+    private volume = document.createElement("div");
+    private cleanupVolume: (() => void) | undefined;
+    private cleanupLocale: (() => void) | undefined;
     private shownLoop: boolean | null = null;
-    private shownVolume: number | null = null;
 
     // The store notifies on every timeupdate, so render() has to stay cheap.
     // Only the song identity and the play state reach the DOM.
@@ -55,34 +60,29 @@ export function defineNowPlaying() {
 
     constructor() {
       super();
-      this.elapsed.className = CLOCK_CLASS;
+      this.elapsed.className = `${CLOCK_CLASS} footer-player-clock`;
       this.elapsed.hidden = true;
-      this.total.className = CLOCK_CLASS;
+      this.total.className = `${CLOCK_CLASS} footer-player-clock`;
       this.total.hidden = true;
 
       this.box.className =
-        "flex h-full min-h-0 min-w-0 max-w-full items-center gap-3 border-2 border-black bg-black px-2 py-1";
+        "footer-player-console";
       this.toggle.type = "button";
+      this.toggle.classList.add("footer-player-toggle");
       this.toggle.addEventListener("click", () => player.toggle());
       this.icon.className = "icon-morph";
       this.toggle.append(this.icon);
 
       this.loop.type = "button";
-      this.loop.className = "shrink-0 border-2 border-white px-2 py-1 font-mono text-[10px] font-bold text-white";
-      this.loop.textContent = "↻";
-      this.loop.setAttribute("aria-label", "loop");
+      this.loop.className = "player-transport player-repeat footer-player-repeat";
+      this.loop.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m17 2 4 4-4 4M3 11V8a2 2 0 0 1 2-2h16M7 22l-4-4 4-4m14-1v3a2 2 0 0 1-2 2H3" /></svg>';
       this.loop.addEventListener("click", () => player.setLoop(!player.getSnapshot().loop));
-      this.volume.type = "range";
-      this.volume.min = "0";
-      this.volume.max = "1";
-      this.volume.step = "0.01";
-      this.volume.className = "w-16 shrink-0 accent-brut-blue tablet:w-20";
-      this.volume.addEventListener("input", () => player.setVolume(Number(this.volume.value)));
+      this.volume.className = "volume-wake";
 
       this.songName.className = TITLE_CLASS;
       this.songName.translate = false;
       const name = document.createElement("p");
-      name.className = "min-w-0";
+      name.className = "footer-player-title";
       name.append(this.songName);
 
       // Built once and never replaced, so a track change repaints this canvas
@@ -95,12 +95,14 @@ export function defineNowPlaying() {
       this.canvas.className = "block h-full w-full";
       square.append(this.canvas);
 
-      this.box.append(this.toggle, this.elapsed, name, this.loop, this.volume, this.total, square);
+      this.box.append(this.toggle, this.loop, name, this.elapsed, this.total, square, this.volume);
     }
 
     connectedCallback() {
       this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       this.replaceChildren(this.box);
+      this.cleanupVolume = mountVolumeControl(this.volume);
+      this.cleanupLocale = subscribeLocale(() => this.render());
       this.unsubscribe = player.subscribe(() => this.render());
       this.resizeObserver = new ResizeObserver(() => this.paint());
       this.resizeObserver.observe(this.canvas);
@@ -108,6 +110,8 @@ export function defineNowPlaying() {
     }
 
     disconnectedCallback() {
+      this.cleanupVolume?.();
+      this.cleanupLocale?.();
       this.unsubscribe?.();
       this.unsubscribe = undefined;
       this.resizeObserver?.disconnect();
@@ -200,15 +204,17 @@ export function defineNowPlaying() {
         this.loop.setAttribute("aria-pressed", String(this.shownLoop));
         this.loop.classList.toggle("bg-brut-blue", this.shownLoop);
       }
-      if (this.shownVolume !== player.getSnapshot().volume) {
-        this.shownVolume = player.getSnapshot().volume;
-        this.volume.value = String(this.shownVolume);
-      }
+      const native = nowPlaying.source === "tracks";
+      this.loop.hidden = !native;
+      this.volume.hidden = !native;
+      const locale = getLocale();
+      this.loop.setAttribute("aria-label", translate(messages.music.loop, locale));
+      this.loop.title = translate(messages.music.loop, locale);
+      this.toggle.setAttribute("aria-label", translate(isPlaying ? messages.music.pause : messages.music.play, locale));
 
       if (this.shownPlaying !== isPlaying) {
         this.shownPlaying = isPlaying;
         this.toggle.className = playPauseClass(isPlaying, TOGGLE_BASE);
-        this.toggle.setAttribute("aria-label", isPlaying ? "pause" : "play");
         // icon-morph only replays on a fresh node, so swap the glyph into a new
         // span instead of patching textContent.
         this.icon = document.createElement("span");

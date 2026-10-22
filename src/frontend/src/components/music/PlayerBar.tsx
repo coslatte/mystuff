@@ -1,3 +1,4 @@
+import { mountVolumeControl } from "../../browser/audio/volume-control";
 import { messages } from "../../lib/i18n/catalog";
 import { useTranslations } from "../../hooks/useTranslations";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
@@ -52,12 +53,15 @@ function syntheticPeaks(seed: number): WaveformPeaks {
   return peaks;
 }
 
-export default function PlayerBar({ song }: { song: Song }) {
+export default function PlayerBar({ song, preloadWaveform = true }: { song: Song; preloadWaveform?: boolean }) {
   const t = useTranslations();
   // Browsing another preview must not expose the playing song's seek position.
-  const { track } = usePlayer();
-  const playback = usePlayer();
-  const active = track.song?.id === song.id;
+  const { track, loop } = usePlayer();
+  const volumeRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (volumeRef.current) return mountVolumeControl(volumeRef.current);
+  }, []);
+  const active = track.song?.id === song.id && track.song?.audioUrl === song.audioUrl;
   const isPlaying = active && track.isPlaying;
   const currentTime = active ? track.currentTime : 0;
   const duration = active ? track.duration : 0;
@@ -73,7 +77,7 @@ export default function PlayerBar({ song }: { song: Song }) {
   const waveSize = useCanvasSize(waveformRef);
 
   useEffect(() => {
-    if (!song?.audioUrl) {
+    if (!song?.audioUrl || !preloadWaveform) {
       setDecoded(null);
       return;
     }
@@ -84,7 +88,7 @@ export default function PlayerBar({ song }: { song: Song }) {
     return () => {
       cancelled = true;
     };
-  }, [song?.id, song?.audioUrl]);
+  }, [song?.id, song?.audioUrl, preloadWaveform]);
 
   const fallback = useMemo(() => (song ? syntheticPeaks(song.id) : null), [song?.id]);
   const peaks = decoded ?? fallback;
@@ -184,14 +188,14 @@ export default function PlayerBar({ song }: { song: Song }) {
 
   return (
     <div className="flex w-full flex-col gap-2">
-      <div className="flex items-center gap-2 laptop:gap-3">
+      <div className="player-console">
         <button
           type="button"
           onClick={() => player.toggle(song ?? undefined)}
           disabled={!song}
           className={playPauseClass(
             isPlaying,
-            "flex h-11 w-11 shrink-0 items-center justify-center border-2 border-brut-black text-lg font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40 laptop:h-12 laptop:w-12 laptop:text-xl"
+            "player-transport"
           )}
           aria-label={t.text(isPlaying ? "pause" : "play")}
         >
@@ -200,52 +204,22 @@ export default function PlayerBar({ song }: { song: Song }) {
           </span>
         </button>
 
+        <button type="button" className="player-transport player-repeat" aria-pressed={loop}
+          aria-label={t(messages.music.loop)} title={t(messages.music.loop)}
+          onClick={() => player.setLoop(!loop)}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="m17 2 4 4-4 4M3 11V8a2 2 0 0 1 2-2h16M7 22l-4-4 4-4m14-1v3a2 2 0 0 1-2 2H3" />
+          </svg>
+        </button>
+
         <div className="min-w-0 flex-1 border-2 border-brut-black bg-brut-inverse p-1" aria-hidden="true">
-          <canvas ref={spectrumRef} className="block h-10 w-full laptop:h-12" />
+          <canvas ref={spectrumRef} className="block h-8 w-full" />
         </div>
 
-        <div className="shrink-0 border-2 border-brut-black bg-brut-surface px-2 py-1 font-mono text-[10px] font-bold text-brut-black laptop:text-xs">
+        <div className="flex h-11 shrink-0 items-center border-2 border-brut-black bg-brut-surface px-2 font-mono text-[10px] font-bold text-brut-black laptop:text-xs">
           {t.text(formatClock(currentTime))}
         </div>
-      </div>
-
-      <div className="flex items-center gap-3 font-mono text-[10px] font-bold">
-        <button type="button" aria-pressed={playback.loop} aria-label={t(messages.music.loop)}
-          onClick={() => player.setLoop(!playback.loop)}
-          className={`flex h-9 w-9 shrink-0 items-center justify-center border-2 border-brut-black text-lg transition-colors ${playback.loop ? "bg-brut-blue text-brut-on-accent" : "bg-brut-surface text-brut-black"}`}>
-          ↻
-        </button>
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="shrink-0">{t(messages.music.volume)}</span>
-          <div className="relative flex h-8 min-w-0 flex-1 touch-none items-center" role="slider" tabIndex={0}
-            aria-label={t(messages.music.volume)} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(playback.volume * 100)}
-            onPointerDown={(event) => {
-              event.currentTarget.setPointerCapture(event.pointerId);
-              const rect = event.currentTarget.getBoundingClientRect();
-              player.setVolume((event.clientX - rect.left) / rect.width);
-            }}
-            onPointerMove={(event) => {
-              if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
-              const rect = event.currentTarget.getBoundingClientRect();
-              player.setVolume((event.clientX - rect.left) / rect.width);
-            }}
-            onKeyDown={(event) => {
-              const step = event.shiftKey ? 0.1 : 0.01;
-              if (event.key === "ArrowRight" || event.key === "ArrowUp") player.setVolume(playback.volume + step);
-              else if (event.key === "ArrowLeft" || event.key === "ArrowDown") player.setVolume(playback.volume - step);
-              else if (event.key === "Home") player.setVolume(0);
-              else if (event.key === "End") player.setVolume(1);
-              else return;
-              event.preventDefault();
-            }}>
-            <div className="flex h-6 w-full items-center justify-between gap-[3px] px-1">
-              {Array.from({ length: 28 }, (_, index) => (
-                <span key={index} className={`h-2 flex-1 ${index / 27 <= playback.volume ? "bg-brut-blue" : "bg-brut-muted/30"}`} />
-              ))}
-            </div>
-          </div>
-          <span className="w-7 shrink-0 text-right tabular-nums">{Math.round(playback.volume * 100)}</span>
-        </div>
+        <div ref={volumeRef} className="volume-wake" />
       </div>
 
       <div

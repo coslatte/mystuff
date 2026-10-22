@@ -276,7 +276,7 @@ class PlayerEngine {
     }
     const target = song ?? this.trackState.song;
     if (!target) return;
-    if (this.activeEmbed || this.trackState.song?.id !== target.id) {
+    if (this.activeEmbed || this.trackState.song?.id !== target.id || this.trackState.song?.audioUrl !== target.audioUrl) {
       this.playSong(target);
       return;
     }
@@ -306,6 +306,25 @@ class PlayerEngine {
   setVolume = (volume: number) => {
     this.volume = Math.max(0, Math.min(1, volume));
     if (this.audio) this.audio.volume = this.volume;
+    this.sync();
+  };
+
+  recover = () => {
+    this.playbackGeneration++;
+    try {
+      if (this.activeEmbed) this.embeds.get(this.activeEmbed.token)?.pause();
+    } catch {
+      // A broken embed must not prevent the section from becoming usable again.
+    }
+    this.activeEmbed = null;
+    if (this.audio) {
+      this.audio.pause();
+      this.audio.removeAttribute("src");
+      this.audio.load();
+      this.audio.loop = false;
+    }
+    this.loop = false;
+    this.trackState = { song: null, isPlaying: false, currentTime: 0, duration: 0, error: false };
     this.sync();
   };
 }

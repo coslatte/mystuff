@@ -1,5 +1,5 @@
 export const PLAY_GLYPH = "▶";
-export const PAUSE_GLYPH = "𐋃";
+export const PAUSE_GLYPH = "Ⅱ";
 
 export function playPauseGlyph(isPlaying: boolean): string {
   return isPlaying ? PAUSE_GLYPH : PLAY_GLYPH;
