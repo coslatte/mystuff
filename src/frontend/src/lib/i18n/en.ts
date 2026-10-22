@@ -235,6 +235,8 @@ const musicMessages = {
   play: "play",
   pause: "pause",
   seek: "seek",
+  loop: "loop",
+  volume: "volume",
   playbackError: "playback error: could not stream this track. check your internet connectivity.",
   loadingTracks: "Loading tracks...",
   theServerIsReady: "The server is ready.",

@@ -34,6 +34,8 @@ export type PlayerState = {
   nowPlaying: NowPlaying | null;
   isPlaying: boolean;
   track: TrackPlayback;
+  loop: boolean;
+  volume: number;
 };
 
 /** What an embed reports about itself; see services/embed-players.ts. */
@@ -86,10 +88,12 @@ class PlayerEngine {
   private activeEmbed: { token: number; report: ExternalReport } | null = null;
   private externalTokenCounter = 0;
   private playbackGeneration = 0;
+  private loop = false;
+  private volume = 1;
   private snapshot: PlayerState;
 
   constructor() {
-    this.snapshot = { nowPlaying: null, isPlaying: false, track: this.trackState };
+    this.snapshot = { nowPlaying: null, isPlaying: false, track: this.trackState, loop: this.loop, volume: this.volume };
   }
 
   subscribe = (listener: Listener) => {
@@ -135,6 +139,8 @@ class PlayerEngine {
       nowPlaying,
       isPlaying: external ? external.isPlaying : this.trackState.isPlaying && song != null,
       track: this.trackState,
+      loop: this.loop,
+      volume: this.volume,
     };
     this.listeners.forEach((listener) => listener());
   }
@@ -172,6 +178,8 @@ class PlayerEngine {
       // (analyser) without producing silence on cross-origin sources.
       audio.crossOrigin = "anonymous";
       audio.preload = "metadata";
+      audio.loop = this.loop;
+      audio.volume = this.volume;
       audio.addEventListener("timeupdate", () => {
         this.patchTrack({ currentTime: audio.currentTime || 0 });
       });
@@ -287,6 +295,18 @@ class PlayerEngine {
     const audio = this.audio;
     if (!audio || !Number.isFinite(audio.duration)) return;
     audio.currentTime = Math.max(0, Math.min(1, ratio)) * audio.duration;
+  };
+
+  setLoop = (loop: boolean) => {
+    this.loop = loop;
+    if (this.audio) this.audio.loop = loop;
+    this.sync();
+  };
+
+  setVolume = (volume: number) => {
+    this.volume = Math.max(0, Math.min(1, volume));
+    if (this.audio) this.audio.volume = this.volume;
+    this.sync();
   };
 }
 

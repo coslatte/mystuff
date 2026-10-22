@@ -246,6 +246,7 @@ export interface components {
             artist: string;
             duration: string;
             audioUrl?: string;
+            artworkUrl?: string;
             /** Format: date-time */
             createdAt: string;
             /** Format: double */
@@ -254,6 +255,8 @@ export interface components {
             totalVotes?: number;
             /** Format: int32 */
             myRating?: number;
+            /** Format: int64 */
+            commentCount: number;
         };
         CommentResponse: {
             /** Format: int64 */
@@ -447,6 +450,8 @@ export interface operations {
                     artist: string;
                     /** Format: binary */
                     file: string;
+                    /** Format: binary */
+                    artwork?: string;
                 };
             };
         };

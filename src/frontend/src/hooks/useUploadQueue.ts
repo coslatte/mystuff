@@ -80,6 +80,7 @@ export function useUploadQueue(adminKey: string, onBatchUploaded: () => Promise<
         form.append("title", reserved.title.trim());
         form.append("artist", reserved.artist.trim());
         form.append("file", reserved.file);
+        if (reserved.artwork) form.append("artwork", reserved.artwork);
         try {
           await api.uploadSong(form, adminKey, ({ percent }) => {
             if (!scope.disposed) updateItem(next.id, { type: "progress", percent });

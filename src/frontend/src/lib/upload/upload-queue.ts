@@ -3,6 +3,7 @@ type UploadFile = {
   file: File;
   title: string;
   artist: string;
+  artwork?: File;
 };
 
 export type QueueItem = UploadFile & (
@@ -13,7 +14,7 @@ export type QueueItem = UploadFile & (
 );
 
 export type RejectedFile = { name: string; reason: string };
-export type MetadataChange = { title?: string; artist?: string };
+export type MetadataChange = { title?: string; artist?: string; artwork?: File };
 export type UploadEvent =
   | { type: "start" }
   | { type: "progress"; percent: number | null }
@@ -30,16 +31,16 @@ export function editUploadMetadata(item: QueueItem, change: MetadataChange): Que
   if (item.status === "uploading" || item.status === "done") return item;
   const next = { ...item, ...change };
   if (item.status !== "failed" || item.failure.kind !== "metadata") return next;
-  const { id, file, title, artist } = next;
+  const { id, file, title, artist, artwork } = next;
   const message = missingMetadata(next);
   return message
-    ? { id, file, title, artist, status: "failed", failure: { kind: "metadata", message } }
-    : { id, file, title, artist, status: "queued" };
+    ? { id, file, title, artist, artwork, status: "failed", failure: { kind: "metadata", message } }
+    : { id, file, title, artist, artwork, status: "queued" };
 }
 
 export function transitionUpload(item: QueueItem, event: UploadEvent): QueueItem {
-  const { id, file, title, artist } = item;
-  const base = { id, file, title, artist };
+  const { id, file, title, artist, artwork } = item;
+  const base = { id, file, title, artist, artwork };
   switch (event.type) {
     case "start": {
       if (item.status !== "queued") return item;

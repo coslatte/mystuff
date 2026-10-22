@@ -237,6 +237,8 @@ const musicMessages = {
   play: "再生",
   pause: "一時停止",
   seek: "再生位置",
+  loop: "リピート",
+  volume: "音量",
   playbackError: "再生エラー：この楽曲を再生できません。接続を確認してください。",
   loadingTracks: "楽曲を読み込み中...",
   theServerIsReady: "サーバーの準備ができました。",

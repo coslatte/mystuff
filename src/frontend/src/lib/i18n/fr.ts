@@ -237,6 +237,8 @@ const musicMessages = {
   play: "lire",
   pause: "pause",
   seek: "position de lecture",
+  loop: "boucle",
+  volume: "volume",
   playbackError: "erreur de lecture : impossible de lire ce morceau. Vérifiez votre connexion.",
   loadingTracks: "Chargement des morceaux...",
   theServerIsReady: "Le serveur est prêt.",

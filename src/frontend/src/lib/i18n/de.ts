@@ -237,6 +237,8 @@ const musicMessages = {
   play: "abspielen",
   pause: "pausieren",
   seek: "Wiedergabeposition",
+  loop: "Wiederholen",
+  volume: "Lautstärke",
   playbackError: "Wiedergabefehler: Dieser Track konnte nicht abgespielt werden. Prüfe deine Verbindung.",
   loadingTracks: "Tracks werden geladen...",
   theServerIsReady: "Der Server ist bereit.",

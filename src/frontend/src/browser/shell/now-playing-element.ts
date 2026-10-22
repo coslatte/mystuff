@@ -40,6 +40,10 @@ export function defineNowPlaying() {
     private songName = document.createElement("span");
     private total = document.createElement("span");
     private canvas = document.createElement("canvas");
+    private loop = document.createElement("button");
+    private volume = document.createElement("input");
+    private shownLoop: boolean | null = null;
+    private shownVolume: number | null = null;
 
     // The store notifies on every timeupdate, so render() has to stay cheap.
     // Only the song identity and the play state reach the DOM.
@@ -63,6 +67,17 @@ export function defineNowPlaying() {
       this.icon.className = "icon-morph";
       this.toggle.append(this.icon);
 
+      this.loop.type = "button";
+      this.loop.className = "shrink-0 border-2 border-white px-2 py-1 font-mono text-[10px] font-bold text-white";
+      this.loop.textContent = "↻ loop";
+      this.loop.addEventListener("click", () => player.setLoop(!player.getSnapshot().loop));
+      this.volume.type = "range";
+      this.volume.min = "0";
+      this.volume.max = "1";
+      this.volume.step = "0.01";
+      this.volume.className = "w-16 shrink-0 accent-brut-blue tablet:w-20";
+      this.volume.addEventListener("input", () => player.setVolume(Number(this.volume.value)));
+
       this.songName.className = TITLE_CLASS;
       this.songName.translate = false;
       const name = document.createElement("p");
@@ -79,7 +94,7 @@ export function defineNowPlaying() {
       this.canvas.className = "block h-full w-full";
       square.append(this.canvas);
 
-      this.box.append(this.toggle, this.elapsed, name, this.total, square);
+      this.box.append(this.toggle, this.elapsed, name, this.loop, this.volume, this.total, square);
     }
 
     connectedCallback() {
@@ -177,6 +192,16 @@ export function defineNowPlaying() {
       if (this.shownControllable !== nowPlaying.controllable) {
         this.shownControllable = nowPlaying.controllable;
         this.toggle.hidden = !nowPlaying.controllable;
+      }
+
+      if (this.shownLoop !== player.getSnapshot().loop) {
+        this.shownLoop = player.getSnapshot().loop;
+        this.loop.setAttribute("aria-pressed", String(this.shownLoop));
+        this.loop.classList.toggle("bg-brut-blue", this.shownLoop);
+      }
+      if (this.shownVolume !== player.getSnapshot().volume) {
+        this.shownVolume = player.getSnapshot().volume;
+        this.volume.value = String(this.shownVolume);
       }
 
       if (this.shownPlaying !== isPlaying) {

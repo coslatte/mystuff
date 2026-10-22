@@ -14,6 +14,7 @@ export default function TrackBlock({ song, onRate }: Props) {
   const t = useTranslations();
   // Browsing previews must not fetch comments until the listener asks for them.
   const [showComments, setShowComments] = useState(false);
+  const [commentCount, setCommentCount] = useState(song.commentCount ?? 0);
   const rating = song.avgRating != null ? `${song.avgRating.toFixed(1)} (${song.totalVotes ?? 0})` : t(messages.music.unrated);
 
   return (
@@ -23,10 +24,10 @@ export default function TrackBlock({ song, onRate }: Props) {
         <span className="font-mono text-xs text-brut-muted">★ {rating}</span>
         <button type="button" className="editorial-link" aria-expanded={showComments}
           onClick={() => setShowComments(value => !value)}>
-          {t(messages.music.comments)} <span aria-hidden="true">{showComments ? "▲" : "▼"}</span>
+          {t(messages.music.comments)} ({commentCount}) <span aria-hidden="true">{showComments ? "▲" : "▼"}</span>
         </button>
       </div>
-      {showComments && <CommentThread songId={song.id} />}
+      {showComments && <CommentThread songId={song.id} onCountChange={setCommentCount} />}
     </div>
   );
 }

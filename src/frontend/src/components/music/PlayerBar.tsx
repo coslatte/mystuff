@@ -56,6 +56,7 @@ export default function PlayerBar({ song }: { song: Song }) {
   const t = useTranslations();
   // Browsing another preview must not expose the playing song's seek position.
   const { track } = usePlayer();
+  const playback = usePlayer();
   const active = track.song?.id === song.id;
   const isPlaying = active && track.isPlaying;
   const currentTime = active ? track.currentTime : 0;
@@ -206,6 +207,20 @@ export default function PlayerBar({ song }: { song: Song }) {
         <div className="shrink-0 border-2 border-brut-black bg-brut-surface px-2 py-1 font-mono text-[10px] font-bold text-brut-black laptop:text-xs">
           {t.text(formatClock(currentTime))}
         </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 font-mono text-[10px] font-bold">
+        <button type="button" aria-pressed={playback.loop} aria-label={t(messages.music.loop)}
+          onClick={() => player.setLoop(!playback.loop)}
+          className={`border-2 border-brut-black px-3 py-2 transition-colors ${playback.loop ? "bg-brut-blue text-brut-on-accent" : "bg-brut-surface text-brut-black"}`}>
+          ↻ {t(messages.music.loop)}
+        </button>
+        <label className="flex min-w-0 flex-1 items-center gap-2">
+          <span>{t(messages.music.volume)}</span>
+          <input type="range" min="0" max="1" step="0.01" value={playback.volume}
+            aria-label={t(messages.music.volume)} onChange={(event) => player.setVolume(Number(event.currentTarget.value))}
+            className="min-w-0 flex-1 accent-brut-blue" />
+        </label>
       </div>
 
       <div

@@ -30,7 +30,7 @@
 .page-jump-swipe[data-direction="up"] { transform: translateY(-100%); }
 
 .page-jump-swipe[data-active] {
-  animation: page-jump-swipe var(--jump-duration, 520ms) cubic-bezier(.7, 0, .3, 1) both;
+  animation: page-jump-swipe var(--jump-duration, 300ms) cubic-bezier(.7, 0, .3, 1) both;
 }
 
 @keyframes page-jump-swipe {

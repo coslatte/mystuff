@@ -10,6 +10,7 @@ import ErrorNotice from "../shared/ErrorNotice";
 
 type Props = {
   songId: number;
+  onCountChange: (count: number) => void;
 };
 
 const AUTHOR_STORAGE = "clm_author";
@@ -67,6 +68,10 @@ export default function CommentThread({ songId }: Props) {
     [songId]
   );
   const comments = data ?? [];
+
+  useEffect(() => {
+    if (data) onCountChange(data.length);
+  }, [data, onCountChange]);
 
   useEffect(() => {
     const saved = readText(AUTHOR_STORAGE);

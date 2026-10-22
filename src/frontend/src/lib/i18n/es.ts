@@ -237,6 +237,8 @@ const musicMessages = {
   play: "reproducir",
   pause: "pausar",
   seek: "posición de reproducción",
+  loop: "repetir",
+  volume: "volumen",
   playbackError: "error de reproducción: no se pudo reproducir este tema. Comprueba tu conexión.",
   loadingTracks: "Cargando temas...",
   theServerIsReady: "El servidor está listo.",

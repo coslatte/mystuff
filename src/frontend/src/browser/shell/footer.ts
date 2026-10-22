@@ -51,7 +51,7 @@ function jumpPage(event: MouseEvent): void {
 
   if (distance < 1) return;
 
-  const duration = Math.min(2000, Math.max(120, distance * 0.18));
+  const duration = 300;
 
   if (reducedMotion || !swipe) {
     target.scrollIntoView({ behavior: "auto" });

@@ -15,7 +15,7 @@ type Props = {
   disabled: boolean;
   onAddFiles: (files: File[]) => void;
   onArtistChange: (artist: string) => void;
-  onMetaChange: (id: string, change: { title?: string; artist?: string }) => void;
+  onMetaChange: (id: string, change: { title?: string; artist?: string; artwork?: File }) => void;
   onRemove: (id: string) => void;
   onStart: () => void;
   onRetry: (id: string) => void;
@@ -185,7 +185,7 @@ export default function UploadQueue({
 type RowProps = {
   item: QueueItem;
   disabled: boolean;
-  onMetaChange: (id: string, change: { title?: string; artist?: string }) => void;
+  onMetaChange: (id: string, change: { title?: string; artist?: string; artwork?: File }) => void;
   onRemove: (id: string) => void;
   onRetry: (id: string) => void;
 };
@@ -271,6 +271,21 @@ function QueueRow({ item, disabled, onMetaChange, onRemove, onRetry }: RowProps)
           className="brut-field min-w-0 flex-1 px-2 py-1 text-xs disabled:opacity-60"
         />
       </div>
+      <label className="font-mono text-[10px]">
+        portada (JPG ≤ 2 MB / PNG ≤ 6 MB)
+        <input type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" disabled={locked || disabled}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            const limit = file.type === "image/png" ? 6 * 1024 * 1024 : 2 * 1024 * 1024;
+            if (!(file.type === "image/png" || file.type === "image/jpeg") || file.size > limit) {
+              window.alert("Choose a JPG up to 2 MB or PNG up to 6 MB.");
+              event.target.value = "";
+              return;
+            }
+            onMetaChange(item.id, { artwork: file });
+          }} className="ml-2 max-w-48" />
+      </label>
     </li>
   );
 }

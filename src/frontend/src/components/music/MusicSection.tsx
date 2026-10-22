@@ -16,6 +16,8 @@ import AlbumCard from "./AlbumCard";
 import ErrorNotice from "../shared/ErrorNotice";
 import LoadingTracks from "../loading/LoadingTracks";
 
+const uploadDate = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
+
 type CatalogEntry =
   | { kind: "album"; key: string; album: PlayableAlbum }
   | { kind: "track"; key: string; song: Song };
@@ -55,6 +57,7 @@ export default function MusicSection() {
   const selected = entries[index];
   const title =
     selected?.kind === "album" ? selected.album.title : selected?.song.title;
+  const trackArtwork = entryArtwork(selected);
 
   const select = (entry: CatalogEntry) => {
     setSelection(entry.key);
@@ -79,8 +82,8 @@ export default function MusicSection() {
         onClick={() => select(entry)}
       >
         <span className="music-catalog-thumb" aria-hidden="true">
-          {album?.artworkUrl ? (
-            <img src={album.artworkUrl} alt="" loading="lazy" />
+          {(album?.artworkUrl ?? (entry.kind === "track" ? entry.song.artworkUrl : undefined)) ? (
+            <img src={album?.artworkUrl ?? (entry.kind === "track" ? entry.song.artworkUrl! : "")} alt="" loading="lazy" />
           ) : (
             "♪"
           )}
@@ -92,7 +95,7 @@ export default function MusicSection() {
           <span className="music-catalog-item-meta">
             {entry.kind === "album"
               ? t.text(entry.album.setType ?? "album")
-              : entry.song.duration}
+              : `${entry.song.duration ?? ""} · ${uploadDate.format(new Date(entry.song.createdAt))}`}
           </span>
         </span>
         <span aria-hidden="true">
@@ -208,8 +211,9 @@ export default function MusicSection() {
                   </>
                 ) : (
                   <div className="music-track-preview">
+                    {trackArtwork && <img src={trackArtwork} alt="" className="mb-4 aspect-square w-full max-w-64 border-2 border-brut-black object-cover" />}
                     <PlayerBar song={selected.song} />
-                    <TrackBlock song={selected.song} onRate={tracks.rate} />
+                    <TrackBlock key={selected.song.id} song={selected.song} onRate={tracks.rate} />
                   </div>
                 )}
               </div>
@@ -270,4 +274,8 @@ export default function MusicSection() {
       </div>
     </div>
   );
+}
+
+function entryArtwork(entry: CatalogEntry | undefined) {
+  return entry?.kind === "track" ? entry.song.artworkUrl : undefined;
 }
