@@ -47,8 +47,47 @@ Read it in this order, and stop as soon as you have your answer.
 | Database + audio | Supabase | `src/backend/src/main/resources/application.yml` |
 | CI | GitHub Actions | `.github/workflows/ci.yml`, on `master` |
 
-The API parks between requests on free hosting, so its cold start can reach
-30-60 seconds. That single fact drives every rendering decision below.
+The API can park between requests on free hosting, so its cold start can reach
+30-60 seconds. External monitoring can reduce idle suspensions, but cold-start
+handling remains necessary after restarts or interruptions to monitoring.
+
+### Configure external uptime monitoring
+
+Use the existing `GET /health` endpoint for UptimeRobot. `HealthController`
+returns HTTP `200` with `success: true` and `data.status: "ok"` without database
+queries. This checks application liveness, not database or audio availability.
+
+1. Copy the backend's public HTTPS URL from the Render dashboard.
+2. Open that URL with `/health` appended. Allow the first request to finish if
+   Render needs to start the service.
+3. Confirm HTTP `200` and the following response:
+
+   ```json
+   {"success":true,"message":null,"data":{"status":"ok","service":"cosmiclatteweb"},"meta":null,"errors":null}
+   ```
+
+4. In UptimeRobot, create an **HTTP(s)** monitor named `CosmicLatte API`.
+5. Set its URL to the backend's public HTTPS URL followed by `/health`.
+   Use the Render backend directly. The Vercel frontend does not wake the API.
+6. Set the monitoring interval to **5 minutes**. Use **GET** if the interface
+   offers a method setting. No authentication or custom headers are required.
+7. Enable email alerts for downtime and recovery, then activate the monitor.
+8. Confirm that UptimeRobot reports **Up** and receives successful checks over
+   at least two intervals. Recheck the monitor URL if the Render hostname changes.
+
+UptimeRobot runs independently of visitors, local computers, and CI. This setup
+requires no frontend timer, repository secret, or scheduled GitHub Actions job.
+Creating the monitor is an account-level step. Repository configuration alone
+does not activate it.
+
+The [UptimeRobot free interval](https://help.uptimerobot.com/en/articles/11360876-what-is-a-monitoring-interval-in-uptimerobot)
+is five minutes. Under [Render's free service limits](https://render.com/docs/free),
+15 minutes without inbound traffic can suspend the API. Periodic successful
+checks can avoid that idle suspension, but Render can still restart the service.
+Free instance hours are shared across the workspace, with 750 hours per calendar
+month. A service running throughout a 31-day month uses 744 hours. Review usage
+in Render's billing dashboard, especially if the workspace has other services.
+Keep the existing warmup, retry, and error states for interruptions.
 
 ## The rules
 
