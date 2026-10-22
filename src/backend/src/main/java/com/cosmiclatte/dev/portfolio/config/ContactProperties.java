@@ -32,6 +32,9 @@ public record ContactProperties(
                 || !telegramChatId.matches("-?[1-9][0-9]*"))) {
             throw new IllegalStateException("Telegram delivery requires a valid bot token and numeric chat ID.");
         }
+        if ((telegramEnabled || emailEnabled) && ipHashKey.length() < 32) {
+            throw new IllegalStateException("Contact rate limiting requires an IP hash key of at least 32 characters.");
+        }
         if (emailEnabled && (gmailClientId.isBlank() || gmailClientSecret.isBlank() || gmailRefreshToken.isBlank()
                 || runnerToken.length() < 32 || ipHashKey.length() < 32
                 || !fromEmail.matches(CreateContactMessageRequest.ADDRESS_PATTERN)

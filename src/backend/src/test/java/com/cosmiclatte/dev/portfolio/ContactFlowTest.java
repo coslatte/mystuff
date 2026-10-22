@@ -7,6 +7,7 @@ import com.cosmiclatte.dev.portfolio.mapper.ContactMapper;
 import com.cosmiclatte.dev.portfolio.repository.ContactRepository;
 import com.cosmiclatte.dev.portfolio.repository.ContactRepository.State;
 import com.cosmiclatte.dev.portfolio.service.ContactDeliveryService;
+import com.cosmiclatte.dev.portfolio.service.ClientErrorReportService;
 import com.cosmiclatte.dev.portfolio.service.ContactService;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterAll;
@@ -315,7 +316,9 @@ class ContactFlowTest {
     @Test
     void controllerDispatchesAfterCommitWithoutAnExternalRunner() {
         var sender = new ContactDeliveryService(repository, immediateDelivery(), client, executor);
-        var controller = new ContactController(service, sender, immediateDelivery());
+        var config = immediateDelivery();
+        var controller = new ContactController(service, sender,
+                new ClientErrorReportService(repository, config, sender), config);
         var request = new MockHttpServletRequest();
         request.setRemoteAddr("127.0.0.1");
         var receipt = controller.create(new CreateContactMessageRequest(UUID.randomUUID(), "Immediate",

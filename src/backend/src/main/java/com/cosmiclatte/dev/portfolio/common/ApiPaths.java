@@ -17,6 +17,7 @@ public final class ApiPaths {
 
     public static final String CONTACT_MESSAGES = API + "/contact/messages";
     public static final String CONTACT_RUNNER = API + "/internal/contact/deliveries/process";
+    public static final String CLIENT_ERRORS = API + "/client-errors";
 
     // Kept separate from SONGS so the two mappings below can be derived from it.
     // Annotation values must be compile-time constants, so this cannot be a
@@ -26,6 +27,8 @@ public final class ApiPaths {
     public static final String SONGS = API + SONGS_PATH;
     public static final String SONG_ID = "/{id}";
     public static final String SONG_AUDIO = "/{id}/audio";
+    public static final String SONG_SHARE = "/{id}/share";
+    public static final String SHARED_TRACK = "/shared-tracks/{token}";
 
     public static final String ALBUMS = API + "/albums";
     public static final String SOUNDCLOUD = "/soundcloud";

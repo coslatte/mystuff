@@ -11,9 +11,11 @@ import com.cosmiclatte.dev.portfolio.common.dto.ResponseFormat;
 import com.cosmiclatte.dev.portfolio.common.exception.ContactException;
 import com.cosmiclatte.dev.portfolio.config.ContactProperties;
 import com.cosmiclatte.dev.portfolio.dto.ContactAcceptedResponse;
+import com.cosmiclatte.dev.portfolio.dto.ClientErrorReportRequest;
 import com.cosmiclatte.dev.portfolio.dto.CreateContactMessageRequest;
 import com.cosmiclatte.dev.portfolio.service.ContactDeliveryService;
 import com.cosmiclatte.dev.portfolio.service.ContactService;
+import com.cosmiclatte.dev.portfolio.service.ClientErrorReportService;
 import lombok.RequiredArgsConstructor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -32,6 +34,7 @@ import java.security.MessageDigest;
 public class ContactController {
     private final ContactService service;
     private final ContactDeliveryService deliveries;
+    private final ClientErrorReportService errorReports;
     private final ContactProperties config;
 
     @PostMapping(ApiPaths.CONTACT_MESSAGES)
@@ -54,6 +57,18 @@ public class ContactController {
             throw new ContactException(HttpStatus.SERVICE_UNAVAILABLE,
                     "Contact is temporarily unavailable. Your message has not been confirmed. Please retry.");
         }
+    }
+
+    @PostMapping(ApiPaths.CLIENT_ERRORS)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void reportClientError(
+            @Valid @RequestBody ClientErrorReportRequest body, HttpServletRequest request) {
+        String ip = request.getRemoteAddr();
+        if (config.trustForwardedFor()) {
+            String forwarded = request.getHeader("X-Forwarded-For");
+            if (forwarded != null && !forwarded.isBlank()) ip = forwarded.split(",")[0].strip();
+        }
+        errorReports.report(body, ip);
     }
 
     @PostMapping(ApiPaths.CONTACT_RUNNER)

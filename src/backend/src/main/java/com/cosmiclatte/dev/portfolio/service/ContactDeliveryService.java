@@ -1,5 +1,6 @@
 package com.cosmiclatte.dev.portfolio.service;
 
+import com.cosmiclatte.dev.portfolio.common.exception.ContactException;
 import com.cosmiclatte.dev.portfolio.config.ContactProperties;
 import com.cosmiclatte.dev.portfolio.repository.ContactRepository;
 import com.cosmiclatte.dev.portfolio.repository.ContactRepository.Channel;
@@ -12,6 +13,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.TaskRejectedException;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 @Service
 @EnableScheduling
@@ -77,6 +80,29 @@ public class ContactDeliveryService {
             executor.execute(this::processSafely);
         } catch (TaskRejectedException ex) {
             log.warn("Contact dispatch deferred to the durable queue.");
+        }
+    }
+
+    public void sendClientErrorReport(String text) {
+        if (!config.telegramEnabled()) {
+            throw new IllegalStateException("Telegram error reporting is disabled.");
+        }
+        try {
+            JsonNode response = client.post()
+                    .uri(config.telegramApiUrl() + "/bot" + config.telegramBotToken() + "/sendMessage")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("chat_id", config.telegramChatId(), "text", text,
+                            "link_preview_options", Map.of("is_disabled", true)))
+                    .retrieve().body(JsonNode.class);
+            if (response == null || !response.path("ok").asBoolean()
+                    || !response.path("result").path("message_id").canConvertToLong()
+                    || response.path("result").path("message_id").asLong() <= 0) {
+                throw new RestClientException("Telegram rejected the client error report.");
+            }
+        } catch (RestClientException ex) {
+            log.warn("Client error Telegram delivery failed type={}", ex.getClass().getSimpleName());
+            throw new ContactException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "Error report could not be delivered.");
         }
     }
 
