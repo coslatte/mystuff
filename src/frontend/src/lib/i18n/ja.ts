@@ -209,7 +209,7 @@ const musicMessages = {
   introDescription: "ダブステップをルーツに、緻密なサウンドデザインと豊かな和声の色彩、そして音の風景への関心を込めた実験的なエレクトロニック・ミュージックを制作しています。リリース作品や制作中の曲を聴いたり、音楽の背景にある影響をたどったりできます。",
   listenReleases: "音楽を聴く",
   exploreJourney: "音楽の歩みをたどる",
-  findMusic: "音楽を聴く",
+  mymusicfromeverywhere: "音楽を聴く",
   releaseSketches: "リリース作品とスケッチ。",
   influences: "03 / 影響",
   electronicRootContinuous: "電子音楽のルーツ / 継続",

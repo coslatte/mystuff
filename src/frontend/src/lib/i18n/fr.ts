@@ -209,7 +209,7 @@ const musicMessages = {
   introDescription: "Je crée une musique électronique expérimentale ancrée dans le dubstep, avec un sound design détaillé, des couleurs harmoniques et une attirance pour les paysages sonores. Écoutez mes morceaux, découvrez mes projets en cours ou suivez les influences derrière cette musique.",
   listenReleases: "Écouter ma musique",
   exploreJourney: "Explorer mon parcours musical",
-  findMusic: "Retrouvez ma musique",
+  mymusicfromeverywhere: "Retrouvez ma musique",
   releaseSketches: "Sorties et esquisses.",
   influences: "03 / influences",
   electronicRootContinuous: "Racine électronique / continue",
