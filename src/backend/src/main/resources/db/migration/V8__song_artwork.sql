@@ -1,0 +1,1 @@
+ALTER TABLE song ADD COLUMN artwork_url VARCHAR(500);
