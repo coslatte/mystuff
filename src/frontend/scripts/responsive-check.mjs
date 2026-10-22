@@ -611,7 +611,7 @@ async function checkLoading() {
     await settle();
     await page.goto(baseURL + "/loading");
     await page.locator('[data-boot-screen][data-state="active"]').waitFor();
-    await page.locator('a[href="/"]').first().evaluate(link => link.click());
+    await page.locator('a[href="/"]').first().dispatchEvent("click");
     await page.waitForURL(baseURL + "/");
     await settle();
     await page.waitForTimeout(1700);
