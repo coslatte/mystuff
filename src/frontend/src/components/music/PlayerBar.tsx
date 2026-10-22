@@ -209,18 +209,43 @@ export default function PlayerBar({ song }: { song: Song }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3 font-mono text-[10px] font-bold">
+      <div className="flex items-center gap-3 font-mono text-[10px] font-bold">
         <button type="button" aria-pressed={playback.loop} aria-label={t(messages.music.loop)}
           onClick={() => player.setLoop(!playback.loop)}
-          className={`border-2 border-brut-black px-3 py-2 transition-colors ${playback.loop ? "bg-brut-blue text-brut-on-accent" : "bg-brut-surface text-brut-black"}`}>
-          ↻ {t(messages.music.loop)}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center border-2 border-brut-black text-lg transition-colors ${playback.loop ? "bg-brut-blue text-brut-on-accent" : "bg-brut-surface text-brut-black"}`}>
+          ↻
         </button>
-        <label className="flex min-w-0 flex-1 items-center gap-2">
-          <span>{t(messages.music.volume)}</span>
-          <input type="range" min="0" max="1" step="0.01" value={playback.volume}
-            aria-label={t(messages.music.volume)} onChange={(event) => player.setVolume(Number(event.currentTarget.value))}
-            className="min-w-0 flex-1 accent-brut-blue" />
-        </label>
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <span className="shrink-0">{t(messages.music.volume)}</span>
+          <div className="relative flex h-8 min-w-0 flex-1 touch-none items-center" role="slider" tabIndex={0}
+            aria-label={t(messages.music.volume)} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(playback.volume * 100)}
+            onPointerDown={(event) => {
+              event.currentTarget.setPointerCapture(event.pointerId);
+              const rect = event.currentTarget.getBoundingClientRect();
+              player.setVolume((event.clientX - rect.left) / rect.width);
+            }}
+            onPointerMove={(event) => {
+              if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+              const rect = event.currentTarget.getBoundingClientRect();
+              player.setVolume((event.clientX - rect.left) / rect.width);
+            }}
+            onKeyDown={(event) => {
+              const step = event.shiftKey ? 0.1 : 0.01;
+              if (event.key === "ArrowRight" || event.key === "ArrowUp") player.setVolume(playback.volume + step);
+              else if (event.key === "ArrowLeft" || event.key === "ArrowDown") player.setVolume(playback.volume - step);
+              else if (event.key === "Home") player.setVolume(0);
+              else if (event.key === "End") player.setVolume(1);
+              else return;
+              event.preventDefault();
+            }}>
+            <div className="flex h-6 w-full items-center justify-between gap-[3px] px-1">
+              {Array.from({ length: 28 }, (_, index) => (
+                <span key={index} className={`h-2 flex-1 ${index / 27 <= playback.volume ? "bg-brut-blue" : "bg-brut-muted/30"}`} />
+              ))}
+            </div>
+          </div>
+          <span className="w-7 shrink-0 text-right tabular-nums">{Math.round(playback.volume * 100)}</span>
+        </div>
       </div>
 
       <div

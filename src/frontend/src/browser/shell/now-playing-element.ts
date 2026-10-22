@@ -69,7 +69,8 @@ export function defineNowPlaying() {
 
       this.loop.type = "button";
       this.loop.className = "shrink-0 border-2 border-white px-2 py-1 font-mono text-[10px] font-bold text-white";
-      this.loop.textContent = "↻ loop";
+      this.loop.textContent = "↻";
+      this.loop.setAttribute("aria-label", "loop");
       this.loop.addEventListener("click", () => player.setLoop(!player.getSnapshot().loop));
       this.volume.type = "range";
       this.volume.min = "0";
