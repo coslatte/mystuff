@@ -50,7 +50,7 @@ public class LocalAudioController {
         this.storage = storage;
     }
 
-    @GetMapping("/{objectPath}")
+    @GetMapping("/{objectPath:.+}")
     public ResponseEntity<Resource> read(
             @PathVariable String objectPath,
             @RequestHeader(value = HttpHeaders.RANGE, required = false) String range) {
@@ -143,6 +143,8 @@ public class LocalAudioController {
 
     private static MediaType contentTypeOf(String objectPath) {
         String name = objectPath.toLowerCase();
+        if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return MediaType.IMAGE_JPEG;
+        if (name.endsWith(".png")) return MediaType.IMAGE_PNG;
         if (name.endsWith(".mp3")) {
             return MediaType.parseMediaType("audio/mpeg");
         }

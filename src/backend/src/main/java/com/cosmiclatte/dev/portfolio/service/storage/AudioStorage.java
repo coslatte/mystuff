@@ -28,6 +28,11 @@ public interface AudioStorage {
     /** Validates and persists the upload, returning the object path to persist. */
     String store(MultipartFile file);
 
+    default String storeArtwork(MultipartFile file) {
+        Rules.validateArtwork(file);
+        return store(file);
+    }
+
     /**
      * Removes a stored object. Deleting something that is already gone is a
      * success, not an error: the row is being removed either way and a retry must
@@ -41,6 +46,10 @@ public interface AudioStorage {
      */
     String signedUrl(String objectPath);
 
+    default String publicUrl(String objectPath) {
+        return signedUrl(objectPath);
+    }
+
     /**
      * Limits shared by both implementations.
      *
@@ -53,6 +62,19 @@ public interface AudioStorage {
         }
 
         public static final String FORMATS_HINT = "Allowed formats are .mp3, .wav and .flac.";
+
+        public static void validateArtwork(MultipartFile file) {
+            if (file == null || file.isEmpty()) throw new BadRequestException("Artwork image is required.");
+            String extension = extensionOf(file.getOriginalFilename());
+            long limit = switch (extension) {
+                case ".jpg", ".jpeg" -> 2L * 1024 * 1024;
+                case ".png" -> 6L * 1024 * 1024;
+                default -> throw new BadRequestException("Artwork must be a JPG (2 MB max) or PNG (6 MB max).");
+            };
+            String expected = extension.equals(".png") ? "image/png" : "image/jpeg";
+            if (!expected.equalsIgnoreCase(file.getContentType())) throw new BadRequestException("Artwork content type does not match its file extension.");
+            if (file.getSize() > limit) throw new BadRequestException("Artwork exceeds the size limit for " + extension + ".");
+        }
 
         public static final List<String> ALLOWED_CONTENT_TYPES = List.of(
                 "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/wave",
@@ -115,6 +137,8 @@ public interface AudioStorage {
                 case ".mp3" -> "audio/mpeg";
                 case ".wav" -> "audio/wav";
                 case ".flac" -> "audio/flac";
+                case ".jpg", ".jpeg" -> "image/jpeg";
+                case ".png" -> "image/png";
                 default -> "application/octet-stream";
             };
         }

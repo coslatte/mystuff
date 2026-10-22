@@ -5,7 +5,6 @@ import com.cosmiclatte.dev.portfolio.repository.ContactRepository;
 import com.cosmiclatte.dev.portfolio.repository.ContactRepository.Channel;
 import com.cosmiclatte.dev.portfolio.repository.ContactRepository.Delivery;
 import com.cosmiclatte.dev.portfolio.repository.ContactRepository.State;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -30,7 +29,6 @@ import java.time.format.DateTimeFormatter;
 @Service
 @EnableScheduling
 @EnableConfigurationProperties(ContactProperties.class)
-@RequiredArgsConstructor
 public class ContactDeliveryService {
     private static final Logger log = LoggerFactory.getLogger(ContactDeliveryService.class);
     private static final long[] RETRY_SECONDS = {60, 300, 1800, 7200};
@@ -38,10 +36,20 @@ public class ContactDeliveryService {
     private final ContactProperties config;
     @Qualifier("contactRestClient")
     private final RestClient client;
-    @Qualifier("applicationTaskExecutor")
     private final AsyncTaskExecutor executor;
     private volatile AccessToken cachedToken;
     private record AccessToken(String value, Instant expiresAt) { }
+
+    public ContactDeliveryService(
+            ContactRepository repository,
+            ContactProperties config,
+            @Qualifier("contactRestClient") RestClient client,
+            @Qualifier("applicationTaskExecutor") AsyncTaskExecutor executor) {
+        this.repository = repository;
+        this.config = config;
+        this.client = client;
+        this.executor = executor;
+    }
 
     /**
      * Claims at most five leased deliveries per invocation so the scheduled worker

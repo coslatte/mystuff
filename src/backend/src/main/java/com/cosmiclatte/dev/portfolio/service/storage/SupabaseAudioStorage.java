@@ -77,6 +77,26 @@ public class SupabaseAudioStorage implements AudioStorage {
         return filename;
     }
 
+    @Override
+    public String storeArtwork(MultipartFile file) {
+        requireConfigured();
+        AudioStorage.Rules.validateArtwork(file);
+        String filename = AudioStorage.Rules.newObjectPath(file.getOriginalFilename());
+        HttpResponse<String> resp = send(HttpRequest.newBuilder()
+                .uri(URI.create(storageBase + "/object/" + bucket + "/" + filename))
+                .timeout(Duration.ofSeconds(30))
+                .header("Content-Type", AudioStorage.Rules.contentTypeOf(file))
+                .POST(HttpRequest.BodyPublishers.ofByteArray(readBytes(file))), "Could not upload artwork to Supabase");
+        require2xx(resp, "artwork upload");
+        return filename;
+    }
+
+    @Override
+    public String publicUrl(String objectPath) {
+        requireConfigured();
+        return storageBase.replace("/storage/v1", "/storage/v1/object/public") + "/" + bucket + "/" + objectPath;
+    }
+
     private byte[] readBytes(MultipartFile file) {
         try {
             return file.getBytes();

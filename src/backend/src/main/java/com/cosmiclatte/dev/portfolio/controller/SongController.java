@@ -68,9 +68,10 @@ public class SongController {
             @RequestPart("title") String title,
             @RequestPart("artist") String artist,
             @RequestPart("file") MultipartFile file,
+            @RequestPart(value = "artwork", required = false) MultipartFile artwork,
             @RequestHeader(value = "X-Admin-Key", required = false) String adminKey) {
         requireAdmin(adminKey);
-        return ResponseFormat.success(songService.createSong(title, artist, file));
+        return ResponseFormat.success(songService.createSong(title, artist, file, artwork));
     }
 
     @PutMapping(value = ApiPaths.SONG_AUDIO, consumes = "multipart/form-data")

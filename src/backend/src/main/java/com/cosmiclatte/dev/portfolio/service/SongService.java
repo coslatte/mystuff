@@ -12,10 +12,12 @@ import com.cosmiclatte.dev.portfolio.common.exception.NotFoundException;
 import com.cosmiclatte.dev.portfolio.dto.SongResponse;
 import com.cosmiclatte.dev.portfolio.mapper.SongMapper;
 import com.cosmiclatte.dev.portfolio.model.Song;
+import com.cosmiclatte.dev.portfolio.repository.CommentRepository;
 import com.cosmiclatte.dev.portfolio.repository.RatingRepository;
 import com.cosmiclatte.dev.portfolio.repository.SongRepository;
 import com.cosmiclatte.dev.portfolio.repository.RatingRepository.MyRating;
 import com.cosmiclatte.dev.portfolio.repository.RatingRepository.SongRatingSummary;
+import com.cosmiclatte.dev.portfolio.repository.CommentRepository.SongCommentCount;
 import com.cosmiclatte.dev.portfolio.service.storage.AudioStorage;
 
 import java.util.HashMap;
@@ -30,6 +32,7 @@ public class SongService {
 
     private final SongRepository songRepository;
     private final RatingRepository ratingRepository;
+    private final CommentRepository commentRepository;
     /**
      * Audio storage is an interface so local development runs against disk and
      * production against Supabase. Everything in this class is identical either
@@ -47,9 +50,12 @@ public class SongService {
         List<Long> songIds = songs.stream().map(Song::getId).toList();
         Map<Long, SongRatingSummary> summaries = Map.copyOf(ratingRepository.summarizeBySongIds(songIds).stream()
                 .collect(Collectors.toMap(SongRatingSummary::getSongId, Function.identity())));
+        Map<Long, Long> commentCounts = commentRepository.countBySongIds(songIds).stream()
+                .collect(Collectors.toMap(SongCommentCount::getSongId, SongCommentCount::getTotal));
         MyRatings mine = loadMyRatings(songIds, visitorId, ipHash);
         return songs.parallelStream()
-                .map(song -> toResponse(song, summaries.get(song.getId()), mine.pick(song.getId())))
+                .map(song -> toResponse(song, summaries.get(song.getId()), mine.pick(song.getId()),
+                        commentCounts.getOrDefault(song.getId(), 0L)))
                 .toList();
     }
 
@@ -58,11 +64,11 @@ public class SongService {
         SongRatingSummary summary = ratingRepository.summarizeBySongIds(List.of(id)).stream()
                 .findFirst()
                 .orElse(null);
-        return toResponse(song, summary, null);
+        return toResponse(song, summary, null, commentCount(id));
     }
 
     @Transactional
-    public SongResponse createSong(String title, String artist, MultipartFile file) {
+    public SongResponse createSong(String title, String artist, MultipartFile file, MultipartFile artwork) {
         if (title == null || title.isBlank()) {
             throw new BadRequestException("Title is required.");
         }
@@ -71,13 +77,15 @@ public class SongService {
         }
         String duration = audioMetadata.readDuration(file);
         String objectPath = fileStorage.store(file);
+        String artworkPath = artwork == null || artwork.isEmpty() ? null : fileStorage.storeArtwork(artwork);
         Song song = Song.builder()
                 .title(title.trim())
                 .artist(artist.trim())
                 .duration(duration)
                 .audioUrl(objectPath)
+                .artworkUrl(artworkPath)
                 .build();
-        return toResponse(songRepository.save(song), null, null);
+        return toResponse(songRepository.save(song), null, null, 0L);
     }
 
     @Transactional
@@ -88,7 +96,7 @@ public class SongService {
         String newPath = fileStorage.store(file);
         song.setAudioUrl(newPath);
         song.setDuration(duration);
-        SongResponse response = toResponse(songRepository.save(song), null, null);
+        SongResponse response = toResponse(songRepository.save(song), null, null, commentCount(id));
         deleteAfterCommit(oldPath);
         return response;
     }
@@ -97,8 +105,10 @@ public class SongService {
     public void deleteSong(Long id) {
         Song song = findById(id);
         String path = song.getAudioUrl();
+        String artworkPath = song.getArtworkUrl();
         songRepository.delete(song);
         deleteAfterCommit(path);
+        deleteAfterCommit(artworkPath);
     }
 
     /**
@@ -145,11 +155,19 @@ public class SongService {
         return new MyRatings(Map.copyOf(byVisitor), Map.copyOf(byIp));
     }
 
-    private SongResponse toResponse(Song song, SongRatingSummary summary, Integer myRating) {
+    private SongResponse toResponse(Song song, SongRatingSummary summary, Integer myRating, long commentCount) {
         long total = summary == null ? 0L : summary.getTotal();
         Double avg = total == 0 ? null : summary.getAverage();
         String audioUrl = song.getAudioUrl() == null ? null : fileStorage.signedUrl(song.getAudioUrl());
-        return songMapper.toResponse(song, audioUrl, avg, total, myRating);
+        String artworkUrl = song.getArtworkUrl() == null ? null : fileStorage.publicUrl(song.getArtworkUrl());
+        return songMapper.toResponse(song, audioUrl, artworkUrl, avg, total, myRating, commentCount);
+    }
+
+    private long commentCount(Long songId) {
+        return commentRepository.countBySongIds(List.of(songId)).stream()
+                .mapToLong(SongCommentCount::getTotal)
+                .findFirst()
+                .orElse(0L);
     }
 
     private record MyRatings(Map<Long, Integer> byVisitor, Map<Long, Integer> byIp) {

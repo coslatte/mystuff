@@ -15,16 +15,18 @@ import java.time.Instant;
  */
 @Schema(
         name = "SongResponse",
-        requiredProperties = {"id", "title", "artist", "duration", "createdAt"})
+        requiredProperties = {"id", "title", "artist", "duration", "createdAt", "commentCount"})
 public record SongResponse(
         Long id,
         String title,
         String artist,
         String duration,
         String audioUrl,
+        @Schema(nullable = true) String artworkUrl,
         Instant createdAt,
         Double avgRating,
         Long totalVotes,
-        Integer myRating
+        Integer myRating,
+        long commentCount
 ) {
 }

@@ -11,12 +11,14 @@ import com.cosmiclatte.dev.portfolio.model.Song;
 public interface SongMapper {
 
     @Mapping(target = "audioUrl", ignore = true)
+    @Mapping(target = "artworkUrl", ignore = true)
     @Mapping(target = "avgRating", ignore = true)
     @Mapping(target = "totalVotes", ignore = true)
     @Mapping(target = "myRating", ignore = true)
     SongResponse toResponse(Song song);
 
-    default SongResponse toResponse(Song song, String audioUrl, Double avgRating, Long totalVotes, Integer myRating) {
+    default SongResponse toResponse(
+            Song song, String audioUrl, String artworkUrl, Double avgRating, Long totalVotes, Integer myRating, long commentCount) {
         SongResponse response = toResponse(song);
         return new SongResponse(
                 response.id(),
@@ -24,9 +26,12 @@ public interface SongMapper {
                 response.artist(),
                 response.duration(),
                 audioUrl,
+                artworkUrl,
                 response.createdAt(),
                 avgRating,
                 totalVotes,
-                myRating);
+                myRating,
+                commentCount);
     }
+
 }

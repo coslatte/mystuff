@@ -113,6 +113,24 @@ public class LocalDiskAudioStorage implements AudioStorage {
         return publicBaseUrl + "/api/local-audio/" + objectPath;
     }
 
+    @Override
+    public String storeArtwork(MultipartFile file) {
+        AudioStorage.Rules.validateArtwork(file);
+        String objectPath = AudioStorage.Rules.newObjectPath(file.getOriginalFilename());
+        try {
+            Files.createDirectories(root);
+            Files.copy(file.getInputStream(), resolve(objectPath), StandardCopyOption.REPLACE_EXISTING);
+            return objectPath;
+        } catch (IOException e) {
+            throw new StorageException("Could not write artwork to disk: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public String publicUrl(String objectPath) {
+        return publicBaseUrl + "/api/local-audio/" + objectPath;
+    }
+
     /**
      * Maps an object path onto a real file inside the root.
      *

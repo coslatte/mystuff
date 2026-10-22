@@ -37,6 +37,9 @@ public class Song {
     @Column(name = "audio_url")
     private String audioUrl;
 
+    @Column(name = "artwork_url")
+    private String artworkUrl;
+
     private String duration;
 
     @Column(name = "created_at", updatable = false)
