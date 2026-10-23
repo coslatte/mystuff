@@ -21,7 +21,7 @@ class SoundCloudServiceTest {
         List<SoundCloudAlbumDto> albums = service().listAlbums();
 
         assertThat(albums).extracting(SoundCloudAlbumDto::title)
-                .containsExactly("enCrescendo", "m0Tion", "amb", "en futuro", "discography");
+                .containsExactly("enCrescendo", "m0Tion", "amb", "en futuro", "Singularity (2018 - 2020)", "discography");
     }
 
     @Test
