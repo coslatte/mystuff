@@ -32,25 +32,25 @@ export const musicJourneyMoments: MusicJourneyMoment[] = [
     period: messages.music.sharedBeginnings,
     shared: {
       copy: musicJourneyCopy.chapters[0],
-      artists: [["skrillex", "Skrillex"], ["zomboy", "Zomboy"], ["bmth", "Bring Me the Horizon"]],
+      artists: [["skrillex", "Skrillex"]],
     },
   },
   {
     period: messages.music.adolescenceParallelPaths,
     shared: {
       copy: musicJourneyCopy.chapters[1],
-      artists: [["linkin-park", "Linkin Park"], ["marshmello", "Marshmello"], ["post-malone", "Post Malone"], ["twenty-one-pilots", "Twenty One Pilots"]],
+      artists: [["linkin-park", "Linkin Park"]],
     },
   },
   {
     period: messages.music.overlappingDiscoveries,
     root: {
       copy: musicJourneyCopy.chapters[2],
-      artists: [["mr-bill", "Mr. Bill"], ["chime", "Chime"], ["ace-aura", "Ace Aura"], ["au5", "Au5"], ["voltra", "VOLTRA"]],
+      artists: [["chime", "Chime"]],
     },
     discovery: {
       copy: musicJourneyCopy.chapters[3],
-      artists: [["joji", "Joji"], ["fujii-kaze", "Fujii Kaze"], ["tyler-the-creator", "Tyler, the Creator"]],
+      artists: [["joji", "Joji"]],
     },
   },
   {
@@ -74,7 +74,7 @@ export const musicJourneyMoments: MusicJourneyMoment[] = [
     period: messages.music.pathsDrawCloser,
     discovery: {
       copy: musicJourneyCopy.chapters[6],
-      artists: [["opn", "Oneohtrix Point Never"], ["boards-of-canada", "Boards of Canada"], ["cubalibre-exe", "cubalibre.exe"], ["sakamoto", "Ryuichi Sakamoto"]],
+      artists: [["opn", "Oneohtrix Point Never"], ["cubalibre-exe", "cubalibre.exe"], ["sakamoto", "Ryuichi Sakamoto"]],
     },
   },
 ];

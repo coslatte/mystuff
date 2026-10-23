@@ -341,6 +341,10 @@ const WAVEFORM_RESOLUTION = 2048;
 const waveformCache = new Map<string, WaveformPeaks>();
 const WAVEFORM_CACHE_MAX = 32;
 
+export function getCachedWaveform(url: string | null | undefined): WaveformPeaks | null {
+  return url ? waveformCache.get(url) ?? null : null;
+}
+
 function cacheWaveform(url: string, peaks: WaveformPeaks) {
   if (waveformCache.size >= WAVEFORM_CACHE_MAX) {
     const oldest = waveformCache.keys().next().value;

@@ -315,6 +315,14 @@ html:has(.music-page) {
   background: var(--color-brut-inverse);
 }
 .footer-player-title { flex: 1; min-width: 0; }
+.footer-player-waveform {
+  flex: 1.5 1 120px;
+  min-width: 80px;
+  height: 36px;
+  overflow: hidden;
+  border: 1px solid var(--player-ink, var(--color-brut-black));
+  background: var(--color-brut-inverse);
+}
 .footer-player-console .volume-wake { width: clamp(120px, 18vw, 190px); flex-shrink: 0; }
 .footer-player-console [hidden] { display: none; }
 @media (min-width: 1024px) {
@@ -325,16 +333,16 @@ html:has(.music-page) {
   [data-audio-player] { height: 96px; }
   .footer-player-console {
     display: grid;
-    grid-template-columns: 44px 44px minmax(0, 1fr);
+    grid-template-columns: 44px 44px minmax(3.5rem, 1fr) minmax(5.5rem, 1.1fr);
     grid-template-rows: 30px 44px;
-    grid-template-areas: "title title title" "play repeat volume";
+    grid-template-areas: "title title title title" "play repeat wave volume";
     gap: 4px 8px;
   }
   .footer-player-console > .footer-player-toggle { grid-area: play; }
   .footer-player-console > .footer-player-repeat { grid-area: repeat; }
   .footer-player-console > .footer-player-title { grid-area: title; }
-  .footer-player-console > .footer-player-clock,
-  .footer-player-console > div[aria-hidden="true"] { display: none; }
+  .footer-player-console > .footer-player-clock { display: none; }
+  .footer-player-console > .footer-player-waveform { grid-area: wave; }
   .footer-player-console > .volume-wake { grid-area: volume; }
   .footer-player-console .volume-wake { width: 100%; }
 }

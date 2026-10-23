@@ -2,8 +2,8 @@ import { mountVolumeControl } from "../audio/volume-control";
 import { messages } from "../../lib/i18n/catalog";
 import { translate } from "../../lib/i18n/translate";
 import { getLocale, subscribeLocale } from "../../services/locale";
-import { player } from "../../services/player";
-import { drawPseudoSpectrum, drawSpectrum, sizeCanvas } from "../audio/playback-canvas";
+import { getCachedWaveform, player } from "../../services/player";
+import { drawPseudoSpectrum, drawWaveform, sizeCanvas } from "../audio/playback-canvas";
 import { formatClock, playPauseClass, playPauseGlyph } from "../../lib/audio/playback-ui";
 
 const TOGGLE_BASE =
@@ -11,8 +11,7 @@ const TOGGLE_BASE =
 const CLOCK_CLASS = "shrink-0 font-mono text-[10px] font-bold tabular-nums text-white tablet:text-xs";
 const TITLE_CLASS =
   "block truncate font-mono text-xs font-bold leading-tight text-brut-red tablet:text-sm";
-const SQUARE_CLASS =
-  "hidden h-full min-h-0 aspect-square shrink-0 border-2 border-neutral-700 bg-black p-0.5 tablet:block";
+const WAVEFORM_CLASS = "footer-player-waveform";
 
 let registered = false;
 
@@ -85,17 +84,13 @@ export function defineNowPlaying() {
       name.className = "footer-player-title";
       name.append(this.songName);
 
-      // Built once and never replaced, so a track change repaints this canvas
-      // instead of throwing away the backing store it already has.
-      // h-full plus aspect-square is what lets the footer own the height: the
-      // square follows the bar down instead of pushing the bar taller.
-      const square = document.createElement("div");
-      square.className = SQUARE_CLASS;
-      square.setAttribute("aria-hidden", "true");
+      const waveform = document.createElement("div");
+      waveform.className = WAVEFORM_CLASS;
+      waveform.setAttribute("aria-hidden", "true");
       this.canvas.className = "block h-full w-full";
-      square.append(this.canvas);
+      waveform.append(this.canvas);
 
-      this.box.append(this.toggle, this.loop, name, this.elapsed, this.total, square, this.volume);
+      this.box.append(this.toggle, this.loop, name, waveform, this.elapsed, this.total, this.volume);
     }
 
     connectedCallback() {
@@ -120,9 +115,8 @@ export function defineNowPlaying() {
     }
 
     /**
-     * One frame of the log spectrum square. Own tracks paint measured analyser
-     * data; every other source paints the synthetic stand-in, because a
-     * cross-origin embed has no samples to analyse.
+     * One frame of the footer timeline. Native tracks use their cached waveform;
+     * embedded sources use a synthetic stand-in because their audio is isolated.
      */
     private paint() {
       const dpr = window.devicePixelRatio || 1;
@@ -131,10 +125,11 @@ export function defineNowPlaying() {
       if (!sizeCanvas(this.canvas, width, height)) return;
       const ctx = this.canvas.getContext("2d");
       if (!ctx) return;
-      const { nowPlaying, isPlaying } = player.getSnapshot();
+      const { nowPlaying, track } = player.getSnapshot();
       const real = nowPlaying?.source === "tracks";
       if (real) {
-        drawSpectrum(ctx, width, height, player.getAnalyser(), isPlaying);
+        const progress = track.duration > 0 ? track.currentTime / track.duration : 0;
+        drawWaveform(ctx, width, height, getCachedWaveform(nowPlaying.song?.audioUrl), progress);
         return;
       }
       const frozen = this.reducedMotion ? 0 : performance.now();
@@ -184,6 +179,8 @@ export function defineNowPlaying() {
         this.shownKey = nowPlaying.key;
         this.paint();
       }
+
+      if (nowPlaying.source === "tracks") this.paint();
 
       // An embed never reports a position, so a frozen 0:00 there would be a
       // clock that lies about a track it cannot see.

@@ -6,12 +6,15 @@
 
 .journey-chapter {
   position: relative;
-  display: grid;
-  gap: 1.25rem;
-  align-content: start;
   padding: clamp(1rem, 2vw, 1.75rem);
   border: 2px solid var(--color-brut-black);
   background: var(--color-brut-surface);
+}
+
+.journey-chapter::after {
+  display: block;
+  clear: both;
+  content: "";
 }
 
 .chapter-marker {

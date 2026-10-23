@@ -5,8 +5,6 @@ import { musicJourneyCopy } from "../../data/music-journey-copy";
 import { musicJourneyMoments as moments } from "../../lib/music-journey-moments";
 import portraitSources from "../../../public/images/influences/sources.json";
 
-const keyArtists = new Set(["skrillex", "jacob-collier", "keith-jarrett", "sakamoto"]);
-const groups = new Set(["bmth", "linkin-park", "twenty-one-pilots", "boards-of-canada"]);
 const portraits = new Map(portraitSources.map(source => [source.id, source.image]));
 ---
 
@@ -41,7 +39,7 @@ const portraits = new Map(portraitSources.map(source => [source.id, source.image
                 </header>
                 <div class="artist-grid">
                   {chapter.artists.map(([id, name]) => (
-                    <figure class:list={["artist-portrait", { "artist-key": keyArtists.has(id), "artist-group": groups.has(id) }]} data-artist-id={id}>
+                    <figure class="artist-portrait" data-artist-id={id}>
                       <img src={portraits.get(id)} alt="" width="640" height="640" loading="eager" decoding="async" />
                       <figcaption translate="no">{name}</figcaption>
                     </figure>
