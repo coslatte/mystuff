@@ -106,19 +106,34 @@ const socialImage = new URL("/images/previews/og.png", Astro.site);
 
   if (new URLSearchParams(location.search).has("viewport-debug")) {
     const panel = document.createElement("pre");
+    panel.dataset.viewportDebug = "true";
     panel.style.cssText = "position:fixed;top:0;left:0;z-index:2147483647;margin:0;padding:8px;background:#fff;color:#000;font:12px/1.4 monospace;white-space:pre-wrap;pointer-events:none";
     document.body.append(panel);
 
     const updateViewportReadout = () => {
       const root = document.documentElement;
       const bodyWidth = document.body.getBoundingClientRect().width;
-      const mainWidth = document.querySelector("main")?.getBoundingClientRect().width ?? 0;
+      const body = document.body;
+      const main = document.querySelector("main");
+      const mainWidth = main?.getBoundingClientRect().width ?? 0;
       const visual = window.visualViewport;
+      const overflow = [...document.querySelectorAll("body *")]
+        .filter((element) => !element.closest("[data-viewport-debug]"))
+        .map((element) => ({ element, right: element.getBoundingClientRect().right }))
+        .filter(({ right }) => right > root.clientWidth + 1)
+        .sort((a, b) => b.right - a.right)
+        .slice(0, 3)
+        .map(({ element, right }) => {
+          const name = `${element.tagName.toLowerCase()}${element.id ? `#${element.id}` : ""}.${String(element.className).split(/\s+/).slice(0, 2).join(".")}`;
+          return `${name} right ${Math.round(right)}`;
+        });
       panel.textContent = [
         `screen: ${screen.width} × ${screen.height}`,
         `inner: ${innerWidth} × ${innerHeight}`,
         `document: ${root.clientWidth} client / ${root.scrollWidth} scroll`,
-        `body/main: ${Math.round(bodyWidth)} / ${Math.round(mainWidth)}`,
+        `body/main: ${Math.round(bodyWidth)} / ${Math.round(mainWidth)} rect`,
+        `body/main scroll: ${body.scrollWidth} / ${main?.scrollWidth ?? 0}`,
+        `overflow: ${overflow.join("; ") || "none"}`,
         `visual: ${Math.round(visual?.width ?? 0)} @ ${visual?.scale ?? 0}`,
       ].join("\n");
     };
