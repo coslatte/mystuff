@@ -115,11 +115,18 @@ html[data-theme-transition] *::after {
 
   html {
     scrollbar-gutter: stable;
+    text-size-adjust: 100%;
   }
 
   @media (max-width: 767px) {
     html {
       scrollbar-gutter: auto;
+    }
+  }
+
+  @media (max-width: 639px) {
+    body {
+      font-size: 15px;
     }
   }
 
