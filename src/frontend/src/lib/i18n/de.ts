@@ -24,12 +24,12 @@ const themeMessages = {
 } satisfies TranslationSection<"theme">;
 
 const forumMessages = {
-  title: "forum.", description: "Ein privates Notizbuch für Ideen, Entwürfe und veröffentlichte Notizen.",
+  title: "forum.", description: "Notizen, Ideen und Gedanken, an denen ich gerade arbeite.", publishedNotes: "Notizen", noPublishedNotes: "Noch keine Veröffentlichungen.", adminLink: "Notiz schreiben", unlock: "Forum öffnen", logout: "Forum sperren",
   adminKey: "Admin-Schlüssel", titleLabel: "Titel", authorLabel: "Name", contentLabel: "Markdown",
   draft: "Entwurf", published: "veröffentlicht", saveDraft: "Entwurf speichern", publish: "veröffentlichen",
   update: "Änderungen speichern", newNote: "neue Notiz", preview: "Vorschau", edit: "bearbeiten", delete: "löschen",
   created: "erstellt", updated: "aktualisiert", empty: "Noch keine Notizen.",
-  privateNotice: "Nur ein Administrator kann dieses Notizbuch öffnen.", saved: "Notiz gespeichert.", deleted: "Notiz gelöscht.",
+  privateNotice: "Gib den Admin-Schlüssel ein, um den privaten Editor zu öffnen.", saved: "Notiz gespeichert.", deleted: "Notiz gelöscht.",
   untitled: "Notiz ohne Titel", mathHint: "Verwende $...$ oder $$...$$ für LaTeX-Ausdrücke.",
 } satisfies TranslationSection<"forum">;
 

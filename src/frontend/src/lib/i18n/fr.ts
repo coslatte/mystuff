@@ -24,12 +24,12 @@ const themeMessages = {
 } satisfies TranslationSection<"theme">;
 
 const forumMessages = {
-  title: "forum.", description: "Un carnet privé pour les idées, brouillons et notes publiées.",
+  title: "forum.", description: "Des notes, des idées et des réflexions en cours.", publishedNotes: "notes", noPublishedNotes: "Aucune publication pour le moment.", adminLink: "écrire une note", unlock: "entrer dans le forum", logout: "verrouiller le forum",
   adminKey: "clé administrateur", titleLabel: "titre", authorLabel: "nom", contentLabel: "markdown",
   draft: "brouillon", published: "publiée", saveDraft: "enregistrer le brouillon", publish: "publier",
   update: "enregistrer", newNote: "nouvelle note", preview: "aperçu", edit: "modifier", delete: "supprimer",
   created: "créée", updated: "modifiée", empty: "aucune note pour le moment.",
-  privateNotice: "Seul un administrateur peut ouvrir ce carnet.", saved: "note enregistrée.", deleted: "note supprimée.",
+  privateNotice: "Saisissez la clé administrateur pour ouvrir l’éditeur privé.", saved: "note enregistrée.", deleted: "note supprimée.",
   untitled: "Note sans titre", mathHint: "Utilisez $...$ ou $$...$$ pour les expressions LaTeX.",
 } satisfies TranslationSection<"forum">;
 

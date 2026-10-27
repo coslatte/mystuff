@@ -1,0 +1,81 @@
+.forum-markdown > :first-child {
+  margin-top: 0;
+}
+
+.forum-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.forum-markdown :is(h1, h2, h3, h4, h5, h6) {
+  margin-block: 1.5em 0.55em;
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.forum-markdown h1 { font-size: 2rem; }
+.forum-markdown h2 { font-size: 1.6rem; }
+.forum-markdown h3 { font-size: 1.3rem; }
+
+.forum-markdown p,
+.forum-markdown ul,
+.forum-markdown ol,
+.forum-markdown blockquote,
+.forum-markdown table,
+.forum-markdown pre {
+  margin-block: 1em;
+}
+
+.forum-markdown ul,
+.forum-markdown ol {
+  padding-left: 1.5rem;
+}
+
+.forum-markdown ul { list-style: disc; }
+.forum-markdown ol { list-style: decimal; }
+
+.forum-markdown blockquote {
+  border-left: 4px solid var(--color-brut-blue);
+  padding-left: 1rem;
+  color: var(--color-brut-muted);
+}
+
+.forum-markdown a {
+  color: var(--color-brut-link);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.forum-markdown :not(pre) > code {
+  border: 1px solid var(--color-brut-line);
+  background: var(--color-brut-subtle);
+  padding: 0.1em 0.3em;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.forum-markdown pre {
+  overflow-x: auto;
+  border: 2px solid var(--color-brut-black);
+  padding: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.forum-markdown table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.forum-markdown :is(th, td) {
+  border: 1px solid var(--color-brut-line);
+  padding: 0.4rem 0.65rem;
+  text-align: left;
+}
+
+.forum-markdown .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.5rem;
+}

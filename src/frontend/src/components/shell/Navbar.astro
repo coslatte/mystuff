@@ -5,8 +5,8 @@ const links = [
   { href: "/", label: "home", number: "01" },
   { href: "/coding", label: "coding", number: "02" },
   { href: "/music", label: "music", number: "03" },
-  { href: "/experimentation", label: "experiments", number: "04" },
-  { href: "/forum", label: "forum", number: "05" },
+  { href: "/forum", label: "forum", number: "04" },
+  { href: "/experimentation", label: "experiments", number: "05" },
 ].map((link) => ({
   ...link,
   active: link.href === "/" ? pathname === "/" : pathname.startsWith(link.href),

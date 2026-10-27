@@ -24,12 +24,12 @@ const themeMessages = {
 } satisfies TranslationSection<"theme">;
 
 const forumMessages = {
-  title: "フォーラム。", description: "アイデア、下書き、公開したノートを記録する個人用ノートです。",
+  title: "フォーラム。", description: "考えていることやアイデアを記録するノートです。", publishedNotes: "ノート", noPublishedNotes: "公開されたノートはまだありません。", adminLink: "ノートを書く", unlock: "フォーラムに入る", logout: "フォーラムをロック",
   adminKey: "管理者キー", titleLabel: "タイトル", authorLabel: "名前", contentLabel: "Markdown",
   draft: "下書き", published: "公開済み", saveDraft: "下書きを保存", publish: "公開",
   update: "変更を保存", newNote: "新しいノート", preview: "プレビュー", edit: "編集", delete: "削除",
   created: "作成", updated: "更新", empty: "ノートはまだありません。",
-  privateNotice: "このノートを開けるのは管理者だけです。", saved: "ノートを保存しました。", deleted: "ノートを削除しました。",
+  privateNotice: "管理者キーを入力して非公開エディターを開きます。", saved: "ノートを保存しました。", deleted: "ノートを削除しました。",
   untitled: "無題のノート", mathHint: "LaTeX 数式には $...$ または $$...$$ を使います。",
 } satisfies TranslationSection<"forum">;
 

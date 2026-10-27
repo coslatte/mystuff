@@ -237,6 +237,8 @@ export const api = {
 
   getForumNotes: (adminKey: string, signal?: AbortSignal) =>
     request<ForumNote[]>("/api/forum/notes", { adminKey, signal, cache: "no-store" }),
+  getPublishedForumNotes: (signal?: AbortSignal) =>
+    request<ForumNote[]>("/api/forum/notes/published", { signal, cache: "no-store" }),
   createForumNote: (body: Pick<ForumNote, "title" | "author" | "content" | "status">, adminKey: string) =>
     request<ForumNote>("/api/forum/notes", { method: "POST", body: JSON.stringify(body), adminKey }),
   updateForumNote: (id: number, body: Pick<ForumNote, "title" | "author" | "content" | "status">, adminKey: string) =>

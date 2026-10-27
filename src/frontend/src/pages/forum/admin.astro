@@ -1,0 +1,14 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Forum from "../../components/forum/Forum";
+import { messages } from "../../lib/i18n/catalog";
+import LocalizedText from "../../components/shared/LocalizedText.astro";
+---
+
+<Layout title="forum admin ][ cosmiclatte.dev" noindex>
+  <section class="border-b-2 border-brut-black bg-brut-blue p-8 text-brut-on-accent">
+    <h1 class="font-display text-4xl font-black tracking-tighter sm:text-6xl"><LocalizedText id={messages.forum.title} /></h1>
+    <p class="mt-4 max-w-xl font-mono text-sm"><LocalizedText id={messages.forum.privateNotice} /></p>
+  </section>
+  <section class="p-6"><Forum editor client:load /></section>
+</Layout>

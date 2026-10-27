@@ -23,7 +23,12 @@ const themeMessages = {
 
 const forumMessages = {
   title: "forum.",
-  description: "A private notebook for ideas, drafts and published notes.",
+  description: "Notes, ideas and things I'm working through.",
+  publishedNotes: "notes",
+  noPublishedNotes: "Nothing here yet.",
+  adminLink: "write a note",
+  unlock: "enter forum",
+  logout: "lock forum",
   adminKey: "admin key",
   titleLabel: "title",
   authorLabel: "name",
@@ -40,7 +45,7 @@ const forumMessages = {
   created: "created",
   updated: "updated",
   empty: "no notes yet.",
-  privateNotice: "Only an administrator can open this notebook.",
+  privateNotice: "Enter the admin key to open the private editor.",
   saved: "note saved.",
   deleted: "note deleted.",
   untitled: "Untitled note",

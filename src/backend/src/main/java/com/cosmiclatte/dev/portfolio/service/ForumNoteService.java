@@ -4,6 +4,7 @@ import com.cosmiclatte.dev.portfolio.common.exception.NotFoundException;
 import com.cosmiclatte.dev.portfolio.dto.ForumNoteRequest;
 import com.cosmiclatte.dev.portfolio.dto.ForumNoteResponse;
 import com.cosmiclatte.dev.portfolio.model.ForumNote;
+import com.cosmiclatte.dev.portfolio.model.ForumNoteStatus;
 import com.cosmiclatte.dev.portfolio.repository.ForumNoteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,12 @@ public class ForumNoteService {
     @Transactional(readOnly = true)
     public List<ForumNoteResponse> list() {
         return repository.findAllByOrderByUpdatedAtDesc().stream().map(this::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ForumNoteResponse> listPublished() {
+        return repository.findAllByStatusOrderByUpdatedAtDesc(ForumNoteStatus.PUBLISHED).stream()
+                .map(this::toResponse).toList();
     }
 
     @Transactional

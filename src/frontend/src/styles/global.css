@@ -5,6 +5,7 @@
 @import "./music/music-journey-chapters.css";
 @import "./music/music-journey-artists.css";
 @import "./music/music-page.css";
+@import "./forum.css";
 
 @theme {
   --color-brut-bg: #f3f1eb;

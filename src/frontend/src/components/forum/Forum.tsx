@@ -24,11 +24,14 @@ async function renderMarkdown(source: string) {
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
     .replace(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*')/gi, "");
 }
-export default function Forum() {
+export default function Forum({ editor = false }: { editor?: boolean }) {
   const t = useTranslations();
   const m = messages.forum;
   const [adminKey, setAdminKey] = useState("");
+  const [keySubmitted, setKeySubmitted] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
   const [notes, setNotes] = useState<ForumNote[]>([]);
+  const [publishedHtml, setPublishedHtml] = useState<Record<number, string>>({});
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [form, setForm] = useState<NoteInput>({ title: "", author: "Gabriel Paz", content: "", status: "DRAFT" });
   const [preview, setPreview] = useState(false);
@@ -37,38 +40,74 @@ export default function Forum() {
   const [error, setError] = useState<unknown>(null);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
-  const authenticated = adminKey.length > 0;
+  const authenticated = editor && authorized;
 
   useEffect(() => {
     const saved = readText(ADMIN_KEY_STORAGE);
-    if (saved) setAdminKey(saved);
-  }, []);
+    if (saved && editor) {
+      setAdminKey(saved);
+      setKeySubmitted(true);
+    }
+  }, [editor]);
 
   useEffect(() => {
-    if (!authenticated) return;
+    if (!editor || !keySubmitted || !adminKey) return;
     const controller = new AbortController();
-    api.getForumNotes(adminKey, controller.signal).then(setNotes).catch((cause) => {
+    api.getForumNotes(adminKey, controller.signal).then((result) => {
+      setNotes(result);
+      setAuthorized(true);
+      setError(null);
+      writeText(ADMIN_KEY_STORAGE, adminKey);
+    }).catch((cause) => {
+      if (!controller.signal.aborted) {
+        setAuthorized(false);
+        setKeySubmitted(false);
+        setError(cause);
+      }
+    });
+    return () => controller.abort();
+  }, [adminKey, editor, keySubmitted]);
+
+  useEffect(() => {
+    if (editor) return;
+    const controller = new AbortController();
+    api.getPublishedForumNotes(controller.signal).then(setNotes).catch((cause) => {
       if (!controller.signal.aborted) setError(cause);
     });
     return () => controller.abort();
-  }, [adminKey, authenticated]);
+  }, [editor]);
 
   useEffect(() => {
     let active = true;
+    if (!editor) return () => { active = false; };
     renderMarkdown(form.content).then((html) => { if (active) { setPreviewHtml(html); setPreviewError(null); } }).catch((cause) => { if (active) setPreviewError(cause); });
     return () => { active = false; };
-  }, [form.content]);
+  }, [editor, form.content]);
+
+  useEffect(() => {
+    if (editor || notes.length === 0) return;
+    let active = true;
+    Promise.all(notes.map(async (note) => [note.id, await renderMarkdown(note.content)] as const))
+      .then((entries) => { if (active) setPublishedHtml(Object.fromEntries(entries)); })
+      .catch((cause) => { if (active) setError(cause); });
+    return () => { active = false; };
+  }, [editor, notes]);
 
   const selected = useMemo(() => notes.find((note) => note.id === selectedId), [notes, selectedId]);
   const setKey = (value: string) => {
     setAdminKey(value);
+    setKeySubmitted(false);
+    setAuthorized(false);
     setError(null);
-    if (value) writeText(ADMIN_KEY_STORAGE, value);
-    else {
-      removeKey(ADMIN_KEY_STORAGE);
-      setNotes([]);
-      setSelectedId(null);
-    }
+  };
+  const lockEditor = () => {
+    removeKey(ADMIN_KEY_STORAGE);
+    setAdminKey("");
+    setKeySubmitted(false);
+    setAuthorized(false);
+    setNotes([]);
+    setSelectedId(null);
+    setError(null);
   };
   const selectNote = (note: ForumNote) => {
     setSelectedId(note.id);
@@ -106,12 +145,28 @@ export default function Forum() {
     finally { setBusy(false); }
   };
 
+  if (!editor) return <div className="flex flex-col gap-6">
+    {error != null && <ErrorNotice error={error} />}
+    {notes.length === 0 && error == null && <p className="font-mono text-sm text-brut-muted">{t(m.noPublishedNotes)}</p>}
+    <section className="flex flex-col gap-5">{notes.map((note) => <article key={note.id} className="brut-panel p-5 sm:p-8">
+      <header className="mb-5 border-b-2 border-brut-black pb-4">
+        <h2 className="font-display text-2xl font-bold sm:text-3xl">{note.title}</h2>
+        <p className="mt-2 flex flex-wrap gap-x-3 font-mono text-xs text-brut-muted"><span>{note.author}</span><span>·</span><time dateTime={note.createdAt}>{new Date(note.createdAt).toLocaleDateString()}</time></p>
+      </header>
+      {publishedHtml[note.id] ? <div className="forum-markdown" dangerouslySetInnerHTML={{ __html: publishedHtml[note.id] }} /> : <p className="font-mono text-sm">{note.content}</p>}
+    </article>)}</section>
+    <div className="text-right"><a href="/forum/admin" className="font-mono text-xs text-brut-muted underline">{t(m.adminLink)}</a></div>
+  </div>;
+
   return <div className="flex flex-col gap-6">
     <section className="brut-panel p-5">
-      <label className="brut-label block">{t(m.adminKey)}
-        <input type="password" value={adminKey} onChange={(event) => setKey(event.target.value)} placeholder="X-Admin-Key" autoComplete="current-password" className="brut-field-quiet mt-1 w-full px-3 py-2 text-sm" />
-      </label>
-      {!authenticated && <p className="brut-meta mt-3 text-brut-muted">{t(m.privateNotice)}</p>}
+      {!authenticated ? <form onSubmit={(event) => { event.preventDefault(); setKeySubmitted(true); }}>
+        <label className="brut-label block">{t(m.adminKey)}
+          <input type="password" value={adminKey} onChange={(event) => setKey(event.target.value)} placeholder="X-Admin-Key" autoComplete="current-password" className="brut-field-quiet mt-1 w-full px-3 py-2 text-sm" />
+        </label>
+        <p className="brut-meta mt-3 text-brut-muted">{t(m.privateNotice)}</p>
+        <button type="submit" disabled={!adminKey || keySubmitted} className="mt-4 border-2 border-brut-black bg-brut-blue px-4 py-2 font-mono text-sm text-brut-on-accent disabled:opacity-50">{t(m.unlock)}</button>
+      </form> : <div className="flex items-center justify-between gap-4"><span className="font-mono text-sm">{t(m.title)} · {t(m.adminKey)}</span><button type="button" onClick={lockEditor} className="border-2 border-brut-black bg-brut-subtle px-3 py-2 font-mono text-xs">{t(m.logout)}</button></div>}
       {error != null && <ErrorNotice error={error} className="mt-4" />}
       {notice && <p role="status" className="mt-4 font-mono text-sm">{notice}</p>}
     </section>

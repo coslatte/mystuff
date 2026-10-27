@@ -32,6 +32,13 @@ public class ForumController {
     private final ForumNoteService service;
     private final AdminAuth adminAuth;
 
+    @GetMapping("/published")
+    @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = ResponseFormat.class),
+            schemaProperties = @SchemaProperty(name = "data", array = @ArraySchema(schema = @Schema(implementation = ForumNoteResponse.class)))))
+    public ResponseFormat<?> listPublished() {
+        return ResponseFormat.success(service.listPublished());
+    }
+
     @GetMapping
     @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = ResponseFormat.class),
             schemaProperties = @SchemaProperty(name = "data", array = @ArraySchema(schema = @Schema(implementation = ForumNoteResponse.class)))))

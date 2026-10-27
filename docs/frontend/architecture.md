@@ -112,7 +112,7 @@ Do not "improve" this by moving `/music` to SSR.
 
 ### Rule 3 — One `.tsx` root per island
 
-There are nine interactive roots, each mounted `client:load`:
+There are ten interactive roots, each mounted `client:load`:
 
 | Root | Page |
 | --- | --- |
@@ -120,6 +120,7 @@ There are nine interactive roots, each mounted `client:load`:
 | `SharedTrackPage.tsx` | `/share` |
 | `AdminUpload.tsx` | `/admin` |
 | `ContactForm.tsx` | `/contact` |
+| `Forum.tsx` | `/forum` and `/forum/admin` |
 | `ConvChain.tsx` | `/experimentation/convchain` |
 | `HeatMap.tsx` | `/experimentation/heat-map` |
 | `PigmentFlow.tsx` | `/experimentation/spectral` |
@@ -347,21 +348,22 @@ actual reuse. Create no empty groups or re-export barrels.
 | `admin.astro` | Unlisted upload console. |
 | `coding.astro` | SSR GitHub requests, repository mapping, cache headers and coding sections. |
 | `contact.astro` | Contact introduction and form island. |
-| `forum.astro` | Private, noindex Markdown notebook and Forum island. |
+| `forum.astro` | Public published-note feed and Forum island. |
+| `forum/admin.astro` | Noindex admin-key-gated Forum editor. |
 | `experimentation/convchain.astro` | ConvChain sample-learning workbench and upstream credits. |
 | `experimentation/heat-map.astro` | Bencho heat-map experiment header and HeatMap island. |
 | `experimentation/index.astro` | Experiment index composition. |
 | `experimentation/spectral.astro` | Experiment header and PigmentFlow island. |
 | `experimentation/subdivision.astro` | Experiment header and RecursiveSubdivision island. |
-| `components/forum/Forum.tsx` | Admin-key-protected notes editor, Markdown preview, publishing and drafts. |
+| `components/forum/Forum.tsx` | Public published-note feed and admin-key-gated Markdown editor with drafts and preview. |
 | `index.astro` | Home composition. |
 | `loading.astro` | Unlisted loading workbench. |
 | `music.astro` | Prerendered introduction, browser catalog and editorial journey. |
 | `share.astro` | Noindex, shell-free player page; the browser resolves its shared-track token from the query string. |
 
-`forum.astro` is served as a static shell, while the Forum island loads notes from
-the API only after the admin key is present. Drafts and published notes are
-equally private; publishing changes their status for the owner's notebook.
+`forum.astro` is a public static shell whose Forum island requests published notes
+only. `forum/admin.astro` gates the editor behind the admin key; it loads all
+notes, including drafts. Both routes share the Forum island and Markdown renderer.
 
 ### `layouts/` — Document shell
 
@@ -388,6 +390,7 @@ equally private; publishing changes their status for the owner's notebook.
 | `experiments/ExperimentHeader.astro` | Shared heading and back link for individual experiments. |
 | `experiments/ExperimentIndex.astro` | Experiment index heading and study links. |
 | `experiments/HeatMap.tsx` | Reusable React Canvas 2D heat map adapted from Bencho. Exports typed props, shapes and palettes; owns pointer/keyboard input and animation cleanup. |
+| `components/forum/Forum.tsx` | Public published-note feed and admin-key-gated Markdown editor with drafts and preview. |
 | `experiments/PigmentControls.tsx` | The `/experimentation/spectral` panel. One slider per settings field. |
 | `experiments/PigmentFlow.tsx` | `/experimentation/spectral` root. Owns settings, camera, persistence and controls; mounts the browser board controller. |
 | `experiments/RecursiveSubdivision.tsx` | `/experimentation/subdivision` root. Pixel-snapped cells, grid layer, knobs. |
@@ -537,6 +540,7 @@ equally private; publishing changes their status for the owner's notebook.
 | --- | --- |
 | `experiments/heat-map.css` | HeatMap canvas sizing, pointer interaction and keyboard focus; imported by the component. |
 | `global.css` | Light/dark palette tokens, base layer, `@utility` surfaces including `text-highlight` for inline paragraph links, and native scroll entrance motion for static headings, paragraphs and figures. |
+| `forum.css` | Markdown typography, code blocks, tables and LaTeX layout for Forum. |
 | `home/brut-word.css` | Hover plates and layered animations on the two highlighted hero words. |
 | `home/hero.css` | Translated home heading sizing. |
 | `loading/boot-screen.css` | First-paint splash visibility, static partition and canvas crossfade. |

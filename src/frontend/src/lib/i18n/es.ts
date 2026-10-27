@@ -24,12 +24,12 @@ const themeMessages = {
 } satisfies TranslationSection<"theme">;
 
 const forumMessages = {
-  title: "foro.", description: "Un cuaderno privado para ideas, borradores y notas publicadas.",
+  title: "foro.", description: "Notas, ideas y cosas que voy pensando.", publishedNotes: "notas", noPublishedNotes: "Todavía no hay publicaciones.", adminLink: "escribir una nota", unlock: "entrar al foro", logout: "bloquear el foro",
   adminKey: "clave de administrador", titleLabel: "título", authorLabel: "nombre", contentLabel: "markdown",
   draft: "borrador", published: "publicada", saveDraft: "guardar borrador", publish: "publicar",
   update: "guardar cambios", newNote: "nueva nota", preview: "vista previa", edit: "editar", delete: "eliminar",
   created: "creada", updated: "actualizada", empty: "todavía no hay notas.",
-  privateNotice: "Solo un administrador puede abrir este cuaderno.", saved: "nota guardada.", deleted: "nota eliminada.",
+  privateNotice: "Introduce la clave de administrador para abrir el editor privado.", saved: "nota guardada.", deleted: "nota eliminada.",
   untitled: "Nota sin título", mathHint: "Usa $...$ o $$...$$ para expresiones LaTeX.",
 } satisfies TranslationSection<"forum">;
 
