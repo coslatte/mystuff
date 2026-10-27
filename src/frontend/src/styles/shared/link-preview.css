@@ -31,6 +31,17 @@
   visibility: visible;
 }
 
+@media (max-width: 767px) {
+  .channel-note__tip {
+    position: fixed;
+    inset-inline: 1rem;
+    top: auto;
+    bottom: calc(3.75rem + env(safe-area-inset-bottom));
+    width: auto;
+    max-width: none;
+  }
+}
+
 html.morphling-active .channel-note:hover .channel-note__tip {
   box-shadow: none;
 }
