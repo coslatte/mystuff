@@ -13,7 +13,7 @@ export default defineConfig({
     sitemap({
       // A sitemap that lists a noindex page asks for the opposite of what the
       // robots tag asks for.
-      filter: (page) => !/\/(admin|loading|share)\/?$/.test(page),
+      filter: (page) => !/\/(admin|forum|loading|share)\/?$/.test(page),
     }),
   ],
   vite: {

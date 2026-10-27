@@ -14,6 +14,7 @@ const navigationMessages = {
   coding: "código",
   music: "música",
   experiments: "experimentos",
+  forum: "foro",
   portfolio: "portafolio",
 } satisfies TranslationSection<"navigation">;
 
@@ -21,6 +22,16 @@ const themeMessages = {
   darkMode: "Modo oscuro",
   lightMode: "Modo claro",
 } satisfies TranslationSection<"theme">;
+
+const forumMessages = {
+  title: "foro.", description: "Un cuaderno privado para ideas, borradores y notas publicadas.",
+  adminKey: "clave de administrador", titleLabel: "título", authorLabel: "nombre", contentLabel: "markdown",
+  draft: "borrador", published: "publicada", saveDraft: "guardar borrador", publish: "publicar",
+  update: "guardar cambios", newNote: "nueva nota", preview: "vista previa", edit: "editar", delete: "eliminar",
+  created: "creada", updated: "actualizada", empty: "todavía no hay notas.",
+  privateNotice: "Solo un administrador puede abrir este cuaderno.", saved: "nota guardada.", deleted: "nota eliminada.",
+  untitled: "Nota sin título", mathHint: "Usa $...$ o $$...$$ para expresiones LaTeX.",
+} satisfies TranslationSection<"forum">;
 
 const loadingMessages = {
   status: "cargando",
@@ -446,6 +457,7 @@ export const es = {
   common: commonMessages,
   navigation: navigationMessages,
   theme: themeMessages,
+  forum: forumMessages,
   loading: loadingMessages,
   home: homeMessages,
   coding: codingMessages,

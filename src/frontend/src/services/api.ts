@@ -4,6 +4,7 @@ import type {
   ClientErrorReport,
   CreatedComment,
   Health,
+  ForumNote,
   Rating,
   SharedTrack,
   Song,
@@ -233,6 +234,15 @@ export const api = {
 
   deleteSong: (songId: number, adminKey: string) =>
     request(`/api/songs/${songId}`, { method: "DELETE", adminKey, response: "empty" }),
+
+  getForumNotes: (adminKey: string, signal?: AbortSignal) =>
+    request<ForumNote[]>("/api/forum/notes", { adminKey, signal, cache: "no-store" }),
+  createForumNote: (body: Pick<ForumNote, "title" | "author" | "content" | "status">, adminKey: string) =>
+    request<ForumNote>("/api/forum/notes", { method: "POST", body: JSON.stringify(body), adminKey }),
+  updateForumNote: (id: number, body: Pick<ForumNote, "title" | "author" | "content" | "status">, adminKey: string) =>
+    request<ForumNote>(`/api/forum/notes/${id}`, { method: "PUT", body: JSON.stringify(body), adminKey }),
+  deleteForumNote: (id: number, adminKey: string) =>
+    request(`/api/forum/notes/${id}`, { method: "DELETE", adminKey, response: "empty" }),
 
   // Answers with CommentResponse (no token): the caller keeps the one it
   // already holds locally.

@@ -3,6 +3,7 @@ package com.cosmiclatte.dev.portfolio.config;
 import com.cosmiclatte.dev.portfolio.dto.CommentResponse;
 import com.cosmiclatte.dev.portfolio.dto.ContactAcceptedResponse;
 import com.cosmiclatte.dev.portfolio.dto.CreatedCommentResponse;
+import com.cosmiclatte.dev.portfolio.dto.ForumNoteResponse;
 import com.cosmiclatte.dev.portfolio.dto.HealthResponse;
 import com.cosmiclatte.dev.portfolio.dto.RatingResponse;
 import com.cosmiclatte.dev.portfolio.dto.SongResponse;
@@ -30,7 +31,7 @@ public class WebConfig implements WebMvcConfigurer {
             // Nested @SchemaProperty references are not registered by springdoc.
             for (Class<?> type : new Class<?>[]{SongResponse.class, CommentResponse.class,
                     CreatedCommentResponse.class, RatingResponse.class, SoundCloudAlbumDto.class,
-                    HealthResponse.class, ContactAcceptedResponse.class}) {
+                    HealthResponse.class, ContactAcceptedResponse.class, ForumNoteResponse.class}) {
                 ModelConverters.getInstance().read(type).forEach(openApi.getComponents()::addSchemas);
             }
         };

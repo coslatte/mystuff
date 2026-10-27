@@ -14,6 +14,7 @@ const navigationMessages = {
   coding: "開発",
   music: "音楽",
   experiments: "実験",
+  forum: "フォーラム",
   portfolio: "ポートフォリオ",
 } satisfies TranslationSection<"navigation">;
 
@@ -21,6 +22,16 @@ const themeMessages = {
   darkMode: "ダークモード",
   lightMode: "ライトモード",
 } satisfies TranslationSection<"theme">;
+
+const forumMessages = {
+  title: "フォーラム。", description: "アイデア、下書き、公開したノートを記録する個人用ノートです。",
+  adminKey: "管理者キー", titleLabel: "タイトル", authorLabel: "名前", contentLabel: "Markdown",
+  draft: "下書き", published: "公開済み", saveDraft: "下書きを保存", publish: "公開",
+  update: "変更を保存", newNote: "新しいノート", preview: "プレビュー", edit: "編集", delete: "削除",
+  created: "作成", updated: "更新", empty: "ノートはまだありません。",
+  privateNotice: "このノートを開けるのは管理者だけです。", saved: "ノートを保存しました。", deleted: "ノートを削除しました。",
+  untitled: "無題のノート", mathHint: "LaTeX 数式には $...$ または $$...$$ を使います。",
+} satisfies TranslationSection<"forum">;
 
 const loadingMessages = {
   status: "読み込み中",
@@ -446,6 +457,7 @@ export const ja = {
   common: commonMessages,
   navigation: navigationMessages,
   theme: themeMessages,
+  forum: forumMessages,
   loading: loadingMessages,
   home: homeMessages,
   coding: codingMessages,

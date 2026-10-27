@@ -347,15 +347,21 @@ actual reuse. Create no empty groups or re-export barrels.
 | `admin.astro` | Unlisted upload console. |
 | `coding.astro` | SSR GitHub requests, repository mapping, cache headers and coding sections. |
 | `contact.astro` | Contact introduction and form island. |
+| `forum.astro` | Private, noindex Markdown notebook and Forum island. |
 | `experimentation/convchain.astro` | ConvChain sample-learning workbench and upstream credits. |
 | `experimentation/heat-map.astro` | Bencho heat-map experiment header and HeatMap island. |
 | `experimentation/index.astro` | Experiment index composition. |
 | `experimentation/spectral.astro` | Experiment header and PigmentFlow island. |
 | `experimentation/subdivision.astro` | Experiment header and RecursiveSubdivision island. |
+| `components/forum/Forum.tsx` | Admin-key-protected notes editor, Markdown preview, publishing and drafts. |
 | `index.astro` | Home composition. |
 | `loading.astro` | Unlisted loading workbench. |
 | `music.astro` | Prerendered introduction, browser catalog and editorial journey. |
 | `share.astro` | Noindex, shell-free player page; the browser resolves its shared-track token from the query string. |
+
+`forum.astro` is served as a static shell, while the Forum island loads notes from
+the API only after the admin key is present. Drafts and published notes are
+equally private; publishing changes their status for the owner's notebook.
 
 ### `layouts/` — Document shell
 

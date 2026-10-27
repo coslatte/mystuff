@@ -12,12 +12,39 @@ const navigationMessages = {
   coding: "coding",
   music: "music",
   experiments: "experiments",
+  forum: "forum",
   portfolio: "portfolio",
 } as const;
 
 const themeMessages = {
   darkMode: "Dark mode",
   lightMode: "Light mode",
+} as const;
+
+const forumMessages = {
+  title: "forum.",
+  description: "A private notebook for ideas, drafts and published notes.",
+  adminKey: "admin key",
+  titleLabel: "title",
+  authorLabel: "name",
+  contentLabel: "markdown",
+  draft: "draft",
+  published: "published",
+  saveDraft: "save draft",
+  publish: "publish",
+  update: "save changes",
+  newNote: "new note",
+  preview: "preview",
+  edit: "edit",
+  delete: "delete",
+  created: "created",
+  updated: "updated",
+  empty: "no notes yet.",
+  privateNotice: "Only an administrator can open this notebook.",
+  saved: "note saved.",
+  deleted: "note deleted.",
+  untitled: "Untitled note",
+  mathHint: "Use $...$ or $$...$$ for LaTeX expressions.",
 } as const;
 
 const loadingMessages = {
@@ -444,6 +471,7 @@ export const en = {
   common: commonMessages,
   navigation: navigationMessages,
   theme: themeMessages,
+  forum: forumMessages,
   loading: loadingMessages,
   home: homeMessages,
   coding: codingMessages,

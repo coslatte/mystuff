@@ -23,6 +23,7 @@
     "@astrojs/sitemap": "^3.7.4",
     "@astrojs/vercel": "^8",
     "astro": "^5.0.0",
+    "katex": "^0.19.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "spectral.js": "^3.0.0",

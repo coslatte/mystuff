@@ -14,6 +14,7 @@ const navigationMessages = {
   coding: "code",
   music: "musique",
   experiments: "expériences",
+  forum: "forum",
   portfolio: "portfolio",
 } satisfies TranslationSection<"navigation">;
 
@@ -21,6 +22,16 @@ const themeMessages = {
   darkMode: "Mode sombre",
   lightMode: "Mode clair",
 } satisfies TranslationSection<"theme">;
+
+const forumMessages = {
+  title: "forum.", description: "Un carnet privé pour les idées, brouillons et notes publiées.",
+  adminKey: "clé administrateur", titleLabel: "titre", authorLabel: "nom", contentLabel: "markdown",
+  draft: "brouillon", published: "publiée", saveDraft: "enregistrer le brouillon", publish: "publier",
+  update: "enregistrer", newNote: "nouvelle note", preview: "aperçu", edit: "modifier", delete: "supprimer",
+  created: "créée", updated: "modifiée", empty: "aucune note pour le moment.",
+  privateNotice: "Seul un administrateur peut ouvrir ce carnet.", saved: "note enregistrée.", deleted: "note supprimée.",
+  untitled: "Note sans titre", mathHint: "Utilisez $...$ ou $$...$$ pour les expressions LaTeX.",
+} satisfies TranslationSection<"forum">;
 
 const loadingMessages = {
   status: "chargement",
@@ -446,6 +457,7 @@ export const fr = {
   common: commonMessages,
   navigation: navigationMessages,
   theme: themeMessages,
+  forum: forumMessages,
   loading: loadingMessages,
   home: homeMessages,
   coding: codingMessages,

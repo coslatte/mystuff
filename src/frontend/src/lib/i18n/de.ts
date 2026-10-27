@@ -14,6 +14,7 @@ const navigationMessages = {
   coding: "Code",
   music: "Musik",
   experiments: "Experimente",
+  forum: "Forum",
   portfolio: "Portfolio",
 } satisfies TranslationSection<"navigation">;
 
@@ -21,6 +22,16 @@ const themeMessages = {
   darkMode: "Dunkelmodus",
   lightMode: "Hellmodus",
 } satisfies TranslationSection<"theme">;
+
+const forumMessages = {
+  title: "forum.", description: "Ein privates Notizbuch für Ideen, Entwürfe und veröffentlichte Notizen.",
+  adminKey: "Admin-Schlüssel", titleLabel: "Titel", authorLabel: "Name", contentLabel: "Markdown",
+  draft: "Entwurf", published: "veröffentlicht", saveDraft: "Entwurf speichern", publish: "veröffentlichen",
+  update: "Änderungen speichern", newNote: "neue Notiz", preview: "Vorschau", edit: "bearbeiten", delete: "löschen",
+  created: "erstellt", updated: "aktualisiert", empty: "Noch keine Notizen.",
+  privateNotice: "Nur ein Administrator kann dieses Notizbuch öffnen.", saved: "Notiz gespeichert.", deleted: "Notiz gelöscht.",
+  untitled: "Notiz ohne Titel", mathHint: "Verwende $...$ oder $$...$$ für LaTeX-Ausdrücke.",
+} satisfies TranslationSection<"forum">;
 
 const loadingMessages = {
   status: "wird geladen",
@@ -446,6 +457,7 @@ export const de = {
   common: commonMessages,
   navigation: navigationMessages,
   theme: themeMessages,
+  forum: forumMessages,
   loading: loadingMessages,
   home: homeMessages,
   coding: codingMessages,

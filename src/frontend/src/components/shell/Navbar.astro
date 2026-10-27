@@ -6,6 +6,7 @@ const links = [
   { href: "/coding", label: "coding", number: "02" },
   { href: "/music", label: "music", number: "03" },
   { href: "/experimentation", label: "experiments", number: "04" },
+  { href: "/forum", label: "forum", number: "05" },
 ].map((link) => ({
   ...link,
   active: link.href === "/" ? pathname === "/" : pathname.startsWith(link.href),
@@ -23,7 +24,7 @@ const links = [
     </div>
     </div>
     <div class="flex min-w-0">
-    <nav aria-label="Main navigation" class="grid min-w-0 flex-1 grid-cols-2 border-l-2 border-t-2 border-brut-black tablet:grid-cols-4 tablet:border-l-0 tablet:border-t-0">
+    <nav aria-label="Main navigation" class="grid min-w-0 flex-1 grid-cols-2 border-l-2 border-t-2 border-brut-black tablet:grid-cols-5 tablet:border-l-0 tablet:border-t-0">
       {links.map((link) => (
         <a href={link.href} aria-current={link.active ? "page" : undefined}
           class:list={[
