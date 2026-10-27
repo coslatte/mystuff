@@ -126,8 +126,17 @@ html[data-theme-transition] *::after {
 
   @media (max-width: 639px) {
     body {
-      font-size: 15px;
+      font-size: 14px;
     }
+
+    main p:not(.brut-label):not(.brut-meta),
+    main li:not(.brut-label):not(.brut-meta) {
+      line-height: 1.45;
+    }
+
+    main p.text-base { font-size: 15px; }
+    main p.text-lg { font-size: 16px; }
+    main p.text-xl { font-size: 17px; }
   }
 
   /* Fallback for browsers without scrollbar-gutter support */
