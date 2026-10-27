@@ -1,7 +1,7 @@
 .page-jumps {
   position: fixed;
   z-index: 30;
-  right: max(.5rem, calc((100vw - 80rem) / 2 - 3.5rem));
+  right: .5rem;
   bottom: calc(5rem + env(safe-area-inset-bottom));
   display: grid;
   gap: .4rem;

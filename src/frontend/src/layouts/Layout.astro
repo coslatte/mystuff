@@ -90,7 +90,7 @@ const socialImage = new URL("/images/previews/og.png", Astro.site);
     {!immersive && <RouteCurtain />}
     {!immersive && <MorphlingCursor />}
     {!immersive && <Navbar />}
-    <main class:list={["flex-1", !immersive && "mx-auto w-full max-w-7xl border-x-2 border-brut-black tv:max-w-[100rem]"]}>
+    <main class:list={["flex-1", !immersive && "w-full border-x-2 border-brut-black"]}>
       <slot />
     </main>
     {!immersive && <Footer showContact={showFooterContact} />}

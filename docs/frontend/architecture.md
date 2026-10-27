@@ -1340,9 +1340,11 @@ the normal content immediately. No JavaScript initialization hides content.
 ### Page shortcuts
 
 `Layout.astro` gives body the `page-top` anchor. `Footer.astro` provides the
-`page-bottom` anchor and native links to both ends on every route. Desktop places
-the shortcuts in the outer margin; mobile uses a labelled bottom dock and reserves
-space in body so the contact footer remains reachable. The audio bar uses
+`page-bottom` anchor and native links to both ends on every route. The navbar,
+main content and contact footer span the viewport instead of sharing a centered
+maximum width. Desktop shortcuts sit near the viewport edge; mobile uses a
+labelled bottom dock and reserves space in body so the contact footer remains
+reachable. The audio bar uses
 `data-audio-player` to sit above this dock on mobile. Both anchor targets accept
 focus for keyboard navigation. Shortcut labels use the shared translation catalog.
 Native smooth scrolling applies only without a reduced-motion preference; no

@@ -11,7 +11,7 @@ interface Props {
 const { showContact = true } = Astro.props;
 ---
 
-<footer id="page-bottom" tabindex="-1" aria-label="Contact" class="site-footer mx-auto w-full max-w-7xl border-x-2 border-t-2 border-b-2 border-brut-black bg-brut-surface tv:max-w-[100rem]">
+<footer id="page-bottom" tabindex="-1" aria-label="Contact" class="site-footer w-full border-x-2 border-t-2 border-b-2 border-brut-black bg-brut-surface">
   <p class="font-mono text-xs" translate="no">Gabriel Paz / CosmicLatte</p>
   {showContact && <a href="/contact" class="footer-contact brut-up"><span><span><LocalizedText id={messages.common.contact} /></span> <span aria-hidden="true">↗</span></span></a>}
   <nav
