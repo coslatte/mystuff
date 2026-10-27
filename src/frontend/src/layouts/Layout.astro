@@ -104,6 +104,30 @@ const socialImage = new URL("/images/previews/og.png", Astro.site);
 
   initLocalization();
 
+  if (new URLSearchParams(location.search).has("viewport-debug")) {
+    const panel = document.createElement("pre");
+    panel.style.cssText = "position:fixed;top:0;left:0;z-index:2147483647;margin:0;padding:8px;background:#fff;color:#000;font:12px/1.4 monospace;white-space:pre-wrap;pointer-events:none";
+    document.body.append(panel);
+
+    const updateViewportReadout = () => {
+      const root = document.documentElement;
+      const bodyWidth = document.body.getBoundingClientRect().width;
+      const mainWidth = document.querySelector("main")?.getBoundingClientRect().width ?? 0;
+      const visual = window.visualViewport;
+      panel.textContent = [
+        `screen: ${screen.width} × ${screen.height}`,
+        `inner: ${innerWidth} × ${innerHeight}`,
+        `document: ${root.clientWidth} client / ${root.scrollWidth} scroll`,
+        `body/main: ${Math.round(bodyWidth)} / ${Math.round(mainWidth)}`,
+        `visual: ${Math.round(visual?.width ?? 0)} @ ${visual?.scale ?? 0}`,
+      ].join("\n");
+    };
+
+    updateViewportReadout();
+    window.visualViewport?.addEventListener("resize", updateViewportReadout);
+    window.addEventListener("resize", updateViewportReadout);
+  }
+
   let cancelThemeTransition = () => {};
 
   function syncThemeToggle() {
