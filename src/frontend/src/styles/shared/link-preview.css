@@ -42,16 +42,11 @@
   }
 }
 
-html.morphling-active .channel-note:hover .channel-note__tip {
-  box-shadow: none;
-}
-
 html.morphling-active .channel-note:hover {
   z-index: 71;
 }
 
-html.morphling-active .channel-note:hover .text-highlight,
-html.morphling-active .channel-note:hover .channel-note__tip {
+html.morphling-active .channel-note:hover .text-highlight {
   background: transparent;
   color: var(--color-brut-on-accent);
 }

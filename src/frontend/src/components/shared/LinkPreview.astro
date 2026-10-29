@@ -13,7 +13,7 @@ interface Props {
 const { href, note } = Astro.props;
 ---
 
-<span class="channel-note" data-cursor-target data-cursor-region=".channel-note__tip">
+<span class="channel-note" data-cursor-target data-cursor-region=".text-highlight">
   <a class="text-highlight" href={href} target="_blank" rel="noopener noreferrer" data-i18n-title={note}>
     <slot />
   </a>

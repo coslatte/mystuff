@@ -396,7 +396,7 @@ notes, including drafts. Both routes share the Forum island and Markdown rendere
 | `experiments/RecursiveSubdivision.tsx` | `/experimentation/subdivision` root. Pixel-snapped cells, grid layer, knobs. |
 | `home/ContactCallout.astro` | Home contact invitation linking to `/contact`. |
 | `home/FluidPanel.astro` | Home canvas; mounts and releases browser/experiments/fluid-panel.ts. |
-| `home/Hero.astro` | `/` opening: the centered heading with a scrolling code fragment on the brutalist `code` plate and an FM wave on `soundwaves`. Nothing else; the ink band and the portrait belong to `HomeAbout.astro`. Language sizing is in `styles/home/hero.css`. |
+| `home/Hero.astro` | `/` opening: the centered heading with a scrolling code fragment on the brutalist `code` plate, an FM wave on `soundwaves`, and a pointer-local ConvChain canvas texture mounted by `browser/home/conv-chain-hero.ts`. Nothing else; the ink band and the portrait belong to `HomeAbout.astro`. Language sizing and canvas placement are in `styles/home/hero.css`. |
 | `home/HomeAbout.astro` | Home biography, background rows, portrait and fluid panel. |
 | `home/HomeInterests.astro` | Home music interests, hobbies and creator links. |
 | `loading/BootScreen.astro` | First-visit splash. In the layout, so one copy covers all routes. |
@@ -418,7 +418,7 @@ notes, including drafts. Both routes share the Forum island and Markdown rendere
 | `music/TrackShareControls.tsx` | Shared authenticated create/copy/revoke controls for the admin list and selected WIP preview. |
 | `shared/ErrorNotice.tsx` | Error display plus retry. |
 | `shared/InvertLink.astro` | Inline text link that turns blue on hover and focus. For a name inside a heading. |
-| `shared/LinkPreview.astro` | One outbound link inside running text, using the `text-highlight` plate, with its `note` shown on hover and keyboard focus. The note stays real text in the document, so assistive tech reads it and the localization pass translates it. Wide screens place it below the link; mobile pins it above the bottom shortcut dock so the hidden note cannot widen the page. Styling is in `styles/shared/link-preview.css`. |
+| `shared/LinkPreview.astro` | One outbound link inside running text, using the `text-highlight` plate, with its `note` shown on hover and keyboard focus. The note stays real text in the document, so assistive tech reads it and the localization pass translates it. The Morphling panel targets only the link so its canvas fill cannot cover the note. Wide screens place the note below the link; mobile pins it above the bottom shortcut dock so the hidden note cannot widen the page. Styling is in `styles/shared/link-preview.css`. |
 | `shared/LocalizedText.astro` | Renders catalog-backed static copy from a semantic `MessageKey`, with English server output and client-side locale changes. |
 | `shared/SocialButton.astro` | One outbound social link. |
 | `shell/Footer.astro` | Compact contact footer, native shortcuts to the page's top and bottom, and the independently collapsible now-playing bar on every route. Shortcuts use a side rail on desktop and a labelled bottom dock on mobile; the audio bar sits above that dock. Contact links to `/contact` on every route except `/`, where the landing page has its own contact callout. Its hover fill starts at the pointer entry point. Only the player hides when idle; its fixed height sizes the spectrum. Styling is in `styles/shell/footer.css`; pointer and player behavior is in `browser/shell/footer.ts`. |
@@ -434,6 +434,7 @@ notes, including drafts. Both routes share the Forum island and Markdown rendere
 | `audio/playback-canvas.ts` | Browser spectrum and waveform painters; pure colors live in lib/audio/spectrum.ts. |
 | `coding/contribution-calendar.ts` | Browser-only contribution tooltip binding across Astro navigation; hides and releases the old tooltip before swaps. |
 | `experiments/conv-chain-canvas.ts` | Draws a binary ConvChain field with user-selected ink/paper and optional 2×2 tiling. |
+| `home/conv-chain-hero.ts` | Mounts a rectangular ConvChain field sized to the hero, capped at 256 cells per axis, with a faint grid visible from page load. Pointer travel queues proposals inside a near-circular brush whose radius scales from 32px to 96px with pointer speed. Animation frames apply queued batches, then continue sampling the last brush area while its tiles remain visible, including after pointer exit. Active tiles remain fully opaque for 500ms, then fade over 180ms; faint cell outlines expose the grid. Each pointer entry has a 2% chance to leave sparse, longer-lived comet pixels. The next learned sample is selected once the active trail expires. Each mount uses a cryptographically random seed. The Hero colors prop supplies red, blue and white: white fills empty cells, and seeded patches select red or blue for occupied cells. Disposal releases listeners, the resize observer and pending animation frames. |
 | `experiments/fluid-filters.ts` | Browser grain and halftone canvas filters. |
 | `experiments/fluid-panel.ts` | Home canvas controller, observers, animation and teardown. |
 | `experiments/pigment-board.ts` | **Browser only.** Mounts one simulation, canvas layers, frame loop, resize observer and pointer listeners; exposes update/reset/dispose. |
@@ -542,7 +543,7 @@ notes, including drafts. Both routes share the Forum island and Markdown rendere
 | `global.css` | Light/dark palette tokens, base layer, `@utility` surfaces including `text-highlight` for inline paragraph links, and native scroll entrance motion for static headings, paragraphs and figures. |
 | `forum.css` | Markdown typography, code blocks, tables and LaTeX layout for Forum. |
 | `home/brut-word.css` | Hover plates and layered animations on the two highlighted hero words. |
-| `home/hero.css` | Translated home heading sizing. |
+| `home/hero.css` | Translated home heading sizing, surface-colored text halo and hero-local canvas placement. Content stays on layer 1 above the canvas on layer 0. |
 | `loading/boot-screen.css` | First-paint splash visibility, static partition and canvas crossfade. |
 | `loading/route-curtain.css` | Full-viewport partition, destination plate, exit fade and pending-link wash. |
 | `loading/server-pulse.css` | `ServerPulse` animation. |
@@ -1107,13 +1108,12 @@ fallbacks for reduced motion and coarse pointers. Run `node scripts/responsive-c
 server to verify rendered silhouettes, editing, dragging, and route persistence.
 
 `LinkPreview` sets `data-cursor-region` on its hover target so the canvas outline
-encloses both the link and its attached note as one rectangle. The note starts at
+encloses only the link. The note retains its own surface, text color and border. The note starts at
 the link's lower edge. In panel mode the cursor fills that shape with an animated
 subtle red-and-blue ordered dither driven by the cursor's wave field, then draws a
 white outline. Red is sparse and translucent over the blue base; the texture renders
 at 2x CSS resolution and updates at 24fps.
-The link and note stay transparent above it, with white text. The note keeps a
-CSS border and background when the custom cursor is unavailable.
+The link stays transparent above it, with white text. Paragraphs containing preview links skip the scroll entrance animation because its opacity/translate stacking context would trap the link below the fixed cursor canvas. The hero canvas uses layer 0 and its content layer 1; a remount always initializes its field even when the canvas dimensions already match.
 
 Keep the hero, navigation, footer controls, form, and page grids usable from
 320px through desktop widths. Long email addresses and media labels wrap or
@@ -1395,7 +1395,7 @@ of the algorithm, not a promise to reproduce .NET's random sequence.
 
 The React root owns model parameters and animation lifetime; the browser painter
 owns canvas pixels. No packages were added. The engine supports pattern sizes
-2–4 and outputs up to 128×128; the UI caps output at 64×64 to keep the controls
+2–4 and rectangular outputs up to 256 cells per axis; the UI caps output at 64×64 to keep the controls
 responsive. Generation spends at most about 5ms per frame in batches of up to
 128 proposals, with a separate sweeps-per-second control. It skips computation
 in hidden documents, cancels frames on cleanup and starts paused under reduced

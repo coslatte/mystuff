@@ -1,5 +1,34 @@
+.hero-section {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.hero-convchain {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.hero-section > div {
+  position: relative;
+  z-index: 1;
+}
+
 .hero-title {
   font-size: clamp(2.75rem, 10vw, 7.5rem);
+  text-shadow:
+    -2px -2px 0 var(--color-brut-surface),
+    2px -2px 0 var(--color-brut-surface),
+    -2px 2px 0 var(--color-brut-surface),
+    2px 2px 0 var(--color-brut-surface);
+}
+
+.hero-title .brut-word:hover {
+  text-shadow: none;
 }
 
 .hero-title:lang(es),

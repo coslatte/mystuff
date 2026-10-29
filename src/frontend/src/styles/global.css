@@ -259,7 +259,8 @@ html[data-page-jump-instant] {
 
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    main :where(h2, h3, p, figure):not(:where(astro-island *, .experiment-workspace *, [data-no-reveal], [data-no-reveal] *)) {
+    /* Opacity/translate would trap preview labels below the fixed cursor canvas. */
+    main :where(h2, h3, p, figure):not(:has(.channel-note)):not(:where(astro-island *, .experiment-workspace *, [data-no-reveal], [data-no-reveal] *)) {
       animation: scroll-arrive linear both;
       animation-timeline: view();
       animation-range: entry 0% entry 80%;

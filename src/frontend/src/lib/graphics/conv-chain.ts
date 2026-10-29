@@ -53,24 +53,24 @@ export function learnConvChain(sample: readonly string[], patternSize: PatternSi
   return { patternSize, logWeights: weights.map(weight => Math.log(weight || 0.1)) };
 }
 
-export function createConvChain(model: ConvChainModel, size: number, seed: number) {
-  if (!Number.isInteger(size) || size < model.patternSize || size > 128 || !Number.isFinite(seed)) {
-    throw new RangeError("ConvChain output must be an integer from the pattern size to 128, with a finite seed.");
+export function createConvChain(model: ConvChainModel, size: number, seed: number, height = size) {
+  if (!Number.isInteger(size) || size < model.patternSize || size > 256 || !Number.isInteger(height) || height < model.patternSize || height > 256 || !Number.isFinite(seed)) {
+    throw new RangeError("ConvChain output must be an integer from the pattern size to 256, with a finite seed.");
   }
   let state = seed >>> 0;
   const random = () => {
     state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
     return state / 4294967296;
   };
-  const cells = Uint8Array.from({ length: size * size }, () => random() >= 0.5 ? 1 : 0);
+  const cells = Uint8Array.from({ length: size * height }, () => random() >= 0.5 ? 1 : 0);
   const indices = new Uint16Array(cells.length);
   const { patternSize: n, logWeights } = model;
-  for (let sy = 0; sy < size; sy++) {
+  for (let sy = 0; sy < height; sy++) {
     for (let sx = 0; sx < size; sx++) {
       let index = 0;
       for (let dy = 0; dy < n; dy++) {
         for (let dx = 0; dx < n; dx++) {
-          index |= cells[(sx + dx) % size + ((sy + dy) % size) * size] << (dy * n + dx);
+          index |= cells[(sx + dx) % size + ((sy + dy) % height) * size] << (dy * n + dx);
         }
       }
       indices[sx + sy * size] = index;
@@ -80,20 +80,31 @@ export function createConvChain(model: ConvChainModel, size: number, seed: numbe
   return {
     cells,
     size,
+    height,
     get attempts() { return attempts; },
-    step(count: number, temperature: number) {
+    step(count: number, temperature: number, region?: { x: number; y: number; radius: number }) {
       if (!Number.isInteger(count) || count < 0 || !Number.isFinite(temperature) || temperature <= 0) {
         throw new RangeError("ConvChain needs a nonnegative integer step count and positive temperature.");
       }
       for (let attempt = 0; attempt < count; attempt++) {
-        const pixel = Math.floor(random() * cells.length);
+        let pixel: number;
+        if (region) {
+          const angle = random() * Math.PI * 2;
+          const radius = Math.sqrt(random()) * region.radius;
+          const px = Math.round(region.x + Math.cos(angle) * radius);
+          const py = Math.round(region.y + Math.sin(angle) * radius);
+          if (px < 0 || px >= size || py < 0 || py >= height) continue;
+          pixel = px + py * size;
+        } else {
+          pixel = Math.floor(random() * cells.length);
+        }
         const x = pixel % size, y = Math.floor(pixel / size);
         let delta = 0;
         // Only N² pattern origins contain this pixel; all other weight ratios cancel.
         // Cached indices reduce each proposal from O(N⁴) to O(N²), including wrapped edges.
         for (let dy = 0; dy < n; dy++) {
           for (let dx = 0; dx < n; dx++) {
-            const origin = wrap(x - dx, size) + wrap(y - dy, size) * size;
+            const origin = wrap(x - dx, size) + wrap(y - dy, height) * size;
             const index = indices[origin];
             delta += logWeights[index ^ (1 << (dy * n + dx))] - logWeights[index];
           }
@@ -103,7 +114,7 @@ export function createConvChain(model: ConvChainModel, size: number, seed: numbe
           cells[pixel] ^= 1;
           for (let dy = 0; dy < n; dy++) {
             for (let dx = 0; dx < n; dx++) {
-              const origin = wrap(x - dx, size) + wrap(y - dy, size) * size;
+              const origin = wrap(x - dx, size) + wrap(y - dy, height) * size;
               indices[origin] ^= 1 << (dy * n + dx);
             }
           }

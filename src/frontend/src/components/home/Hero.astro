@@ -3,9 +3,16 @@ import { messages } from "../../lib/i18n/catalog";
 import LocalizedText from "../shared/LocalizedText.astro";
 import "../../styles/home/brut-word.css";
 import "../../styles/home/hero.css";
+
+interface Props {
+  colors?: { red: string; blue: string; white: string };
+}
+
+const { colors = { red: "#e4483d", blue: "#2448c8", white: "#ffffff" } } = Astro.props;
 ---
 
-<section class="border-b-2 border-brut-black bg-brut-surface">
+<section class="hero-section border-b-2 border-brut-black bg-brut-surface" data-convchain-hero data-red={colors.red} data-blue={colors.blue} data-white={colors.white}>
+  <canvas class="hero-convchain" aria-hidden="true"></canvas>
   <div class="px-6 py-10 text-center tablet:px-8 tablet:py-12 laptop:px-10">
     <p class="brut-label">Gabriel Paz / Cuba</p>
     <h1 class="hero-title mx-auto mt-6 max-w-5xl wrap-break-word font-display text-[clamp(2.75rem,10vw,7.5rem)] font-black leading-[1.05] tracking-[-0.07em]">
@@ -39,6 +46,7 @@ import "../../styles/home/hero.css";
 
 <script>
   import { buildFmWavePath, fmWaveOffset } from "../../lib/graphics/fm-wave";
+  import { bindConvChainHero } from "../../browser/home/conv-chain-hero";
 
   const codeFragments = [
     `function mix(start: number, end: number, progress: number): number {
@@ -139,8 +147,10 @@ import "../../styles/home/hero.css";
   }
 
   bindWave();
+  let stopConvChainHero = bindConvChainHero();
   document.addEventListener("astro:page-load", bindWave);
-  document.addEventListener("astro:before-swap", stopWave);
+  document.addEventListener("astro:page-load", () => { stopConvChainHero(); stopConvChainHero = bindConvChainHero(); });
+  document.addEventListener("astro:before-swap", () => { stopWave(); stopConvChainHero(); });
   reducedMotion.addEventListener("change", (event) => {
     if (event.matches) stopWave();
   });
