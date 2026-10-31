@@ -578,6 +578,8 @@ async function checkLoading() {
     const curtain = page.locator("[data-route-curtain]");
     await curtain.waitFor({ state: "visible" });
     assert.equal(await curtain.getAttribute("data-state"), "in");
+    assert.equal(await curtain.locator("[data-route-curtain-back]").evaluate(element => getComputedStyle(element).borderWidth), "0px");
+    assert.notEqual(await curtain.locator("[data-route-curtain-back]").evaluate(element => getComputedStyle(element).cursor), "none");
     const canvas = curtain.locator("canvas");
     const pixels = () => canvas.evaluate(element => element.toDataURL());
     const before = await pixels();
@@ -606,6 +608,17 @@ async function checkLoading() {
     await settle();
     await page.waitForTimeout(1900);
     assert.equal(await curtain.getAttribute("data-state"), null, "Stale navigation must not reactivate loading");
+
+    for (const action of ["Escape", "Backspace", "Delete", "button"]) {
+      await page.locator('a[href="/experimentation/subdivision"]').first().click();
+      await curtain.waitFor({ state: "visible" });
+      if (action === "button") await curtain.locator("[data-route-curtain-back]").click();
+      else await page.keyboard.press(action);
+      await settle();
+      await page.waitForTimeout(1900);
+      assert.equal(new URL(page.url()).pathname, "/experimentation", `${action} must return to the origin`);
+      assert.equal(await curtain.getAttribute("data-state"), null, `${action} must cancel the pending destination`);
+    }
 
     await page.goBack();
     await settle();

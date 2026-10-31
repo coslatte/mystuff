@@ -418,7 +418,7 @@ notes, including drafts. Both routes share the Forum island and Markdown rendere
 | `music/TrackShareControls.tsx` | Shared authenticated create/copy/revoke controls for the admin list and selected WIP preview. |
 | `shared/ErrorNotice.tsx` | Error display plus retry. |
 | `shared/InvertLink.astro` | Inline text link that turns blue on hover and focus. For a name inside a heading. |
-| `shared/LinkPreview.astro` | One outbound link inside running text, using the `text-highlight` plate, with its `note` shown on hover and keyboard focus. The note stays real text in the document, so assistive tech reads it and the localization pass translates it. The Morphling panel targets only the link so its canvas fill cannot cover the note. Wide screens place the note below the link; mobile pins it above the bottom shortcut dock so the hidden note cannot widen the page. Styling is in `styles/shared/link-preview.css`. |
+| `shared/LinkPreview.astro` | One outbound link inside running text, using the `text-highlight` plate, with its `note` shown on hover and keyboard focus. The note stays real text in the document, so assistive tech reads it and the localization pass translates it. The Morphling panel wraps the link and note together, with both texts above its canvas fill. On narrow screens, touch and reduced-motion layouts pin the note above the bottom shortcut dock so it cannot widen the page. Styling is in `styles/shared/link-preview.css`. |
 | `shared/LocalizedText.astro` | Renders catalog-backed static copy from a semantic `MessageKey`, with English server output and client-side locale changes. |
 | `shared/SocialButton.astro` | One outbound social link. |
 | `shell/Footer.astro` | Compact contact footer, native shortcuts to the page's top and bottom, and the independently collapsible now-playing bar on every route. Shortcuts use a side rail on desktop and a labelled bottom dock on mobile; the audio bar sits above that dock. Contact links to `/contact` on every route except `/`, where the landing page has its own contact callout. Its hover fill starts at the pointer entry point. Only the player hides when idle; its fixed height sizes the spectrum. Styling is in `styles/shell/footer.css`; pointer and player behavior is in `browser/shell/footer.ts`. |
@@ -862,6 +862,9 @@ hold and a 260ms exit fade keep warm navigations readable.
 navigation, shows loading first. Same-page hash jumps bypass it. Controls are
 inert and scrolling is locked through the exit. Cancellation and overlapping
 navigations use a generation id so stale callbacks cannot release a newer load.
+Escape, Backspace, Delete and a touch-sized back button return to the navigation's
+origin, superseding the pending destination. The native cursor remains visible
+while loading covers the custom cursor.
 A 15s deadline releases a stalled overlay. Timers, observers and animation
 frames are stopped when the overlay leaves. Reduced motion keeps the partition
 still and removes the exit fade.

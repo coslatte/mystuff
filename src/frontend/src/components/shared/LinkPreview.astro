@@ -13,7 +13,7 @@ interface Props {
 const { href, note } = Astro.props;
 ---
 
-<span class="channel-note" data-cursor-target data-cursor-region=".text-highlight">
+<span class="channel-note" data-cursor-target data-cursor-region=".channel-note__tip">
   <a class="text-highlight" href={href} target="_blank" rel="noopener noreferrer" data-i18n-title={note}>
     <slot />
   </a>
@@ -21,3 +21,24 @@ const { href, note } = Astro.props;
     <LocalizedText id={note} />
   </span>
 </span>
+
+<script>
+  function fitNote(note: HTMLElement) {
+    note.style.translate = "none";
+    const bounds = note.getBoundingClientRect();
+    const offset = Math.max(0, 16 - bounds.left) - Math.max(0, bounds.right - innerWidth + 16);
+    note.style.translate = `${offset}px 0`;
+  }
+
+  document.addEventListener("pointerover", (event) => {
+    if (!(event.target instanceof Element)) return;
+    const note = event.target.closest(".channel-note")?.querySelector<HTMLElement>(".channel-note__tip");
+    if (note && getComputedStyle(note).position === "absolute") fitNote(note);
+  });
+
+  document.addEventListener("focusin", (event) => {
+    if (!(event.target instanceof Element)) return;
+    const note = event.target.closest(".channel-note")?.querySelector<HTMLElement>(".channel-note__tip");
+    if (note && getComputedStyle(note).position === "absolute") fitNote(note);
+  });
+</script>

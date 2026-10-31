@@ -1,5 +1,6 @@
 import { splashFrame, splashDepth } from "../../lib/loading/frame";
 import { interiorEdges } from "../../lib/graphics/recursion/subdivide";
+import { navigate } from "astro:transitions/client";
 
 const MIN_HOLD_MS = 600;
 const EXIT_MS = 260;
@@ -96,7 +97,7 @@ export function startRouteCurtain(): void {
   const canvas: HTMLCanvasElement = foundCanvas;
 
   let generation = 0;
-  let flight: { id: number; started: number; signal: AbortSignal } | null = null;
+  let flight: { id: number; started: number; signal: AbortSignal; origin: string } | null = null;
   let releaseTimer = 0;
   let deadlineTimer = 0;
   let stopAnimation = () => {};
@@ -132,7 +133,7 @@ export function startRouteCurtain(): void {
     clearTimers();
     stopAnimation();
     const id = ++generation;
-    flight = { id, started: performance.now(), signal: event.signal };
+    flight = { id, started: performance.now(), signal: event.signal, origin: event.from.href };
     label.textContent = event.to.pathname === "/" ? "index" : event.to.pathname;
     root.dataset.state = "in";
     lock(true);
@@ -155,6 +156,17 @@ export function startRouteCurtain(): void {
   }
 
   document.addEventListener("astro:before-preparation", onPreparing);
+  function goBack(): void {
+    if (flight) void navigate(flight.origin, { history: "replace" });
+  }
+  root.querySelector<HTMLButtonElement>("[data-route-curtain-back]")?.addEventListener("click", goBack);
+  document.addEventListener("keydown", event => {
+    if (flight && !event.repeat && !event.altKey && !event.ctrlKey && !event.metaKey &&
+      ["Escape", "Backspace", "Delete"].includes(event.key)) {
+      event.preventDefault();
+      goBack();
+    }
+  });
   document.addEventListener("astro:before-swap", event => {
     if (flight) event.newDocument.documentElement.classList.add("route-locked");
   });

@@ -34,6 +34,7 @@ const forumMessages = {
 } satisfies TranslationSection<"forum">;
 
 const loadingMessages = {
+  back: "← 戻る",
   status: "読み込み中",
   application: "cosmiclatteを読み込み中",
   starting: "起動中",

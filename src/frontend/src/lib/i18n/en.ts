@@ -53,6 +53,7 @@ const forumMessages = {
 } as const;
 
 const loadingMessages = {
+  back: "← Back",
   status: "loading",
   application: "loading cosmiclatte",
   starting: "waking up",

@@ -80,6 +80,13 @@ html.route-locked {
   letter-spacing: -0.02em;
 }
 
+.route-curtain .route-curtain__back {
+  display: inline-flex;
+  min-height: 44px;
+  border: 0;
+  cursor: pointer;
+}
+
 [data-nav-pending] {
   background-color: var(--color-brut-blue);
   color: white;

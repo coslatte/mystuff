@@ -34,6 +34,7 @@ const forumMessages = {
 } satisfies TranslationSection<"forum">;
 
 const loadingMessages = {
+  back: "← Retour",
   status: "chargement",
   application: "chargement de cosmiclatte",
   starting: "démarrage",
