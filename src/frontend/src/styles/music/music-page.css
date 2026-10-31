@@ -128,11 +128,7 @@ html:has(.music-page) {
   color: var(--color-brut-on-inverse);
 }
 .music-preview-content {
-  max-height: 36rem;
-  overflow: auto;
-  overscroll-behavior: contain;
   padding: 0 1.5rem 1.5rem;
-  scrollbar-gutter: stable;
 }
 .music-preview-description { margin-bottom: 1rem; overflow-wrap: anywhere; }
 .music-release-player { min-width: 0; color: var(--color-brut-black); }
@@ -151,9 +147,6 @@ html:has(.music-page) {
 .music-track-feedback-header { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
 .music-catalog-list {
   min-width: 0;
-  max-height: 47rem;
-  overflow-y: auto;
-  overscroll-behavior: contain;
   border-left: 2px solid var(--color-brut-black);
   background: var(--color-brut-subtle);
 }
@@ -226,8 +219,8 @@ html:has(.music-page) {
   .music-preview-header { gap: 0.75rem; padding: 1rem; }
   .music-preview-cover { flex-basis: 5rem; }
   .music-preview-platforms { margin-right: 1rem; margin-left: 1rem; }
-  .music-preview-content { max-height: 65svh; padding: 0 1rem 1rem; }
-  .music-catalog-list { max-height: 30rem; border-top: 2px solid var(--color-brut-black); border-left: 0; }
+  .music-preview-content { padding: 0 1rem 1rem; }
+  .music-catalog-list { border-top: 2px solid var(--color-brut-black); border-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .music-action { transition: none; }

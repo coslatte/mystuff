@@ -1461,9 +1461,9 @@ Catalog order remains curated, not a chronology claim.
 Artwork and metadata render once above the shared preview. `AlbumCard` no longer
 provides a second artwork/header or a collapse control. Exactly one release embed
 is mounted at a time, with teardown on selection/platform changes. The preview
-and catalog have bounded native scroll regions so long albums and lists remain
-reachable without stretching the page. Mobile stacks the preview above the list;
-choosing an item scrolls its preview into view when needed.
+and catalog flow with the page rather than trapping wheel or touch scroll inside
+nested regions. Mobile stacks the preview above the list; choosing an item scrolls
+its preview into view when needed.
 
 `PlayerBar` receives the preview song explicitly. If another song is playing,
 the preview shows zero progress and cannot seek that other song. Only an explicit
