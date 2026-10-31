@@ -8,6 +8,22 @@ const SAMPLES = [
 ];
 const MODELS = SAMPLES.map(sample => learnConvChain(sample, 3, true));
 const REFRESH_INTERVAL_MS = 4000;
+const FRAME_INTERVAL_MS = 1000 / 30;
+const COLOR_INTERVAL_MS = 1000 / 12;
+
+function colorField(x: number, y: number, seed: number): number {
+  const ix = Math.floor(x), iy = Math.floor(y), fx = x - Math.floor(x), fy = y - Math.floor(y);
+  const fade = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
+  const gradient = (gx: number, gy: number, dx: number, dy: number) => {
+    let hash = Math.imul(gx, 73856093) ^ Math.imul(gy, 19349663) ^ seed;
+    hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b);
+    const angle = ((hash ^ (hash >>> 16)) >>> 0) / 0xffffffff * Math.PI * 2;
+    return Math.cos(angle) * dx + Math.sin(angle) * dy;
+  };
+  const top = gradient(ix, iy, fx, fy) * (1 - fade(fx)) + gradient(ix + 1, iy, fx - 1, fy) * fade(fx);
+  const bottom = gradient(ix, iy + 1, fx, fy - 1) * (1 - fade(fx)) + gradient(ix + 1, iy + 1, fx - 1, fy - 1) * fade(fx);
+  return (top * (1 - fade(fy)) + bottom * fade(fy) + 1) / 2;
+}
 
 export function bindConvChainHero(): () => void {
   const section = document.querySelector<HTMLElement>("[data-convchain-hero]");
@@ -18,6 +34,7 @@ export function bindConvChainHero(): () => void {
   const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const controller = new AbortController();
   let seed = crypto.getRandomValues(new Uint32Array(1))[0];
+  const colorSeed = crypto.getRandomValues(new Uint32Array(1))[0];
   const colors = { red: section.dataset.red ?? "#e4483d", blue: section.dataset.blue ?? "#2448c8", white: section.dataset.white ?? "#ffffff" };
   let paper = document.documentElement.dataset.theme === "dark" ? getComputedStyle(section).getPropertyValue("--color-brut-surface").trim() : colors.white;
   let modelIndex = Math.floor(Math.random() * MODELS.length);
@@ -28,9 +45,22 @@ export function bindConvChainHero(): () => void {
   let nextRefresh = performance.now() + REFRESH_INTERVAL_MS;
   let visible = false;
   let painted = new Uint8Array(0);
+  let paintedColors = new Uint8Array(0);
+  let colorMask = new Uint8Array(0);
+  let lastPaint = -Infinity;
+  let nextColorUpdate = 0;
+  let colorPhase = 0;
+  let colorDrift = 0;
 
   const paint = () => {
     frame = null;
+    const now = performance.now();
+    if (now - lastPaint < FRAME_INTERVAL_MS) {
+      if (!motion.matches && visible && !document.hidden) frame = requestAnimationFrame(paint);
+      return;
+    }
+    lastPaint = now;
+    let restarted = false;
     if (!motion.matches) {
       if (performance.now() >= nextRefresh) {
         modelIndex = (modelIndex + 1 + Math.floor(Math.random() * (MODELS.length - 1))) % MODELS.length;
@@ -38,19 +68,44 @@ export function bindConvChainHero(): () => void {
         chain = createConvChain(MODELS[modelIndex], chain.size, seed, chain.height);
         nextRefresh = performance.now() + REFRESH_INTERVAL_MS;
         painted = new Uint8Array(0);
+        restarted = true;
       }
       chain.step(512, 1);
     }
+    let changedCells = 0;
+    if (!restarted && painted.length === chain.cells.length) {
+      for (let index = 0; index < chain.cells.length; index++) {
+        if (painted[index] !== chain.cells[index]) changedCells++;
+      }
+    }
+    const activity = changedCells / chain.cells.length;
+    colorPhase += activity * 0.012;
+    colorDrift += activity * 0.0008;
+    if (colorMask.length !== chain.cells.length) {
+      colorMask = new Uint8Array(chain.cells.length);
+      paintedColors = new Uint8Array(chain.cells.length).fill(255);
+      nextColorUpdate = 0;
+    }
+    if (now >= nextColorUpdate) {
+      const threshold = 0.5 + Math.sin(colorPhase) * 0.08;
+      for (let y = 0; y < chain.height; y++) {
+        for (let x = 0; x < chain.size; x++) {
+          colorMask[x + y * chain.size] = Number(colorField(x / 6 + colorDrift, y / 6 + colorDrift * 0.35, colorSeed) < threshold);
+        }
+      }
+      nextColorUpdate = now + COLOR_INTERVAL_MS;
+    }
+    context.strokeStyle = "rgba(0, 0, 0, 0.12)";
+    context.lineWidth = 0.6;
     for (let y = 0; y < chain.height; y++) {
       for (let x = 0; x < chain.size; x++) {
         const index = x + y * chain.size;
-        if (painted[index] === chain.cells[index]) continue;
-        const patch = Math.imul((x >> 3) + 1, 73856093) ^ Math.imul((y >> 3) + 1, 19349663) ^ seed;
-        context.fillStyle = chain.cells[index] ? (patch >>> 0) % 4 === 0 ? colors.red : colors.blue : paper;
+        const color = chain.cells[index] ? colorMask[index] ? 2 : 1 : 0;
+        if (paintedColors[index] === color) continue;
+        paintedColors[index] = color;
+        context.fillStyle = color === 2 ? colors.red : color === 1 ? colors.blue : paper;
         context.clearRect(x * cellSize, y * cellSize, cellSize, cellSize);
         context.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-        context.strokeStyle = "rgba(0, 0, 0, 0.12)";
-        context.lineWidth = 0.6;
         context.strokeRect(x * cellSize + 0.3, y * cellSize + 0.3, cellSize - 0.6, cellSize - 0.6);
       }
     }
@@ -68,6 +123,8 @@ export function bindConvChainHero(): () => void {
     cellSize = Math.max(3, Math.max(width, height) / 240);
     chain = createConvChain(MODELS[modelIndex], Math.max(3, Math.ceil(width / cellSize)), seed, Math.max(3, Math.ceil(height / cellSize)));
     painted = new Uint8Array(0);
+    colorMask = new Uint8Array(0);
+    lastPaint = -Infinity;
     if (frame !== null) cancelAnimationFrame(frame);
     paint();
   };
@@ -91,6 +148,8 @@ export function bindConvChainHero(): () => void {
       ? getComputedStyle(section).getPropertyValue("--color-brut-surface").trim()
       : colors.white;
     painted = new Uint8Array(0);
+    paintedColors.fill(255);
+    lastPaint = -Infinity;
     if (frame !== null) cancelAnimationFrame(frame);
     paint();
   });

@@ -435,7 +435,7 @@ notes, including drafts. Both routes share the Forum island and Markdown rendere
 | `audio/playback-canvas.ts` | Browser spectrum and waveform painters; pure colors live in lib/audio/spectrum.ts. |
 | `coding/contribution-calendar.ts` | Browser-only contribution tooltip binding across Astro navigation; hides and releases the old tooltip before swaps. |
 | `experiments/conv-chain-canvas.ts` | Draws a binary ConvChain field with user-selected ink/paper and optional 2×2 tiling. |
-| `home/conv-chain-hero.ts` | Mounts a rectangular ConvChain field sized to the hero, capped at 256 cells per axis, with a faint grid visible from page load. Pointer travel queues proposals inside a near-circular brush whose radius scales from 32px to 96px with pointer speed. Animation frames apply queued batches, then continue sampling the last brush area while its tiles remain visible, including after pointer exit. Active tiles remain fully opaque for 500ms, then fade over 180ms; faint cell outlines expose the grid. Each pointer entry has a 2% chance to leave sparse, longer-lived comet pixels. The next learned sample is selected once the active trail expires. Each mount uses a cryptographically random seed. The Hero colors prop supplies red, blue and white: white fills empty cells, and seeded patches select red or blue for occupied cells. Disposal releases listeners, the resize observer and pending animation frames. |
+| `home/conv-chain-hero.ts` | Mounts a rectangular ConvChain canvas capped at 240 cells per axis. Visible animation runs at most 30fps, steps 512 proposals per update and selects a new learned sample every four seconds. The Perlin mask is cached at at most 12fps; only cells whose displayed color changes are repainted. A separately seeded Perlin field colors occupied cells red or blue; empty cells use white or the dark theme surface. Simulation activity gradually advances the color threshold and drift. Sample changes preserve the color seed and phase and do not count as simulation activity. Hidden pages, offscreen heroes and reduced motion stop animation. Disposal releases observers, listeners and pending frames. |
 | `experiments/fluid-filters.ts` | Browser grain and halftone canvas filters. |
 | `experiments/fluid-panel.ts` | Home canvas controller, observers, animation and teardown. |
 | `experiments/pigment-board.ts` | **Browser only.** Mounts one simulation, canvas layers, frame loop, resize observer and pointer listeners; exposes update/reset/dispose. |
@@ -1280,10 +1280,12 @@ previews against `dist/client` through Playwright request interception.
 
 ### Music page composition
 
-The route composes two server-rendered panels through MusicViews. Listening is
-selected by default and puts the preview catalog before the introduction and
-platform links. The other panel contains the musical journey. A sticky, hash-backed tab
-selector uses Astro navigation to preserve router history and supports Left/Right, Home/End, browser history and direct journey links.
+MusicViews renders the introduction above two server-rendered panels. Its tab
+selector sits below the introduction paragraph and before the borderless social
+links, whose hover and keyboard focus use each platform's brand color. Listening
+is selected by default and shows the preview catalog. The other panel contains
+the musical journey. The hash-backed selector supports Left/Right, Home/End,
+browser history and direct journey links.
 Without JavaScript both panels remain readable through native anchors. Switching
 panels hides DOM without unmounting the catalog or interrupting its player.
 The browser controller initializes once per root and aborts listeners on route swap.

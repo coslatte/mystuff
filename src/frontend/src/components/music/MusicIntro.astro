@@ -18,8 +18,8 @@ const socials = [
   <div class="music-intro-content">
     <h2 id="music-title" class="mt-4 font-display font-black leading-none tracking-tighter"><LocalizedText id={messages.music.introTitle} /></h2>
     <p class="music-intro-description mt-5 text-base leading-7"><LocalizedText id={messages.music.introDescription} /></p>
+    <slot name="actions" />
     <nav class="music-platforms" aria-label="Music platforms" data-i18n-aria-label={messages.music.musicPlatforms}>
-      <h2 class="brut-label mb-4"><LocalizedText id={messages.music.mymusicfromeverywhere} /></h2>
       <div class="music-social-grid">
         {socials.map((social) => <SocialButton name={social.name} url={social.url} />)}
       </div>
