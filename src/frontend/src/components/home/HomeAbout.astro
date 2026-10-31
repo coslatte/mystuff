@@ -24,13 +24,13 @@ const background = [
         class="profile-photo relative mx-auto aspect-square border-2 border-brut-black bg-brut-soft object-cover shadow-[6px_6px_0_var(--color-brut-black)]" />
     </div>
     <div class="grid gap-8 p-6 tablet:p-8 laptop:p-10">
-      <p class="max-w-3xl text-lg leading-relaxed tablet:text-xl">
+      <p class="w-full text-lg leading-relaxed tablet:text-xl">
         <LocalizedText id={messages.home.aboutDescription} />
       </p>
       {background.map((item) => (
         <div class="grid gap-3 border-t-2 border-brut-black pt-6 tablet:grid-cols-[8rem_1fr] tablet:gap-6">
           <p class="brut-label"><LocalizedText id={item.label} /></p>
-          <p class="max-w-2xl leading-7"><LocalizedText id={item.text} /></p>
+          <p class="w-full leading-7"><LocalizedText id={item.text} /></p>
         </div>
       ))}
     </div>
