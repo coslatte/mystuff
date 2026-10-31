@@ -358,7 +358,7 @@ actual reuse. Create no empty groups or re-export barrels.
 | `components/forum/Forum.tsx` | Public published-note feed and admin-key-gated Markdown editor with drafts and preview. |
 | `index.astro` | Home composition. |
 | `loading.astro` | Unlisted loading workbench. |
-| `music.astro` | Prerendered introduction, browser catalog and editorial journey. |
+| `music.astro` | Prerendered listening and journey panels composed through MusicViews. |
 | `share.astro` | Noindex, shell-free player page; the browser resolves its shared-track token from the query string. |
 
 `forum.astro` is a public static shell whose Forum island requests published notes
@@ -408,7 +408,8 @@ notes, including drafts. Both routes share the Forum island and Markdown rendere
 | `music/AlbumCard.tsx` | The selected release embed and source link; its parent owns artwork, metadata and navigation. |
 | `music/CommentThread.tsx` | Comments for one track, with optimistic edits. |
 | `music/MusicCatalog.astro` | Catalog heading and the single `MusicSection` island. |
-| `music/MusicIntro.astro` | Music introduction, catalog/journey anchors and platform links. |
+| `music/MusicViews.astro` | Accessible listening/journey selector and slotted panels, enhanced by `browser/music/music-views.ts`. |
+| `music/MusicIntro.astro` | Music introduction and platform links below the preview catalog. |
 | `music/MusicJourney.astro` | `/music` influence history using the complete artist-authored English and Spanish copy from `data/music-journey-copy.ts`. Early years and adolescence span both paths; later discoveries share time rows before converging in the full current-practice chapter. Mobile interleaves the same moments. Layout lives in `styles/music/music-journey.css`; SVG path lifecycle and geometry live in `browser/music/music-journey.ts`. Prose preserves the author's capitalization. Photos live in `public/images/influences`; `sources.json` and `credits.html` link to their source pages. |
 | `music/MusicSection.tsx` | The single `/music` interactive catalog island. Loads releases and tracks independently into one keyed preview browser, with previous/next navigation and a selectable catalog. AlbumCard owns the one mounted release embed; PlayerBar and TrackBlock render the selected track. |
 | `music/PlayerBar.tsx` | Selected-song transport and spectrum/waveform canvases; hides another song's progress and disables seeking until the selected song is active. |
@@ -421,7 +422,7 @@ notes, including drafts. Both routes share the Forum island and Markdown rendere
 | `shared/LinkPreview.astro` | One outbound link inside running text, using the `text-highlight` plate, with its `note` shown on hover and keyboard focus. The note stays real text in the document, so assistive tech reads it and the localization pass translates it. The Morphling panel wraps the link and note together, with both texts above its canvas fill. On narrow screens, touch and reduced-motion layouts pin the note above the bottom shortcut dock so it cannot widen the page. Styling is in `styles/shared/link-preview.css`. |
 | `shared/LocalizedText.astro` | Renders catalog-backed static copy from a semantic `MessageKey`, with English server output and client-side locale changes. |
 | `shared/SocialButton.astro` | One outbound social link. |
-| `shell/Footer.astro` | Compact contact footer, native shortcuts to the page's top and bottom, and the independently collapsible now-playing bar on every route. Shortcuts use a side rail on desktop and a labelled bottom dock on mobile; the audio bar sits above that dock. Contact links to `/contact` on every route except `/`, where the landing page has its own contact callout. Its hover fill starts at the pointer entry point. Only the player hides when idle; its fixed height sizes the spectrum. Styling is in `styles/shell/footer.css`; pointer and player behavior is in `browser/shell/footer.ts`. |
+| `shell/Footer.astro` | Compact contact footer, native shortcuts to the page's top and bottom, and the independently collapsible now-playing bar on every route. Shortcuts use a side rail on desktop and a labelled bottom dock on mobile; the audio bar sits above that dock. Contact links to `/contact` on every route except `/`, where the landing page has its own contact callout. Its hover fill starts at the pointer entry point. `/music` omits the summary footer through `showFooterSummary={false}` while retaining the page-end target, fixed shortcuts and active audio bar. Only the player hides when idle; its fixed height sizes the spectrum. Styling is in `styles/shell/footer.css`; pointer and player behavior is in `browser/shell/footer.ts`. |
 | `shell/LanguageSelector.astro` | Shared navbar language select; the square bordered surface lives in `styles/shell/language-selector.css`; the cursor target is the whole control. |
 | `shell/MorphlingCursor.astro` | Persistent canvas overlay for the fine-pointer cursor treatment. |
 | `shell/Navbar.astro` | Site navigation. |
@@ -441,7 +442,8 @@ notes, including drafts. Both routes share the Forum island and Markdown rendere
 | `loading/boot-controller.ts` | Every-load splash lifecycle, browser readiness, replay and bounded teardown. |
 | `loading/replay.ts` | `/loading` replay schedule and repeat lifecycle. |
 | `loading/route-curtain.ts` | Browser navigation overlay, loading painter, readiness and teardown. |
-| `music/music-journey.ts` | Browser journey connector geometry, resize handling and teardown. |
+| `music/music-views.ts` | Hash-backed listening/journey tabs, keyboard navigation, history and teardown. |
+| `music/music-journey.ts` | Journey connector geometry and desktop scroll motion, resize handling and teardown. |
 | `shared/dispose.ts` | `createCleanupRegistry` and `frameBudget`. |
 | `shell/footer.ts` | Footer contact hover origin, player toggle and persisted-route sync. |
 | `shell/localization.ts` | DOM translations and accessible attributes across Astro navigation. |
@@ -1278,9 +1280,13 @@ previews against `dist/client` through Playwright request interception.
 
 ### Music page composition
 
-The route composes an introduction with a visible grid of platform links,
-catalog, then the influence journey in document order. Native anchors reach the
-catalog and journey without a horizontal scroll container or navigation handlers.
+The route composes two server-rendered panels through MusicViews. Listening is
+selected by default and puts the preview catalog before the introduction and
+platform links. The other panel contains the musical journey. A sticky, hash-backed tab
+selector uses Astro navigation to preserve router history and supports Left/Right, Home/End, browser history and direct journey links.
+Without JavaScript both panels remain readable through native anchors. Switching
+panels hides DOM without unmounting the catalog or interrupting its player.
+The browser controller initializes once per root and aborts listeners on route swap.
 Layout owns the sole main
 landmark. The catalog owns its outer boundary; its React children divide albums
 from uploaded tracks and keep their loading, error and empty states independent.
@@ -1322,8 +1328,10 @@ paragraphs use the full column width and justified alignment, with the last line
 left at its natural width. Automatic hyphenation depends on the inherited document
 language and the browser's available dictionaries; it may be unavailable.
 
-Run `node scripts/responsive-check.mjs --music` against the dev server to check
-anchors, section order, overflow and repeat visits through Astro navigation.
+Run `node scripts/responsive-check.mjs --music-views` against the dev server to
+check the default preview, tabs, keyboard, history, direct links, preserved catalog
+mount, all five locales, desktop scroll motion, reduced motion, mobile overflow
+and the no-JavaScript fallback. Set `BASE_URL` and `BROWSER_PATH` as needed.
 
 Journey connectors are two continuous cubic SVG paths behind opaque cards in an
 isolated stacking context. Small border anchors identify each thread. The blue
@@ -1334,7 +1342,12 @@ cuts between chapters. Theme-aware link/danger colors, 0.32 opacity, and strokes
 of 2px on desktop or 1.5px on mobile keep the paths subordinate to the content.
 `ResizeObserver` watches the journey, cards, period labels and present-day block.
 Reflows are coalesced through one animation frame, including font loading and
-locale changes. Scrolling does not recalculate geometry. Before a route swap,
+locale changes. Revealing a hidden journey redraws its geometry. Desktop scroll
+motion uses a separate coalesced frame: chapter content rises by up to 36px and
+fades from 0.3 to 1 as it enters the reading area. Markers and card geometry stay
+stationary. SVG paths draw to the reading position by locating that vertical point
+along their cached lengths. Mobile and reduced motion show complete paths and
+static content; the journey opts out of the global entrance animation. Before a route swap,
 the observer disconnects and any queued frame is cancelled; late font callbacks
 cannot schedule work for the old page.
 

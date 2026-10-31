@@ -15,18 +15,61 @@ function curveThrough(points: Point[]) {
   return path;
 }
 
+const mounted = new WeakSet<HTMLElement>();
+
 export function mountMusicJourney() {
   const journey = document.querySelector<HTMLElement>("[data-journey-paths]");
-  if (!journey) return;
+  if (!journey || mounted.has(journey)) return;
+  mounted.add(journey);
 
   let frame: number | null = null;
   let disposed = false;
+  let motionFrame: number | null = null;
+  const lifecycle = new AbortController();
+  const motion = matchMedia("(min-width: 1024px) and (prefers-reduced-motion: no-preference)");
+  const chapters = [...journey.querySelectorAll<HTMLElement>(".journey-chapter, .journey-present")];
+  const paths = [...journey.querySelectorAll<SVGPathElement>(".journey-lines path")];
+  const lengths = new Map<SVGPathElement, number>();
+  const updateMotion = () => {
+    motionFrame = null;
+    journey.classList.toggle("journey-scroll-motion", motion.matches);
+    if (!motion.matches || journey.getClientRects().length === 0) return;
+    const readingLine = innerHeight * 0.8;
+    chapters.forEach(chapter => {
+      const progress = Math.max(0, Math.min(1, (readingLine - chapter.getBoundingClientRect().top) / (innerHeight * 0.35)));
+      chapter.style.setProperty("--chapter-entry", String(progress));
+    });
+    const target = readingLine - journey.getBoundingClientRect().top;
+    paths.forEach(path => {
+      const length = lengths.get(path);
+      if (!length) return;
+      let low = 0;
+      let high = length;
+      for (let step = 0; step < 12; step++) {
+        const middle = (low + high) / 2;
+        if (path.getPointAtLength(middle).y < target) low = middle;
+        else high = middle;
+      }
+      path.style.strokeDasharray = String(length);
+      path.style.strokeDashoffset = String(length - (low + high) / 2);
+    });
+  };
+  const scheduleMotion = () => {
+    if (!disposed && motionFrame === null) motionFrame = requestAnimationFrame(updateMotion);
+  };
+  window.addEventListener("scroll", scheduleMotion, { passive: true, signal: lifecycle.signal });
+  window.addEventListener("resize", scheduleMotion, { signal: lifecycle.signal });
+  motion.addEventListener("change", scheduleMotion, { signal: lifecycle.signal });
+  document.querySelector("[data-music-views]")?.addEventListener("music:view-change", () => {
+    scheduleDraw();
+    scheduleMotion();
+  }, { signal: lifecycle.signal });
 
   const draw = () => {
     frame = null;
     const svg = journey.querySelector("svg");
     const end = journey.querySelector<HTMLElement>("[data-journey-present]");
-    if (!svg || !end) return;
+    if (!svg || !end || journey.getClientRects().length === 0) return;
 
     const bounds = journey.getBoundingClientRect();
     const center = (element: Element): Point => {
@@ -64,6 +107,8 @@ export function mountMusicJourney() {
     svg
       .querySelector(".discovery-line")
       ?.setAttribute("d", curveThrough([...discoveries, destination]));
+    paths.forEach(path => lengths.set(path, path.getTotalLength()));
+    scheduleMotion();
   };
 
   const scheduleDraw = () => {
@@ -80,6 +125,8 @@ export function mountMusicJourney() {
     "astro:before-swap",
     () => {
       disposed = true;
+      lifecycle.abort();
+      if (motionFrame !== null) cancelAnimationFrame(motionFrame);
       observer.disconnect();
       if (frame !== null) cancelAnimationFrame(frame);
     },

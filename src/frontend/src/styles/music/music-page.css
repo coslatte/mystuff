@@ -350,3 +350,25 @@ html:has(.music-page) {
   .player-transport { transition: none; }
   .volume-wake-bar { transform: none !important; }
 }
+
+.music-view-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 1rem clamp(1rem, 3vw, 3rem);
+  border-bottom: 2px solid var(--color-brut-black);
+  background: var(--color-brut-surface);
+}
+.music-view-header h1 { margin: 0 0 0.75rem; }
+.music-view-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.music-view-switch a { min-height: 48px; justify-content: center; text-align: center; }
+.music-view-switch a[aria-selected="true"] {
+  background: var(--color-brut-blue);
+  color: var(--color-brut-on-accent);
+  box-shadow: 4px 4px 0 var(--color-brut-black);
+}
+.music-view-switch a:focus-visible { outline: 3px solid var(--color-brut-link); outline-offset: 4px; }
+[data-music-panel][hidden] { display: none; }
+@media (max-width: 639px) {
+  .music-view-switch { grid-template-columns: 1fr; }
+}

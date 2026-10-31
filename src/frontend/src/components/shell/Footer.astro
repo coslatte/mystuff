@@ -6,14 +6,16 @@ import "../../styles/shell/footer.css";
 
 interface Props {
   showContact?: boolean;
+  showSummary?: boolean;
 }
 
-const { showContact = true } = Astro.props;
+const { showContact = true, showSummary = true } = Astro.props;
 ---
 
-<footer id="page-bottom" tabindex="-1" aria-label="Contact" class="site-footer w-full border-x-2 border-t-2 border-b-2 border-brut-black bg-brut-surface">
+{showSummary ? <footer id="page-bottom" tabindex="-1" aria-label="Contact" class="site-footer w-full border-x-2 border-t-2 border-b-2 border-brut-black bg-brut-surface">
   <p class="font-mono text-xs" translate="no">Gabriel Paz / CosmicLatte</p>
   {showContact && <a href="/contact" class="footer-contact brut-up"><span><span><LocalizedText id={messages.common.contact} /></span> <span aria-hidden="true">↗</span></span></a>}
+</footer> : <div id="page-bottom" tabindex="-1"></div>}
   <nav
     class="page-jumps"
     aria-label="Page shortcuts"
@@ -47,7 +49,6 @@ const { showContact = true } = Astro.props;
         </span>
     </a>
   </nav>
-</footer>
 
 <script>
   import "../../browser/shell/footer";

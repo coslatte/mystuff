@@ -15,6 +15,7 @@ interface Props {
   /** `/loading` replays the splash itself, so the layout's copy stands down. */
   bootReplay?: boolean;
   showFooterContact?: boolean;
+  showFooterSummary?: boolean;
   immersive?: boolean;
 }
 
@@ -24,6 +25,7 @@ const {
   noindex = false,
   bootReplay = false,
   showFooterContact = true,
+  showFooterSummary = true,
   immersive = false,
 } = Astro.props;
 
@@ -93,7 +95,7 @@ const socialImage = new URL("/images/previews/og.png", Astro.site);
     <main class:list={["flex-1", !immersive && "w-full border-x-2 border-brut-black"]}>
       <slot />
     </main>
-    {!immersive && <Footer showContact={showFooterContact} />}
+    {!immersive && <Footer showContact={showFooterContact} showSummary={showFooterSummary} />}
   </body>
 </html>
 

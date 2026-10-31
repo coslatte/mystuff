@@ -16,6 +16,73 @@ const comment = { id: 1, songId: 1, author: longText, content: longText, created
 const browser = await chromium.launch({
   ...(process.env.BROWSER_PATH ? { executablePath: process.env.BROWSER_PATH } : {}),
 });
+if (process.argv.includes("--music-views")) {
+  try { await checkMusicViews(); }
+  finally { await browser.close(); }
+  process.exit(0);
+}
+
+async function checkMusicViews() {
+  for (const width of [375, 1440]) {
+    const page = await browser.newPage({ viewport: { width, height: 900 } });
+    const errors = [];
+    page.on("pageerror", error => errors.push(error.message));
+    await page.route("**/api/**", route => route.fulfill({ json: { success: true, data: [] } }));
+    await page.route(/fonts\.google/, route => route.abort());
+    await page.goto(`${baseURL}/music`);
+    await page.waitForFunction(() => !document.documentElement.matches("[data-boot-pending], .boot-locked, .route-locked"));
+    const listen = page.locator("#music-listen-tab");
+    const journey = page.locator("#music-journey-tab");
+    await page.waitForFunction(() => document.querySelector("#music-listen-tab")?.getAttribute("aria-selected") === "true");
+    assert.equal(await page.locator("#music-journey").isVisible(), false);
+    assert.ok(await page.locator("#music-catalog").isVisible());
+    await page.locator("astro-island:not([ssr])").waitFor({ state: "attached" });
+    await page.locator(".music-browser").evaluate(element => { element.dataset.mountCheck = "preserved"; });
+    const labels = new Set();
+    for (const locale of ["es", "fr", "de", "ja", "en"]) {
+      await page.locator("[data-language-select]").selectOption(locale);
+      labels.add(await journey.innerText());
+    }
+    assert.equal(labels.size, 5);
+    await journey.click();
+    assert.equal(await page.locator("#music-listen-panel").isVisible(), false);
+    assert.ok(await page.locator("#music-journey").isVisible());
+    const path = page.locator(".root-line");
+    await page.waitForFunction(() => document.querySelector(".root-line")?.getAttribute("d")?.length > 10);
+    if (width >= 1024) {
+      const before = await path.evaluate(element => getComputedStyle(element).strokeDashoffset);
+      const chapter = page.locator(".journey-chapter").nth(2);
+      await chapter.scrollIntoViewIfNeeded();
+      await page.waitForFunction(previous => getComputedStyle(document.querySelector(".root-line")).strokeDashoffset !== previous, before);
+      assert.ok(await chapter.evaluate(element => Number(element.style.getPropertyValue("--chapter-entry")) > 0));
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.waitForFunction(() => getComputedStyle(document.querySelector(".root-line")).strokeDasharray === "none");
+      assert.equal(await chapter.locator(".chapter-heading").evaluate(element => getComputedStyle(element).transform), "none");
+    }
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await page.goBack();
+    assert.ok(await page.locator("#music-listen-panel").isVisible());
+    await listen.focus();
+    await page.keyboard.press("ArrowRight");
+    await page.waitForFunction(() => document.querySelector("#music-journey-tab")?.getAttribute("aria-selected") === "true");
+    await page.keyboard.press("Home");
+    await page.waitForFunction(() => document.querySelector("#music-listen-tab")?.getAttribute("aria-selected") === "true");
+    assert.equal(await page.locator(".music-browser").getAttribute("data-mount-check"), "preserved");
+    await page.goto(`${baseURL}/music#music-journey`);
+    await page.waitForFunction(() => document.querySelector("#music-journey-tab")?.getAttribute("aria-selected") === "true");
+    await page.locator('.journey-present a[href="#music-catalog"]').click();
+    assert.ok(await page.locator("#music-listen-panel").isVisible());
+    assert.deepEqual(errors, []);
+    await page.close();
+  }
+  const page = await browser.newPage({ javaScriptEnabled: false });
+  await page.goto(`${baseURL}/music`);
+  assert.ok(await page.locator("#music-catalog").isVisible());
+  assert.ok(await page.locator("#music-journey").isVisible());
+  await page.close();
+  console.log("Music views: default preview, tabs, keyboard, history, deep links, mounted player, five locales, desktop scroll, reduced motion, mobile and no-JS passed.");
+}
+
 if (process.argv.includes("--music-preview")) {
   try { await checkMusicPreview(); }
   finally { await browser.close(); }

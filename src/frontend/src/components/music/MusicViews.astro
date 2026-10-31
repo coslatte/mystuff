@@ -1,0 +1,23 @@
+---
+import { messages } from "../../lib/i18n/catalog";
+import LocalizedText from "../shared/LocalizedText.astro";
+import "../../styles/music/music-page.css";
+---
+
+<div class="music-page" data-music-views>
+  <header class="music-view-header" data-no-reveal>
+    <h1 class="brut-label"><LocalizedText id={messages.music.section01Music} /></h1>
+    <nav class="music-view-switch" aria-label="Music" data-i18n-aria-label={messages.music.section01Music}>
+      <a id="music-listen-tab" class="brut-up" href="#music-catalog" data-music-view="listen"><LocalizedText id={messages.music.listenReleases} /></a>
+      <a id="music-journey-tab" class="brut-up" href="#music-journey" data-music-view="journey"><LocalizedText id={messages.music.exploreJourney} /></a>
+    </nav>
+  </header>
+  <div id="music-listen-panel" data-music-panel="listen"><slot name="listen" /></div>
+  <div id="music-journey" data-music-panel="journey"><slot name="journey" /></div>
+</div>
+
+<script>
+  import { mountMusicViews } from "../../browser/music/music-views";
+  document.addEventListener("astro:page-load", mountMusicViews);
+  mountMusicViews();
+</script>

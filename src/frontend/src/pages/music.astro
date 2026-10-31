@@ -1,19 +1,21 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import MusicViews from "../components/music/MusicViews.astro";
 import MusicIntro from "../components/music/MusicIntro.astro";
 import MusicCatalog from "../components/music/MusicCatalog.astro";
 import MusicJourney from "../components/music/MusicJourney.astro";
 ---
 
 <Layout
+  showFooterSummary={false}
   title="music ][ cosmiclatte.dev"
   description="Original releases, sound design, and the musical influences behind an experimental electronic practice."
 >
-  <div class="music-page">
-    <MusicIntro />
-
-    <MusicCatalog />
-
-    <MusicJourney />
-  </div>
+  <MusicViews>
+    <div slot="listen">
+      <MusicCatalog />
+      <MusicIntro />
+    </div>
+    <MusicJourney slot="journey" />
+  </MusicViews>
 </Layout>
