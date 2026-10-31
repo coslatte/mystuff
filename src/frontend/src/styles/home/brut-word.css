@@ -29,6 +29,10 @@
     opacity: 1;
     transition-delay: 0.18s;
   }
+
+  .brut-word--soundwaves:hover::before {
+    animation-play-state: running;
+  }
 }
 
 .brut-word--code {
@@ -133,8 +137,22 @@
 
 .brut-word--soundwaves::before {
   content: "";
-  background-color: var(--color-brut-red);
+  background-image: linear-gradient(
+    110deg,
+    var(--color-brut-red) 0%,
+    var(--color-brut-red) 62%,
+    color-mix(in srgb, var(--color-brut-red) 55%, var(--color-brut-blue)) 82%,
+    var(--color-brut-blue) 100%
+  );
+  background-size: 180% 100%;
+  animation: soundwave-color-morph 8s ease-in-out infinite alternate paused;
   clip-path: inset(0 0 0 50%);
+}
+
+@keyframes soundwave-color-morph {
+  to {
+    background-position: 100% 0;
+  }
 }
 
 .brut-word__wave-text {
@@ -158,6 +176,11 @@
 
   .brut-word__code-matrix {
     animation: none;
+  }
+
+  .brut-word--soundwaves::before {
+    animation: none;
+    background-position: 50% 0;
   }
 
   .brut-word--soundwaves::before,
